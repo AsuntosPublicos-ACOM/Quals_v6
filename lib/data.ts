@@ -436,6 +436,38 @@ export const congresistas: Congresista[] = [
       { cargo: 'Vicepresidenta de Comisión de Economía', desde: '2023-06' }
     ],
     perfilCualitativo: 'Congresista con destacada trayectoria en políticas económicas y fiscales, conocida por su postura técnica y propositiva en el debate legislativo. Ha liderado iniciativas orientadas a la formalización del sector empresarial y la reducción de barreras burocráticas para la inversión privada.\n\nSu estilo legislativo se caracteriza por la construcción de consensos entre bancadas y la articulación con gremios empresariales. Mantiene una posición favorable a la desregulación sectorial y ha mostrado interés constante en reformas tributarias que amplíen la base de contribuyentes.',
+    hitosClaves: [
+      {
+        id: 'hito-1-1',
+        descripcion: 'Votó a favor de la Ley de Reforma Tributaria 2024 que amplió la base de contribuyentes',
+        fecha: '2024-03-15',
+        tipo: 'votacion'
+      },
+      {
+        id: 'hito-1-2',
+        descripcion: 'Entrevista en "Panorama" sobre flexibilización de regulaciones empresariales',
+        fecha: '2024-03-10',
+        tipo: 'entrevista'
+      },
+      {
+        id: 'hito-1-3',
+        descripcion: 'Presentó proyecto de ley para reducción de barreras administrativas para MYPES',
+        fecha: '2024-02-28',
+        tipo: 'evento'
+      },
+      {
+        id: 'hito-1-4',
+        descripcion: 'Dictamen favorable de proyecto sobre formalización del comercio informal',
+        fecha: '2024-02-15',
+        tipo: 'votacion'
+      },
+      {
+        id: 'hito-1-5',
+        descripcion: 'Investigación por presunta influencia de gremios en su voto',
+        fecha: '2024-01-20',
+        tipo: 'investigacion'
+      }
+    ]
   },
   { 
     id: '2', 
@@ -472,6 +504,32 @@ export const congresistas: Congresista[] = [
       { cargo: 'Presidenta de Comisión de Trabajo', desde: '2023-06' }
     ],
     perfilCualitativo: 'Una de las parlamentarias más activas en materia económica y laboral, con una visión pro-empleo y de fortalecimiento de la competitividad industrial. Ha impulsado proyectos orientados a la flexibilización regulatoria en sectores de energía y minería, alineados con las demandas de la región La Libertad.\n\nCon experiencia previa en gestión regional, aporta al debate legislativo una perspectiva práctica sobre la implementación de políticas públicas. Su postura suele ser crítica frente a regulaciones que considera restrictivas para la inversión y el desarrollo productivo.',
+    hitosClaves: [
+      {
+        id: 'hito-3-1',
+        descripcion: 'Votó a favor de la Ley de Flexibilización Laboral que redujo restricciones para contrataciones',
+        fecha: '2024-03-18',
+        tipo: 'votacion'
+      },
+      {
+        id: 'hito-3-2',
+        descripcion: 'Presentó proyecto de promoción de minería responsable en regiones',
+        fecha: '2024-03-05',
+        tipo: 'evento'
+      },
+      {
+        id: 'hito-3-3',
+        descripcion: 'Debate en comisión sobre competitividad y empleo se viralizó en redes sociales',
+        fecha: '2024-02-20',
+        tipo: 'entrevista'
+      },
+      {
+        id: 'hito-3-4',
+        descripcion: 'Ley de Energías Renovables aprobada con su presidencia de comisión',
+        fecha: '2024-02-10',
+        tipo: 'votacion'
+      }
+    ]
   },
   { 
     id: '4', 

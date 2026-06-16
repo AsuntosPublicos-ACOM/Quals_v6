@@ -31,6 +31,7 @@ import { useSortableTable } from '@/hooks/use-sortable-table'
 import { SortableHead } from '@/components/ui/sortable-head'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { Input } from '@/components/ui/input'
+import { HitosClaveCard } from '@/components/hitos-clave-card'
 
 interface CongresistDetailProps {
   congresista: Congresista
@@ -704,10 +705,16 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
         )}
       </div>
 
-      {/* Perfil Cualitativo */}
-      {congresista.perfilCualitativo && (
-        <PerfilCualitativoCard texto={congresista.perfilCualitativo} />
-      )}
+      {/* Perfil Cualitativo y Hitos Clave */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Perfil Cualitativo */}
+        {congresista.perfilCualitativo && (
+          <PerfilCualitativoCard texto={congresista.perfilCualitativo} />
+        )}
+        
+        {/* Hitos Clave */}
+        <HitosClaveCard hitos={congresista.hitosClaves} />
+      </div>
 
       {/* Parties and Positions History */}
       <div className={`grid gap-6 ${congresista.tipo === 'diputado' ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>

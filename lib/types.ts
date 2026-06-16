@@ -32,6 +32,13 @@ export interface SectorCongresista {
   porcentajeAprobacion: number
 }
 
+export interface HitoClave {
+  id: string
+  descripcion: string
+  fecha: string // ISO 8601 format
+  tipo: 'votacion' | 'investigacion' | 'entrevista' | 'evento' | 'otro'
+}
+
 export interface Congresista {
   id: string
   nombre: string
@@ -47,6 +54,7 @@ export interface Congresista {
   partidosHistoria?: Array<{ partido: string; fechaInicio: string; fechaFin?: string }>
   cargosHistoria?: Array<{ cargo: string; fechaInicio: string; fechaFin?: string }>
   perfilCualitativo?: string // Descripción cualitativa del perfil político y legislativo
+  hitosClaves?: HitoClave[] // Hitos clave cronológicos del congresista
 }
 
 export interface ProyectoLey {
