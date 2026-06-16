@@ -591,7 +591,7 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
   }, [congresistProjects, congresista.id])
 
   // Mock party history for María Elena Torres
-  const partieHistory = isMariaTorres 
+  const partieHistory = (isMariaTorres 
     ? [
         { partido: 'Fuerza Nacional', fechaInicio: '2020-09', fechaFin: '2022-04' },
         { partido: 'Accion Popular', fechaInicio: '2022-05', fechaFin: '2023-08' },
@@ -599,10 +599,14 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
       ]
     : congresista.partidosHistoria || [
         { partido: congresista.partido, fechaInicio: '2024-01', fechaFin: undefined },
-      ]
+      ]).sort((a, b) => {
+        const dateA = a.fechaFin || a.fechaInicio
+        const dateB = b.fechaFin || b.fechaInicio
+        return dateB.localeCompare(dateA)
+      })
 
   // Mock positions history for María Elena Torres
-  const positionsHistory = isMariaTorres
+  const positionsHistory = (isMariaTorres
     ? [
         { cargo: 'Vicepresidenta del Congreso', fechaInicio: '2020-09', fechaFin: '2021-08' },
         { cargo: 'Miembro Comisión de Economía', fechaInicio: '2020-09', fechaFin: '2022-02' },
@@ -612,7 +616,11 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
       ]
     : congresista.cargosHistoria || (congresista.cargo ? [
         { cargo: congresista.cargo, fechaInicio: '2024-01', fechaFin: undefined }
-      ] : [])
+      ] : [])).sort((a, b) => {
+        const dateA = a.fechaFin || a.fechaInicio
+        const dateB = b.fechaFin || b.fechaInicio
+        return dateB.localeCompare(dateA)
+      })
 
   const getPartidoColor = (partido: string) => {
     const colors: Record<string, string> = {
@@ -720,15 +728,15 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
       <div className={`grid gap-6 ${congresista.tipo === 'diputado' ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
         {/* Party History */}
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="text-base">Historial de partidos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {partieHistory.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between gap-4 p-2 border-b border-border last:border-b-0">
-                  <p className="font-medium text-sm text-foreground">{item.partido}</p>
-                  <p className="text-xs text-muted-foreground whitespace-nowrap">
+                <div key={idx} className="flex items-center justify-between gap-2 text-xs">
+                  <p className="font-medium text-foreground truncate">{item.partido}</p>
+                  <p className="text-muted-foreground whitespace-nowrap flex-shrink-0">
                     {item.fechaInicio} {item.fechaFin ? `- ${item.fechaFin}` : ''}
                   </p>
                 </div>
@@ -740,25 +748,25 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
         {/* Positions History - solo para diputados */}
         {congresista.tipo === 'diputado' && (
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="text-base">Cargos en el Congreso</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {positionsHistory.length > 0 ? (
                 positionsHistory.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between gap-4 p-2 border-b border-border last:border-b-0">
-                    <p className="font-medium text-sm text-foreground flex items-center gap-2 min-w-0">
-                      <Briefcase className="h-3.5 w-3.5 flex-shrink-0" />
+                  <div key={idx} className="flex items-center justify-between gap-2 text-xs">
+                    <p className="font-medium text-foreground flex items-center gap-1.5 min-w-0 truncate">
+                      <Briefcase className="h-3 w-3 flex-shrink-0" />
                       <span className="truncate">{item.cargo}</span>
                     </p>
-                    <p className="text-xs text-muted-foreground whitespace-nowrap">
+                    <p className="text-muted-foreground whitespace-nowrap flex-shrink-0">
                       {item.fechaInicio} {item.fechaFin ? `- ${item.fechaFin}` : ''}
                     </p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">Sin cargos registrados</p>
+                <p className="text-xs text-muted-foreground">Sin cargos registrados</p>
               )}
             </div>
           </CardContent>
