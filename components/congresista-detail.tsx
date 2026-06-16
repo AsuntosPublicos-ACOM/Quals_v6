@@ -725,7 +725,7 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
       </div>
 
       {/* Parties and Positions History */}
-      <div className={`grid gap-6 ${congresista.tipo === 'diputado' ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
+      <div className={`grid gap-6 ${['diputado', 'senador'].includes(congresista.tipo) ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
         {/* Party History */}
         <Card>
           <CardHeader className="pb-3">
@@ -745,11 +745,13 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
           </CardContent>
         </Card>
 
-        {/* Positions History - solo para diputados */}
-        {congresista.tipo === 'diputado' && (
+        {/* Positions History - para diputados y senadores */}
+        {['diputado', 'senador'].includes(congresista.tipo) && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Cargos en el Congreso</CardTitle>
+            <CardTitle className="text-base">
+              {congresista.tipo === 'diputado' ? 'Cargos en el Congreso' : 'Cargos en el Senado'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-1">

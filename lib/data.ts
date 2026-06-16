@@ -575,15 +575,48 @@ export const congresistas: Congresista[] = [
     tipo: 'senador',
     proyectosCount: 12,
     leyesAprobadas: 2,
+    partidosHistoria: [
+      { partido: 'Movimiento Regional', fechaInicio: '2023-09', fechaFin: undefined },
+      { partido: 'Fuerza Popular', fechaInicio: '2021-03', fechaFin: '2023-08' },
+      { partido: 'Juntos por el Peru', fechaInicio: '2020-01', fechaFin: '2021-02' }
+    ],
     topComisiones: [
       { sectorId: 'economia', comisiones: ['Comisión de Economía'] },
       { sectorId: 'energia', comisiones: ['Comisión de Energía y Minas'] },
       { sectorId: 'agricultura', comisiones: ['Comisión Agraria'] }
     ],
     cargosHistoria: [
-      { cargo: 'Miembro de Comisión Agraria', desde: '2023-06' }
+      { cargo: 'Presidente de Comisión Agraria', fechaInicio: '2023-09', fechaFin: undefined },
+      { cargo: 'Vicepresidente de Comisión de Energía y Minas', fechaInicio: '2023-01', fechaFin: '2023-08' },
+      { cargo: 'Miembro de Comisión Agraria', fechaInicio: '2022-08', fechaFin: '2023-08' }
     ],
     perfilCualitativo: 'Representante con fuerte arraigo en el sector agrario y minero de Cajamarca, cuya agenda legislativa gira en torno a la defensa de los pequeños productores y la regulación de las actividades extractivas. Ha sido crítico de los grandes proyectos mineros que generan conflictos socioambientales en su región.\n\nSus propuestas buscan equilibrar el desarrollo económico con la protección ambiental y los derechos de las comunidades campesinas. Tiene una postura favorable a la descentralización fiscal y a mayores transferencias del canon minero hacia los gobiernos locales.',
+    hitosClaves: [
+      {
+        id: 'hito-6-1',
+        descripcion: 'Votó a favor de la Ley de Protección Ambiental para proyectos mineros en Cajamarca',
+        fecha: '2024-03-20',
+        tipo: 'votacion'
+      },
+      {
+        id: 'hito-6-2',
+        descripcion: 'Lideró debate en el Senado sobre redistribución del canon minero',
+        fecha: '2024-03-10',
+        tipo: 'evento'
+      },
+      {
+        id: 'hito-6-3',
+        descripcion: 'Entrevista con TV Perú sobre conflictividad minera en Cajamarca',
+        fecha: '2024-02-25',
+        tipo: 'entrevista'
+      },
+      {
+        id: 'hito-6-4',
+        descripcion: 'Presentó proyecto de ley para fondo de reparación ambiental',
+        fecha: '2024-02-15',
+        tipo: 'evento'
+      }
+    ]
   },
   { 
     id: '7', 
@@ -593,15 +626,54 @@ export const congresistas: Congresista[] = [
     tipo: 'senador',
     proyectosCount: 20,
     leyesAprobadas: 5,
+    partidosHistoria: [
+      { partido: 'Alianza para el Progreso', fechaInicio: '2023-09', fechaFin: undefined },
+      { partido: 'Accion Popular', fechaInicio: '2021-09', fechaFin: '2023-08' },
+      { partido: 'Somos Peru', fechaInicio: '2020-03', fechaFin: '2021-08' }
+    ],
     topComisiones: [
       { sectorId: 'transporte', comisiones: ['Comisión de Transportes'] },
       { sectorId: 'economia', comisiones: ['Comisión de Economía'] },
       { sectorId: 'energia', comisiones: ['Comisión de Energía y Minas'] }
     ],
     cargosHistoria: [
-      { cargo: 'Vicepresidenta de Comisión de Transportes', desde: '2023-06' }
+      { cargo: 'Presidenta de Comisión de Transportes', fechaInicio: '2024-01', fechaFin: undefined },
+      { cargo: 'Vicepresidenta de Comisión de Transportes', fechaInicio: '2023-06', fechaFin: '2023-12' },
+      { cargo: 'Miembro de Comisión de Economía', fechaInicio: '2023-01', fechaFin: undefined }
     ],
     perfilCualitativo: 'Congresista especializada en infraestructura vial y conectividad, con especial atención a los proyectos de integración de la región Junín con la selva central. Ha impulsado iniciativas para mejorar carreteras, puentes y el transporte multimodal en zonas de difícil acceso.\n\nEn materia energética, defiende la ampliación de la cobertura eléctrica rural y el aprovechamiento sostenible de recursos hídricos. Su trabajo legislativo se distingue por la coordinación con gobiernos regionales y la búsqueda de financiamiento para obras de infraestructura prioritarias.',
+    hitosClaves: [
+      {
+        id: 'hito-7-1',
+        descripcion: 'Ley de Infraestructura Vial Interregional aprobada bajo su presidencia de comisión',
+        fecha: '2024-03-22',
+        tipo: 'votacion'
+      },
+      {
+        id: 'hito-7-2',
+        descripcion: 'Propuesta de corredor energético Junín-Selva Central generó debate nacional',
+        fecha: '2024-03-05',
+        tipo: 'evento'
+      },
+      {
+        id: 'hito-7-3',
+        descripcion: 'Entrevista en RPP sobre conectividad y desarrollo regional',
+        fecha: '2024-02-28',
+        tipo: 'entrevista'
+      },
+      {
+        id: 'hito-7-4',
+        descripcion: 'Visita de inspección a proyectos de infraestructura en Junín',
+        fecha: '2024-02-10',
+        tipo: 'evento'
+      },
+      {
+        id: 'hito-7-5',
+        descripcion: 'Proyecto de ampliación de cobertura eléctrica rural presentado',
+        fecha: '2024-01-30',
+        tipo: 'evento'
+      }
+    ]
   },
   { 
     id: '8', 
@@ -611,15 +683,48 @@ export const congresistas: Congresista[] = [
     tipo: 'senador',
     proyectosCount: 26,
     leyesAprobadas: 7,
+    partidosHistoria: [
+      { partido: 'Fuerza Nacional', fechaInicio: '2023-09', fechaFin: undefined },
+      { partido: 'Fuerza Popular', fechaInicio: '2021-09', fechaFin: '2023-08' },
+      { partido: 'Somos Peru', fechaInicio: '2020-03', fechaFin: '2021-08' }
+    ],
     topComisiones: [
       { sectorId: 'justicia', comisiones: ['Comisión de Justicia'] },
       { sectorId: 'defensa', comisiones: ['Comisión de Defensa Nacional'] },
       { sectorId: 'economia', comisiones: ['Comisión de Economía'] }
     ],
     cargosHistoria: [
-      { cargo: 'Miembro de Comisión de Justicia', desde: '2023-06' }
+      { cargo: 'Vicepresidente de Comisión de Justicia', fechaInicio: '2023-09', fechaFin: undefined },
+      { cargo: 'Miembro de Comisión de Defensa Nacional', fechaInicio: '2023-06', fechaFin: undefined },
+      { cargo: 'Miembro de Comisión de Justicia', fechaInicio: '2023-06', fechaFin: undefined }
     ],
     perfilCualitativo: 'Congresista con perfil jurídico y enfoque en seguridad ciudadana y reforma del sistema de justicia. Ha presentado proyectos para endurecer penas en delitos de corrupción y mejorar la eficiencia del sistema penitenciario, alineándose con una postura de mano dura frente a la criminalidad.\n\nEn defensa nacional, apoya el fortalecimiento de las fuerzas del orden y ha respaldado iniciativas para modernizar el equipamiento policial y militar. Su discurso legislativo combina el garantismo con la necesidad de mayor eficacia en la persecución penal.',
+    hitosClaves: [
+      {
+        id: 'hito-8-1',
+        descripcion: 'Ley de fortalecimiento de la Policía Nacional aprobada bajo su coordinación',
+        fecha: '2024-03-18',
+        tipo: 'votacion'
+      },
+      {
+        id: 'hito-8-2',
+        descripcion: 'Investigación por supuestos vínculos con empresas constructoras',
+        fecha: '2024-03-01',
+        tipo: 'investigacion'
+      },
+      {
+        id: 'hito-8-3',
+        descripcion: 'Debate en TV sobre reforma penal se viralizó en redes sociales',
+        fecha: '2024-02-20',
+        tipo: 'entrevista'
+      },
+      {
+        id: 'hito-8-4',
+        descripcion: 'Proyecto de ley para aumentar penas en delitos de corrupción presentado',
+        fecha: '2024-02-05',
+        tipo: 'evento'
+      }
+    ]
   },
   { 
     id: '9', 
@@ -629,15 +734,54 @@ export const congresistas: Congresista[] = [
     tipo: 'senador',
     proyectosCount: 14,
     leyesAprobadas: 3,
+    partidosHistoria: [
+      { partido: 'Accion Popular', fechaInicio: '2023-09', fechaFin: undefined },
+      { partido: 'Fuerza Popular', fechaInicio: '2021-09', fechaFin: '2023-08' },
+      { partido: 'Juntos por el Peru', fechaInicio: '2020-01', fechaFin: '2021-08' }
+    ],
     topComisiones: [
       { sectorId: 'agricultura', comisiones: ['Comisión Agraria'] },
       { sectorId: 'salud', comisiones: ['Comisión de Salud'] },
       { sectorId: 'educacion', comisiones: ['Comisión de Educación'] }
     ],
     cargosHistoria: [
-      { cargo: 'Presidenta de Comisión Agraria', desde: '2023-06' }
+      { cargo: 'Presidenta de Comisión Agraria', fechaInicio: '2023-06', fechaFin: undefined },
+      { cargo: 'Miembro de Comisión de Salud', fechaInicio: '2023-06', fechaFin: undefined },
+      { cargo: 'Miembro de Comisión de Educación', fechaInicio: '2023-01', fechaFin: '2023-05' }
     ],
     perfilCualitativo: 'Presidenta de la Comisión Agraria con vasta experiencia en políticas de desarrollo rural y seguridad alimentaria. Representa a Puno, una de las regiones con mayor concentración de comunidades campesinas y alpaqueras, lo que marca profundamente su agenda legislativa.\n\nHa liderado proyectos de ley para mejorar los precios de garantía agropecuarios, fortalecer las cooperativas rurales y ampliar la cobertura del seguro agrario. En salud, promueve la interculturalidad en los servicios sanitarios y el reconocimiento de la medicina tradicional andina.',
+    hitosClaves: [
+      {
+        id: 'hito-9-1',
+        descripcion: 'Ley de precios de garantía agrícola aprobada bajo su liderazgo',
+        fecha: '2024-03-25',
+        tipo: 'votacion'
+      },
+      {
+        id: 'hito-9-2',
+        descripcion: 'Propuesta de reconocimiento de medicina tradicional andina generó debate',
+        fecha: '2024-03-08',
+        tipo: 'evento'
+      },
+      {
+        id: 'hito-9-3',
+        descripcion: 'Entrevista con La Onda sobre agricultura en Puno',
+        fecha: '2024-02-27',
+        tipo: 'entrevista'
+      },
+      {
+        id: 'hito-9-4',
+        descripcion: 'Proyecto para fortalecer cooperativas rurales presentado en comisión',
+        fecha: '2024-02-12',
+        tipo: 'evento'
+      },
+      {
+        id: 'hito-9-5',
+        descripcion: 'Visita de inspección a comunidades alpaqueras de Puno',
+        fecha: '2024-01-28',
+        tipo: 'evento'
+      }
+    ]
   },
   { 
     id: '10', 
