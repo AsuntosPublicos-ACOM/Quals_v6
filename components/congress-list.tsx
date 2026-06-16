@@ -424,12 +424,23 @@ export function CongressList({ onBack, favoriteCongresistas = [], onToggleFavori
                             </Avatar>
                           </TableCell>
                           <TableCell>
-                            <button
-                              onClick={() => setSelectedCongresista(congresista)}
-                              className="font-medium text-primary hover:underline cursor-pointer"
-                            >
-                              {congresista.nombre}
-                            </button>
+                            <div className="flex items-center justify-between gap-3">
+                              <button
+                                onClick={() => setSelectedCongresista(congresista)}
+                                className="font-medium text-primary hover:underline cursor-pointer"
+                              >
+                                {congresista.nombre}
+                              </button>
+                              {congresista.interesesPrincipales && congresista.interesesPrincipales.length > 0 && (
+                                <div className="flex gap-1 flex-shrink-0">
+                                  {congresista.interesesPrincipales.map((interes, idx) => (
+                                    <Badge key={idx} variant="outline" className="text-[9px] whitespace-nowrap">
+                                      {interes}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Badge className={`text-[10px] ${getPartyColor(congresista.partido)}`}>

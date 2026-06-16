@@ -575,6 +575,7 @@ export const congresistas: Congresista[] = [
     tipo: 'senador',
     proyectosCount: 12,
     leyesAprobadas: 2,
+    interesesPrincipales: ['Medio Ambiente', 'Minería Responsable', 'Derechos Campesinos'],
     partidosHistoria: [
       { partido: 'Movimiento Regional', fechaInicio: '2023-09', fechaFin: undefined },
       { partido: 'Fuerza Popular', fechaInicio: '2021-03', fechaFin: '2023-08' },
@@ -626,6 +627,7 @@ export const congresistas: Congresista[] = [
     tipo: 'senador',
     proyectosCount: 20,
     leyesAprobadas: 5,
+    interesesPrincipales: ['Infraestructura', 'Energías Renovables'],
     partidosHistoria: [
       { partido: 'Alianza para el Progreso', fechaInicio: '2023-09', fechaFin: undefined },
       { partido: 'Accion Popular', fechaInicio: '2021-09', fechaFin: '2023-08' },
@@ -683,6 +685,7 @@ export const congresistas: Congresista[] = [
     tipo: 'senador',
     proyectosCount: 26,
     leyesAprobadas: 7,
+    interesesPrincipales: ['Seguridad Ciudadana', 'Reforma Judicial', 'Anticorrupción'],
     partidosHistoria: [
       { partido: 'Fuerza Nacional', fechaInicio: '2023-09', fechaFin: undefined },
       { partido: 'Fuerza Popular', fechaInicio: '2021-09', fechaFin: '2023-08' },
@@ -734,6 +737,7 @@ export const congresistas: Congresista[] = [
     tipo: 'senador',
     proyectosCount: 14,
     leyesAprobadas: 3,
+    interesesPrincipales: ['Agricultura', 'Desarrollo Rural'],
     partidosHistoria: [
       { partido: 'Accion Popular', fechaInicio: '2023-09', fechaFin: undefined },
       { partido: 'Fuerza Popular', fechaInicio: '2021-09', fechaFin: '2023-08' },

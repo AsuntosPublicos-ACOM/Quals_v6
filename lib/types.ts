@@ -55,6 +55,7 @@ export interface Congresista {
   cargosHistoria?: Array<{ cargo: string; fechaInicio: string; fechaFin?: string }>
   perfilCualitativo?: string // Descripción cualitativa del perfil político y legislativo
   hitosClaves?: HitoClave[] // Hitos clave cronológicos del congresista
+  interesesPrincipales?: string[] // Intereses temáticos principales (máximo 3, solo para senadores)
 }
 
 export interface ProyectoLey {
