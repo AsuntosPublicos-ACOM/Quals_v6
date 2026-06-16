@@ -206,8 +206,8 @@ function getUniqueTweets(tweets: typeof mockTweets): string[] {
 
 interface TwitterActivitySectionProps {
   congresista: Congresista
-  selectedTopic: string | null
-  onTopicSelect: (topic: string | null) => void
+  selectedTopics: string[]
+  onTopicsChange: (topics: string[]) => void
   fechaDesde: string
   onFechaDesdeChange: (fecha: string) => void
   fechaHasta: string
@@ -220,18 +220,20 @@ interface TwitterActivitySectionProps {
   onFiltersToggle: (open: boolean) => void
 }
 
-function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect, fechaDesde, onFechaDesdeChange, fechaHasta, onFechaHastaChange, minInteracciones, onMinInteraccionesChange, maxInteracciones, onMaxInteraccionesChange, filtersOpen, onFiltersToggle }: TwitterActivitySectionProps) {
+function TwitterActivitySection({ congresista, selectedTopics, onTopicsChange, fechaDesde, onFechaDesdeChange, fechaHasta, onFechaHastaChange, minInteracciones, onMinInteraccionesChange, maxInteracciones, onMaxInteraccionesChange, filtersOpen, onFiltersToggle }: TwitterActivitySectionProps) {
   const wordCloudData = useMemo(() => extractWordFrequencies(mockTweets), [])
   const allTopics = useMemo(() => getUniqueTweets(mockTweets), [])
   
   const filteredTweets = useMemo(() => {
     let tweets = mockTweets
     
-    // Filter by topic
-    if (selectedTopic) {
+    // Filter by topic - support multiple topics (OR logic)
+    if (selectedTopics.length > 0) {
       tweets = tweets.filter(tweet => 
-        tweet.topics.some(t => t.toLowerCase() === selectedTopic.toLowerCase()) ||
-        tweet.texto.toLowerCase().includes(selectedTopic.toLowerCase())
+        selectedTopics.some(topic =>
+          tweet.topics.some(t => t.toLowerCase() === topic.toLowerCase()) ||
+          tweet.texto.toLowerCase().includes(topic.toLowerCase())
+        )
       )
     }
     
@@ -256,13 +258,13 @@ function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect, fec
     }
     
     return tweets
-  }, [selectedTopic, fechaDesde, fechaHasta, minInteracciones, maxInteracciones])
+  }, [selectedTopics, fechaDesde, fechaHasta, minInteracciones, maxInteracciones])
 
   const handleWordClick = (word: string) => {
-    if (selectedTopic === word) {
-      onTopicSelect(null)
+    if (selectedTopics.includes(word)) {
+      onTopicsChange(selectedTopics.filter(t => t !== word))
     } else {
-      onTopicSelect(word)
+      onTopicsChange([...selectedTopics, word])
     }
   }
 
@@ -296,116 +298,139 @@ function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect, fec
               <WordCloud 
                 words={wordCloudData} 
                 onWordClick={handleWordClick}
-                selectedWord={selectedTopic}
+                selectedWords={selectedTopics}
               />
             </div>
           </div>
 
-          {/* Filters - Right Column (1/3 width) */}
+          {/* Filters - Right Column (1/3 width) - Collapsible */}
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-foreground">Filtros</h4>
-            <div className="space-y-4 bg-muted/20 rounded-lg p-4 border border-border">
-              {/* Filtro por tema */}
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-foreground">Tema:</p>
-                <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                  <button
-                    onClick={() => onTopicSelect(null)}
-                    className={cn(
-                      "w-full text-left px-2 py-1.5 rounded text-xs font-medium transition-colors",
-                      !selectedTopic
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-background text-muted-foreground hover:bg-muted"
-                    )}
-                  >
-                    Todos
-                  </button>
-                  {allTopics.map(topic => (
+            {/* Filters Header - Collapsible */}
+            <button
+              onClick={() => onFiltersToggle(!filtersOpen)}
+              className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors rounded-lg border border-border"
+            >
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Filtros</span>
+                {(selectedTopics.length > 0 || fechaDesde || fechaHasta || minInteracciones || maxInteracciones) && (
+                  <span className="text-xs bg-primary text-primary-foreground rounded-full px-2 py-0.5">
+                    {[selectedTopics.length > 0, fechaDesde, fechaHasta, minInteracciones, maxInteracciones].filter(Boolean).length} activos
+                  </span>
+                )}
+              </div>
+              <svg
+                className={`h-4 w-4 text-muted-foreground transition-transform ${filtersOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </button>
+
+            {/* Filters Content - Shown when open */}
+            {filtersOpen && (
+              <div className="space-y-4 bg-muted/20 rounded-lg p-4 border border-border">
+                {/* Filtro por tema - Multiple selection */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-foreground">Tema:</p>
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
                     <button
-                      key={topic}
-                      onClick={() => onTopicSelect(selectedTopic === topic ? null : topic)}
+                      onClick={() => onTopicsChange([])}
                       className={cn(
-                        "w-full text-left px-2 py-1.5 rounded text-xs font-medium transition-colors capitalize",
-                        selectedTopic === topic
+                        "w-full text-left px-2 py-1.5 rounded text-xs font-medium transition-colors",
+                        selectedTopics.length === 0
                           ? "bg-primary text-primary-foreground"
                           : "bg-background text-muted-foreground hover:bg-muted"
                       )}
                     >
-                      {topic}
+                      Todos
                     </button>
-                  ))}
+                    {allTopics.map(topic => (
+                      <button
+                        key={topic}
+                        onClick={() => {
+                          if (selectedTopics.includes(topic)) {
+                            onTopicsChange(selectedTopics.filter(t => t !== topic))
+                          } else {
+                            onTopicsChange([...selectedTopics, topic])
+                          }
+                        }}
+                        className={cn(
+                          "w-full text-left px-2 py-1.5 rounded text-xs font-medium transition-colors capitalize",
+                          selectedTopics.includes(topic)
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background text-muted-foreground hover:bg-muted"
+                        )}
+                      >
+                        {topic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-border/50" />
+
+                {/* Filtro por fecha */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-foreground">Período:</p>
+                  <div className="space-y-1.5">
+                    <div className="space-y-0.5">
+                      <label className="text-[10px] text-muted-foreground">Desde:</label>
+                      <Input
+                        type="date"
+                        value={fechaDesde}
+                        onChange={(e) => onFechaDesdeChange(e.target.value)}
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-0.5">
+                      <label className="text-[10px] text-muted-foreground">Hasta:</label>
+                      <Input
+                        type="date"
+                        value={fechaHasta}
+                        onChange={(e) => onFechaHastaChange(e.target.value)}
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-border/50" />
+
+                {/* Filtro por interacciones */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-foreground">Interacciones:</p>
+                  <div className="space-y-1.5">
+                    <div className="space-y-0.5">
+                      <label className="text-[10px] text-muted-foreground">Mínimo:</label>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={minInteracciones}
+                        onChange={(e) => onMinInteraccionesChange(e.target.value)}
+                        className="h-7 text-xs"
+                        min="0"
+                      />
+                    </div>
+                    <div className="space-y-0.5">
+                      <label className="text-[10px] text-muted-foreground">Máximo:</label>
+                      <Input
+                        type="number"
+                        placeholder="Sin límite"
+                        value={maxInteracciones}
+                        onChange={(e) => onMaxInteraccionesChange(e.target.value)}
+                        className="h-7 text-xs"
+                        min="0"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              {/* Divider */}
-              <div className="border-t border-border/50" />
-
-              {/* Filtro por fecha */}
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-foreground">Período:</p>
-                <div className="space-y-1.5">
-                  <div className="space-y-0.5">
-                    <label className="text-[10px] text-muted-foreground">Desde:</label>
-                    <Input
-                      type="date"
-                      value={fechaDesde}
-                      onChange={(e) => onFechaDesdeChange(e.target.value)}
-                      className="h-7 text-xs"
-                    />
-                  </div>
-                  <div className="space-y-0.5">
-                    <label className="text-[10px] text-muted-foreground">Hasta:</label>
-                    <Input
-                      type="date"
-                      value={fechaHasta}
-                      onChange={(e) => onFechaHastaChange(e.target.value)}
-                      className="h-7 text-xs"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="border-t border-border/50" />
-
-              {/* Filtro por interacciones */}
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-foreground">Interacciones:</p>
-                <div className="space-y-1.5">
-                  <div className="space-y-0.5">
-                    <label className="text-[10px] text-muted-foreground">Mínimo:</label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={minInteracciones}
-                      onChange={(e) => onMinInteraccionesChange(e.target.value)}
-                      className="h-7 text-xs"
-                      min="0"
-                    />
-                  </div>
-                  <div className="space-y-0.5">
-                    <label className="text-[10px] text-muted-foreground">Máximo:</label>
-                    <Input
-                      type="number"
-                      placeholder="Sin límite"
-                      value={maxInteracciones}
-                      onChange={(e) => onMaxInteraccionesChange(e.target.value)}
-                      className="h-7 text-xs"
-                      min="0"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Active filters indicator */}
-              {(selectedTopic || fechaDesde || fechaHasta || minInteracciones || maxInteracciones) && (
-                <div className="pt-2 border-t border-border/50">
-                  <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-1 inline-block">
-                    {[selectedTopic, fechaDesde, fechaHasta, minInteracciones, maxInteracciones].filter(Boolean).length} filtros activos
-                  </span>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
@@ -414,9 +439,9 @@ function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect, fec
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium text-foreground">
               Tweets recientes
-              {selectedTopic && (
+              {selectedTopics.length > 0 && (
                 <span className="ml-2 text-xs font-normal text-muted-foreground">
-                  ({filteredTweets.length} sobre &ldquo;{selectedTopic}&rdquo;)
+                  ({filteredTweets.length} sobre "{selectedTopics.join(", ")}")
                 </span>
               )}
             </h4>
@@ -436,10 +461,16 @@ function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect, fec
                       {tweet.topics.map(topic => (
                         <button
                           key={topic}
-                          onClick={() => onTopicSelect(selectedTopic === topic ? null : topic)}
+                          onClick={() => {
+                            if (selectedTopics.includes(topic)) {
+                              onTopicsChange(selectedTopics.filter(t => t !== topic))
+                            } else {
+                              onTopicsChange([...selectedTopics, topic])
+                            }
+                          }}
                           className={cn(
                             "px-2 py-0.5 rounded text-[10px] font-medium transition-colors capitalize",
-                            selectedTopic === topic
+                            selectedTopics.includes(topic)
                               ? "bg-primary/20 text-primary"
                               : "bg-muted text-muted-foreground hover:bg-muted/80"
                           )}
@@ -550,7 +581,7 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
   const [selectedTipoAutor, setSelectedTipoAutor] = useState<string[]>([])
   const [fechaDesde, setFechaDesde] = useState('')
   const [fechaHasta, setFechaHasta] = useState('')
-  const [selectedTweetTopic, setSelectedTweetTopic] = useState<string | null>(null)
+  const [selectedTweetTopics, setSelectedTweetTopics] = useState<string[]>([])
   const [fechaDesdeTwitter, setFechaDesdeTwitter] = useState('')
   const [fechaHastaTwitter, setFechaHastaTwitter] = useState('')
   const [minInteracciones, setMinInteracciones] = useState('')
@@ -1171,8 +1202,8 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
       {/* Actividad en X (Twitter) con Word Cloud y filtros */}
       <TwitterActivitySection
         congresista={congresista}
-        selectedTopic={selectedTweetTopic}
-        onTopicSelect={setSelectedTweetTopic}
+        selectedTopics={selectedTweetTopics}
+        onTopicsChange={setSelectedTweetTopics}
         fechaDesde={fechaDesdeTwitter}
         onFechaDesdeChange={setFechaDesdeTwitter}
         fechaHasta={fechaHastaTwitter}
