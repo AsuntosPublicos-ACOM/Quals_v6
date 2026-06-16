@@ -394,7 +394,7 @@ export function CongressList({ onBack, favoriteCongresistas = [], onToggleFavori
                       <SortableHead column="nombre" sort={sort} onSort={toggleSort} className="w-[200px]">Nombre</SortableHead>
                       <SortableHead column="partido" sort={sort} onSort={toggleSort} className="w-[150px]">Bancada</SortableHead>
                       <SortableHead column="region" sort={sort} onSort={toggleSort} className="w-[120px]">Región</SortableHead>
-                      <TableHead className="w-[200px]">Top 3 sectores</TableHead>
+                      <TableHead className="w-[200px]">Intereses detectados</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -452,14 +452,15 @@ export function CongressList({ onBack, favoriteCongresistas = [], onToggleFavori
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
-                              {congresista.topComisiones?.slice(0, 3).map((comision) => {
-                                const sectorName = sectores.find(s => s.id === comision.sectorId)?.name
-                                return (
-                                  <Badge key={comision.sectorId} variant="secondary" className="text-[9px]">
-                                    {sectorName}
+                              {congresista.interesesPrincipales && congresista.interesesPrincipales.length > 0 ? (
+                                congresista.interesesPrincipales.map((interes, idx) => (
+                                  <Badge key={idx} variant="outline" className="text-[9px]">
+                                    {interes}
                                   </Badge>
-                                )
-                              }) || <span className="text-xs text-muted-foreground">—</span>}
+                                ))
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>

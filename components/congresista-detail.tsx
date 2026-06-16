@@ -643,16 +643,27 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
       <div className="flex flex-col lg:flex-row lg:items-start gap-6">
         {/* Name / meta */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-3">
-            <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8 shrink-0">
+          <div className="flex items-start gap-3 mb-3 flex-wrap">
+            <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8 shrink-0 mt-0.5">
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-bold text-foreground leading-tight">{congresista.nombre}</h1>
+            <div className="flex-1 flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold text-foreground leading-tight">{congresista.nombre}</h1>
+              {congresista.interesesPrincipales && congresista.interesesPrincipales.length > 0 && (
+                <div className="flex gap-1 flex-wrap">
+                  {congresista.interesesPrincipales.map((interes, idx) => (
+                    <Badge key={idx} variant="outline" className="text-[10px]">
+                      {interes}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setExportModalOpen(true)}
-              className="ml-2 gap-1.5 text-xs h-7 px-2.5 shrink-0"
+              className="gap-1.5 text-xs h-7 px-2.5 shrink-0"
             >
               <FileText className="h-3.5 w-3.5" />
               Exportar Word
