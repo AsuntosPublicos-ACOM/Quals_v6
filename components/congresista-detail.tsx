@@ -208,19 +208,41 @@ interface TwitterActivitySectionProps {
   congresista: Congresista
   selectedTopic: string | null
   onTopicSelect: (topic: string | null) => void
+  fechaDesde: string
+  onFechaDesdeChange: (fecha: string) => void
+  fechaHasta: string
+  onFechaHastaChange: (fecha: string) => void
+  filtersOpen: boolean
+  onFiltersToggle: (open: boolean) => void
 }
 
-function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect }: TwitterActivitySectionProps) {
+function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect, fechaDesde, onFechaDesdeChange, fechaHasta, onFechaHastaChange, filtersOpen, onFiltersToggle }: TwitterActivitySectionProps) {
   const wordCloudData = useMemo(() => extractWordFrequencies(mockTweets), [])
   const allTopics = useMemo(() => getUniqueTweets(mockTweets), [])
   
   const filteredTweets = useMemo(() => {
-    if (!selectedTopic) return mockTweets
-    return mockTweets.filter(tweet => 
-      tweet.topics.some(t => t.toLowerCase() === selectedTopic.toLowerCase()) ||
-      tweet.texto.toLowerCase().includes(selectedTopic.toLowerCase())
-    )
-  }, [selectedTopic])
+    let tweets = mockTweets
+    
+    // Filter by topic
+    if (selectedTopic) {
+      tweets = tweets.filter(tweet => 
+        tweet.topics.some(t => t.toLowerCase() === selectedTopic.toLowerCase()) ||
+        tweet.texto.toLowerCase().includes(selectedTopic.toLowerCase())
+      )
+    }
+    
+    // Filter by date
+    if (fechaDesde || fechaHasta) {
+      tweets = tweets.filter(tweet => {
+        const tweetDate = new Date(tweet.fecha)
+        if (fechaDesde && tweetDate < new Date(fechaDesde)) return false
+        if (fechaHasta && tweetDate > new Date(fechaHasta + 'T23:59:59')) return false
+        return true
+      })
+    }
+    
+    return tweets
+  }, [selectedTopic, fechaDesde, fechaHasta])
 
   const handleWordClick = (word: string) => {
     if (selectedTopic === word) {
@@ -263,39 +285,91 @@ function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect }: T
           </div>
         </div>
 
-        {/* Topic Filter Pills */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground">Filtrar por tema:</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => onTopicSelect(null)}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
-                !selectedTopic
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+        {/* Filtros - Colapsables */}
+        <div className="border border-border rounded-lg">
+          <button
+            onClick={() => onFiltersToggle(!filtersOpen)}
+            className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Filtros</span>
+              {(selectedTopic || fechaDesde || fechaHasta) && (
+                <span className="text-xs bg-primary text-primary-foreground rounded-full px-2 py-0.5">
+                  {[selectedTopic, fechaDesde, fechaHasta].filter(Boolean).length} activos
+                </span>
               )}
+            </div>
+            <svg
+              className={`h-4 w-4 text-muted-foreground transition-transform ${filtersOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              Todos
-            </button>
-            {allTopics.map(topic => (
-              <button
-                key={topic}
-                onClick={() => onTopicSelect(selectedTopic === topic ? null : topic)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-medium transition-colors capitalize",
-                  selectedTopic === topic
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                )}
-              >
-                {topic}
-              </button>
-            ))}
-          </div>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </button>
+
+          {filtersOpen && (
+            <div className="border-t border-border p-3 space-y-4">
+              {/* Filtro por tema */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-foreground">Tema:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    onClick={() => onTopicSelect(null)}
+                    className={cn(
+                      "px-2 py-1 rounded text-xs font-medium transition-colors",
+                      !selectedTopic
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    Todos
+                  </button>
+                  {allTopics.map(topic => (
+                    <button
+                      key={topic}
+                      onClick={() => onTopicSelect(selectedTopic === topic ? null : topic)}
+                      className={cn(
+                        "px-2 py-1 rounded text-xs font-medium transition-colors capitalize",
+                        selectedTopic === topic
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      )}
+                    >
+                      {topic}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filtro por fecha */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-foreground">Rango de fechas:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-muted-foreground">Desde:</label>
+                    <Input
+                      type="date"
+                      value={fechaDesde}
+                      onChange={(e) => onFechaDesdeChange(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-muted-foreground">Hasta:</label>
+                    <Input
+                      type="date"
+                      value={fechaHasta}
+                      onChange={(e) => onFechaHastaChange(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tweets List */}
@@ -440,6 +514,9 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
   const [fechaDesde, setFechaDesde] = useState('')
   const [fechaHasta, setFechaHasta] = useState('')
   const [selectedTweetTopic, setSelectedTweetTopic] = useState<string | null>(null)
+  const [fechaDesdeTwitter, setFechaDesdeTwitter] = useState('')
+  const [fechaHastaTwitter, setFechaHastaTwitter] = useState('')
+  const [twitterFiltersOpen, setTwitterFiltersOpen] = useState(false)
   // Mock specific data for María Elena Torres (ID: '1')
   const isMariaTorres = congresista.id === '1' || congresista.nombre === 'Maria Elena Torres'
   
@@ -1057,6 +1134,12 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
         congresista={congresista}
         selectedTopic={selectedTweetTopic}
         onTopicSelect={setSelectedTweetTopic}
+        fechaDesde={fechaDesdeTwitter}
+        onFechaDesdeChange={setFechaDesdeTwitter}
+        fechaHasta={fechaHastaTwitter}
+        onFechaHastaChange={setFechaHastaTwitter}
+        filtersOpen={twitterFiltersOpen}
+        onFiltersToggle={setTwitterFiltersOpen}
       />
     </div>
 
