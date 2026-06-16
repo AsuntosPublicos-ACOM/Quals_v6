@@ -212,11 +212,15 @@ interface TwitterActivitySectionProps {
   onFechaDesdeChange: (fecha: string) => void
   fechaHasta: string
   onFechaHastaChange: (fecha: string) => void
+  minInteracciones: string
+  onMinInteraccionesChange: (value: string) => void
+  maxInteracciones: string
+  onMaxInteraccionesChange: (value: string) => void
   filtersOpen: boolean
   onFiltersToggle: (open: boolean) => void
 }
 
-function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect, fechaDesde, onFechaDesdeChange, fechaHasta, onFechaHastaChange, filtersOpen, onFiltersToggle }: TwitterActivitySectionProps) {
+function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect, fechaDesde, onFechaDesdeChange, fechaHasta, onFechaHastaChange, minInteracciones, onMinInteraccionesChange, maxInteracciones, onMaxInteraccionesChange, filtersOpen, onFiltersToggle }: TwitterActivitySectionProps) {
   const wordCloudData = useMemo(() => extractWordFrequencies(mockTweets), [])
   const allTopics = useMemo(() => getUniqueTweets(mockTweets), [])
   
@@ -241,8 +245,18 @@ function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect, fec
       })
     }
     
+    // Filter by interactions
+    if (minInteracciones || maxInteracciones) {
+      tweets = tweets.filter(tweet => {
+        const totalInteracciones = tweet.respuestas + tweet.retweets + tweet.likes
+        if (minInteracciones && totalInteracciones < parseInt(minInteracciones)) return false
+        if (maxInteracciones && totalInteracciones > parseInt(maxInteracciones)) return false
+        return true
+      })
+    }
+    
     return tweets
-  }, [selectedTopic, fechaDesde, fechaHasta])
+  }, [selectedTopic, fechaDesde, fechaHasta, minInteracciones, maxInteracciones])
 
   const handleWordClick = (word: string) => {
     if (selectedTopic === word) {
@@ -269,60 +283,39 @@ function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect, fec
           <ExternalLink className="h-3 w-3" />
         </a>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Word Cloud Section */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-foreground">Nube de palabras</h4>
-            <p className="text-xs text-muted-foreground">Haz clic en una palabra para filtrar</p>
-          </div>
-          <div className="bg-muted/30 rounded-lg p-4 border border-border">
-            <WordCloud 
-              words={wordCloudData} 
-              onWordClick={handleWordClick}
-              selectedWord={selectedTopic}
-            />
-          </div>
-        </div>
-
-        {/* Filtros - Colapsables */}
-        <div className="border border-border rounded-lg">
-          <button
-            onClick={() => onFiltersToggle(!filtersOpen)}
-            className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Filtros</span>
-              {(selectedTopic || fechaDesde || fechaHasta) && (
-                <span className="text-xs bg-primary text-primary-foreground rounded-full px-2 py-0.5">
-                  {[selectedTopic, fechaDesde, fechaHasta].filter(Boolean).length} activos
-                </span>
-              )}
+      <CardContent className="space-y-4">
+        {/* Two Column Layout: Word Cloud + Filters */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Word Cloud - Left Column (2/3 width) */}
+          <div className="lg:col-span-2 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium text-foreground">Nube de palabras</h4>
+              <p className="text-xs text-muted-foreground">Haz clic en una palabra para filtrar</p>
             </div>
-            <svg
-              className={`h-4 w-4 text-muted-foreground transition-transform ${filtersOpen ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </button>
+            <div className="bg-muted/30 rounded-lg p-6 border border-border h-80">
+              <WordCloud 
+                words={wordCloudData} 
+                onWordClick={handleWordClick}
+                selectedWord={selectedTopic}
+              />
+            </div>
+          </div>
 
-          {filtersOpen && (
-            <div className="border-t border-border p-3 space-y-4">
+          {/* Filters - Right Column (1/3 width) */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-foreground">Filtros</h4>
+            <div className="space-y-4 bg-muted/20 rounded-lg p-4 border border-border">
               {/* Filtro por tema */}
               <div className="space-y-2">
-                <p className="text-xs font-medium text-foreground">Tema:</p>
-                <div className="flex flex-wrap gap-1.5">
+                <p className="text-xs font-semibold text-foreground">Tema:</p>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
                   <button
                     onClick={() => onTopicSelect(null)}
                     className={cn(
-                      "px-2 py-1 rounded text-xs font-medium transition-colors",
+                      "w-full text-left px-2 py-1.5 rounded text-xs font-medium transition-colors",
                       !selectedTopic
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        : "bg-background text-muted-foreground hover:bg-muted"
                     )}
                   >
                     Todos
@@ -332,10 +325,10 @@ function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect, fec
                       key={topic}
                       onClick={() => onTopicSelect(selectedTopic === topic ? null : topic)}
                       className={cn(
-                        "px-2 py-1 rounded text-xs font-medium transition-colors capitalize",
+                        "w-full text-left px-2 py-1.5 rounded text-xs font-medium transition-colors capitalize",
                         selectedTopic === topic
                           ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          : "bg-background text-muted-foreground hover:bg-muted"
                       )}
                     >
                       {topic}
@@ -344,36 +337,80 @@ function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect, fec
                 </div>
               </div>
 
+              {/* Divider */}
+              <div className="border-t border-border/50" />
+
               {/* Filtro por fecha */}
               <div className="space-y-2">
-                <p className="text-xs font-medium text-foreground">Rango de fechas:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
+                <p className="text-xs font-semibold text-foreground">Período:</p>
+                <div className="space-y-1.5">
+                  <div className="space-y-0.5">
                     <label className="text-[10px] text-muted-foreground">Desde:</label>
                     <Input
                       type="date"
                       value={fechaDesde}
                       onChange={(e) => onFechaDesdeChange(e.target.value)}
-                      className="h-8 text-xs"
+                      className="h-7 text-xs"
                     />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <label className="text-[10px] text-muted-foreground">Hasta:</label>
                     <Input
                       type="date"
                       value={fechaHasta}
                       onChange={(e) => onFechaHastaChange(e.target.value)}
-                      className="h-8 text-xs"
+                      className="h-7 text-xs"
                     />
                   </div>
                 </div>
               </div>
+
+              {/* Divider */}
+              <div className="border-t border-border/50" />
+
+              {/* Filtro por interacciones */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-foreground">Interacciones:</p>
+                <div className="space-y-1.5">
+                  <div className="space-y-0.5">
+                    <label className="text-[10px] text-muted-foreground">Mínimo:</label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={minInteracciones}
+                      onChange={(e) => onMinInteraccionesChange(e.target.value)}
+                      className="h-7 text-xs"
+                      min="0"
+                    />
+                  </div>
+                  <div className="space-y-0.5">
+                    <label className="text-[10px] text-muted-foreground">Máximo:</label>
+                    <Input
+                      type="number"
+                      placeholder="Sin límite"
+                      value={maxInteracciones}
+                      onChange={(e) => onMaxInteraccionesChange(e.target.value)}
+                      className="h-7 text-xs"
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Active filters indicator */}
+              {(selectedTopic || fechaDesde || fechaHasta || minInteracciones || maxInteracciones) && (
+                <div className="pt-2 border-t border-border/50">
+                  <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-1 inline-block">
+                    {[selectedTopic, fechaDesde, fechaHasta, minInteracciones, maxInteracciones].filter(Boolean).length} filtros activos
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Tweets List */}
-        <div className="space-y-2">
+        {/* Tweets List - Full Width */}
+        <div className="space-y-2 pt-2">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium text-foreground">
               Tweets recientes
@@ -516,6 +553,8 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
   const [selectedTweetTopic, setSelectedTweetTopic] = useState<string | null>(null)
   const [fechaDesdeTwitter, setFechaDesdeTwitter] = useState('')
   const [fechaHastaTwitter, setFechaHastaTwitter] = useState('')
+  const [minInteracciones, setMinInteracciones] = useState('')
+  const [maxInteracciones, setMaxInteracciones] = useState('')
   const [twitterFiltersOpen, setTwitterFiltersOpen] = useState(false)
   // Mock specific data for María Elena Torres (ID: '1')
   const isMariaTorres = congresista.id === '1' || congresista.nombre === 'Maria Elena Torres'
@@ -1138,6 +1177,10 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
         onFechaDesdeChange={setFechaDesdeTwitter}
         fechaHasta={fechaHastaTwitter}
         onFechaHastaChange={setFechaHastaTwitter}
+        minInteracciones={minInteracciones}
+        onMinInteraccionesChange={setMinInteracciones}
+        maxInteracciones={maxInteracciones}
+        onMaxInteraccionesChange={setMaxInteracciones}
         filtersOpen={twitterFiltersOpen}
         onFiltersToggle={setTwitterFiltersOpen}
       />
