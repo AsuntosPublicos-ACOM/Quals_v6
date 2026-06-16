@@ -704,6 +704,11 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
         )}
       </div>
 
+      {/* Perfil Cualitativo */}
+      {congresista.perfilCualitativo && (
+        <PerfilCualitativoCard texto={congresista.perfilCualitativo} />
+      )}
+
       {/* Parties and Positions History */}
       <div className={`grid gap-6 ${congresista.tipo === 'diputado' ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
         {/* Party History */}
@@ -753,11 +758,6 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
         </Card>
         )}
       </div>
-
-      {/* Perfil Cualitativo */}
-      {congresista.perfilCualitativo && (
-        <PerfilCualitativoCard texto={congresista.perfilCualitativo} />
-      )}
 
       {/* Charts - solo para diputados */}
       {congresista.tipo === 'diputado' && (
