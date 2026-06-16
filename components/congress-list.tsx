@@ -49,14 +49,13 @@ export function CongressList({ onBack, favoriteCongresistas = [], onToggleFavori
   const [selectedComisiones, setSelectedComisiones] = useState<string[]>([])
   const [selectedSectores, setSelectedSectores] = useState<string[]>([])
   const [selectedCongresista, setSelectedCongresista] = useState<Congresista | null>(null)
-  const [legisladorTab, setLegisladorTab] = useState<TipoLegislador>('diputado')
-  const [mainTab, setMainTab] = useState<'legisladores' | 'analisis'>('legisladores')
+  const [activeTab, setActiveTab] = useState<TipoLegislador | 'analisis'>('diputado')
 
   // Limpiar filtros de comisiones y sectores al cambiar de pestaña
   useEffect(() => {
     setSelectedComisiones([])
     setSelectedSectores([])
-  }, [legisladorTab])
+  }, [activeTab])
 
   const partidos = useMemo(() => 
     Array.from(new Set(congresistas.map(c => c.partido))).sort(),
@@ -79,8 +78,11 @@ export function CongressList({ onBack, favoriteCongresistas = [], onToggleFavori
   )
 
   const filteredCongresistas = useMemo<Congresista[]>(() => {
+    // Solo filtrar por tipo si activeTab es 'diputado' o 'senador'
+    const matchesTipo = activeTab === 'analisis' || congresistas.filter(c => c.tipo === activeTab)
+    
     return congresistas.filter(c => {
-      const matchesTipo = c.tipo === legisladorTab
+      const isTipoCorrect = activeTab === 'analisis' || c.tipo === activeTab
       const matchesSearch = c.nombre.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesPartido = selectedPartidos.length === 0 || selectedPartidos.includes(c.partido)
       const matchesRegion = selectedRegiones.length === 0 || selectedRegiones.includes(c.region)
@@ -88,9 +90,9 @@ export function CongressList({ onBack, favoriteCongresistas = [], onToggleFavori
         c.topComisiones?.some(com => com.comisiones.some(co => selectedComisiones.includes(co)))
       const matchesSector = selectedSectores.length === 0 ||
         c.topComisiones?.some(com => selectedSectores.includes(com.sectorId))
-      return matchesTipo && matchesSearch && matchesPartido && matchesRegion && matchesComisión && matchesSector
+      return isTipoCorrect && matchesSearch && matchesPartido && matchesRegion && matchesComisión && matchesSector
     })
-  }, [searchQuery, selectedPartidos, selectedRegiones, selectedComisiones, selectedSectores, legisladorTab])
+  }, [searchQuery, selectedPartidos, selectedRegiones, selectedComisiones, selectedSectores, activeTab])
 
   const { sort, toggleSort, sortedData: sortedCongresistas } = useSortableTable(filteredCongresistas)
 
@@ -122,12 +124,16 @@ export function CongressList({ onBack, favoriteCongresistas = [], onToggleFavori
         <h1 className="text-3xl font-bold text-foreground">Legisladores</h1>
       </div>
 
-      {/* Tabs principales: Legisladores vs Análisis de Tuits */}
-      <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'legisladores' | 'analisis')} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="legisladores" className="flex items-center gap-2">
+      {/* Tabs principales: Diputados, Senadores, Análisis de Tuits */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TipoLegislador | 'analisis')} className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsTrigger value="diputado" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Legisladores
+            Diputados
+          </TabsTrigger>
+          <TabsTrigger value="senador" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Senadores
           </TabsTrigger>
           <TabsTrigger value="analisis" className="flex items-center gap-2">
             <Building2 className="h-4 w-4" />
@@ -135,65 +141,49 @@ export function CongressList({ onBack, favoriteCongresistas = [], onToggleFavori
           </TabsTrigger>
         </TabsList>
 
-        {/* Contenido de Legisladores */}
-        <TabsContent value="legisladores" className="space-y-4">
-          {/* Tabs secundarias para Diputados y Senadores */}
-          <Tabs value={legisladorTab} onValueChange={(v) => setLegisladorTab(v as TipoLegislador)} className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="diputado" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Diputados
-              </TabsTrigger>
-              <TabsTrigger value="senador" className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                Senadores
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-
+        {/* Contenido de Diputados y Senadores */}
+        <TabsContent value="diputado" className="space-y-4">
           <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Búsqueda y filtros</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-2 border border-input rounded-md px-3 py-2 text-sm bg-background">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <input
-              placeholder="Buscar por nombre..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="text-muted-foreground hover:text-foreground">
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+            <CardHeader>
+              <CardTitle className="text-lg">Búsqueda y filtros</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2 border border-input rounded-md px-3 py-2 text-sm bg-background">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <input
+                  placeholder="Buscar por nombre..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="text-muted-foreground hover:text-foreground">
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
 
-          <div className={`grid gap-3 grid-cols-1 sm:grid-cols-2 ${legisladorTab === 'diputado' ? 'lg:grid-cols-4' : 'lg:grid-cols-2'}`}>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Bancada</label>
-              <MultiSelect
-                options={partidos.map(p => ({ value: p, label: p }))}
-                selected={selectedPartidos}
-                onChange={setSelectedPartidos}
-                placeholder="Todas las bancadas"
-              />
-            </div>
+              <div className={`grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`}>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Bancada</label>
+                  <MultiSelect
+                    options={partidos.map(p => ({ value: p, label: p }))}
+                    selected={selectedPartidos}
+                    onChange={setSelectedPartidos}
+                    placeholder="Todas las bancadas"
+                  />
+                </div>
 
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Región</label>
-              <MultiSelect
-                options={regions.map(r => ({ value: r, label: r }))}
-                selected={selectedRegiones}
-                onChange={setSelectedRegiones}
-                placeholder="Todas las regiones"
-              />
-            </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Región</label>
+                  <MultiSelect
+                    options={regions.map(r => ({ value: r, label: r }))}
+                    selected={selectedRegiones}
+                    onChange={setSelectedRegiones}
+                    placeholder="Todas las regiones"
+                  />
+                </div>
 
-            {legisladorTab === 'diputado' && (
-              <>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">Comisión</label>
                   <MultiSelect
@@ -213,91 +203,81 @@ export function CongressList({ onBack, favoriteCongresistas = [], onToggleFavori
                     placeholder="Todos los sectores"
                   />
                 </div>
-              </>
-            )}
-          </div>
+              </div>
 
-          {hasActiveFilters && (
-            <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={clearFilters}>
-                <X className="h-3 w-3 mr-1" />
-                Limpiar filtros
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              {hasActiveFilters && (
+                <div className="flex justify-end">
+                  <Button variant="outline" size="sm" onClick={clearFilters}>
+                    <X className="h-3 w-3 mr-1" />
+                    Limpiar filtros
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            {legisladorTab === 'diputado' ? 'Diputados' : 'Senadores'} ({filteredCongresistas.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="w-[36px]" />
-                    <TableHead className="w-[50px]" />
-                    <SortableHead column="nombre" sort={sort} onSort={toggleSort} className="w-[200px]">Nombre</SortableHead>
-                    <SortableHead column="partido" sort={sort} onSort={toggleSort} className="w-[150px]">Bancada</SortableHead>
-                    <SortableHead column="region" sort={sort} onSort={toggleSort} className="w-[120px]">Región</SortableHead>
-                    {legisladorTab === 'diputado' && (
-                      <>
-                        <TableHead className="w-[200px]">Comisiones actuales</TableHead>
-                        <SortableHead column="proyectosCount" sort={sort} onSort={toggleSort} className="w-[100px] text-center">PL presentados</SortableHead>
-                        <SortableHead column="leyesAprobadas" sort={sort} onSort={toggleSort} className="w-[100px] text-center">N° leyes aprobadas</SortableHead>
-                      </>
-                    )}
-                    <TableHead className="w-[200px]">Top 3 sectores</TableHead>
-                  </TableRow>
-                </TableHeader>
-              <TableBody>
-                {sortedCongresistas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={legisladorTab === 'diputado' ? 9 : 6} className="h-24 text-center text-muted-foreground">
-                      No se encontraron congresistas
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  sortedCongresistas.map((congresista) => (
-                    <TableRow key={congresista.id} className="hover:bg-muted/50">
-                      <TableCell className="pr-0">
-                        <button
-                          onClick={() => onToggleFavoriteCongresista?.(congresista.id)}
-                          className="p-1 rounded hover:bg-muted transition-colors"
-                          title={favoriteCongresistas.includes(congresista.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-                        >
-                          <Star className={`h-3.5 w-3.5 ${favoriteCongresistas.includes(congresista.id) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`} />
-                        </button>
-                      </TableCell>
-                      <TableCell>
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-primary/10 text-xs">
-                            {congresista.nombre.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell>
-                        <button
-                          onClick={() => setSelectedCongresista(congresista)}
-                          className="font-medium text-primary hover:underline cursor-pointer"
-                        >
-                          {congresista.nombre}
-                        </button>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={`text-[10px] ${getPartyColor(congresista.partido)}`}>
-                          {congresista.partido}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {congresista.region}
-                      </TableCell>
-                      {legisladorTab === 'diputado' && (
-                        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Diputados ({filteredCongresistas.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="w-[36px]" />
+                      <TableHead className="w-[50px]" />
+                      <SortableHead column="nombre" sort={sort} onSort={toggleSort} className="w-[200px]">Nombre</SortableHead>
+                      <SortableHead column="partido" sort={sort} onSort={toggleSort} className="w-[150px]">Bancada</SortableHead>
+                      <SortableHead column="region" sort={sort} onSort={toggleSort} className="w-[120px]">Región</SortableHead>
+                      <TableHead className="w-[200px]">Comisiones actuales</TableHead>
+                      <SortableHead column="proyectosCount" sort={sort} onSort={toggleSort} className="w-[100px] text-center">PL presentados</SortableHead>
+                      <SortableHead column="leyesAprobadas" sort={sort} onSort={toggleSort} className="w-[100px] text-center">N° leyes aprobadas</SortableHead>
+                      <TableHead className="w-[200px]">Top 3 sectores</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedCongresistas.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                          No se encontraron diputados
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      sortedCongresistas.map((congresista) => (
+                        <TableRow key={congresista.id} className="hover:bg-muted/50">
+                          <TableCell className="pr-0">
+                            <button
+                              onClick={() => onToggleFavoriteCongresista?.(congresista.id)}
+                              className="p-1 rounded hover:bg-muted transition-colors"
+                              title={favoriteCongresistas.includes(congresista.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                            >
+                              <Star className={`h-3.5 w-3.5 ${favoriteCongresistas.includes(congresista.id) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`} />
+                            </button>
+                          </TableCell>
+                          <TableCell>
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-primary/10 text-xs">
+                                {congresista.nombre.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TableCell>
+                          <TableCell>
+                            <button
+                              onClick={() => setSelectedCongresista(congresista)}
+                              className="font-medium text-primary hover:underline cursor-pointer"
+                            >
+                              {congresista.nombre}
+                            </button>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={`text-[10px] ${getPartyColor(congresista.partido)}`}>
+                              {congresista.partido}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {congresista.region}
+                          </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
                               {congresista.topComisiones?.flatMap(c => c.comisiones).slice(0, 3).map((comision, idx) => (
@@ -323,28 +303,162 @@ export function CongressList({ onBack, favoriteCongresistas = [], onToggleFavori
                               {congresista.leyesAprobadas ?? 0}
                             </button>
                           </TableCell>
-                        </>
-                      )}
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {congresista.topComisiones?.slice(0, 3).map((comision) => {
-                            const sectorName = sectores.find(s => s.id === comision.sectorId)?.name
-                            return (
-                              <Badge key={comision.sectorId} variant="secondary" className="text-[9px]">
-                                {sectorName}
-                              </Badge>
-                            )
-                          }) || <span className="text-xs text-muted-foreground">—</span>}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {congresista.topComisiones?.slice(0, 3).map((comision) => {
+                                const sectorName = sectores.find(s => s.id === comision.sectorId)?.name
+                                return (
+                                  <Badge key={comision.sectorId} variant="secondary" className="text-[9px]">
+                                    {sectorName}
+                                  </Badge>
+                                )
+                              }) || <span className="text-xs text-muted-foreground">—</span>}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Contenido de Senadores */}
+        <TabsContent value="senador" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Búsqueda y filtros</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2 border border-input rounded-md px-3 py-2 text-sm bg-background">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <input
+                  placeholder="Buscar por nombre..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="text-muted-foreground hover:text-foreground">
+                    <X className="h-4 w-4" />
+                  </button>
                 )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+
+              <div className={`grid gap-3 grid-cols-1 sm:grid-cols-2`}>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Bancada</label>
+                  <MultiSelect
+                    options={partidos.map(p => ({ value: p, label: p }))}
+                    selected={selectedPartidos}
+                    onChange={setSelectedPartidos}
+                    placeholder="Todas las bancadas"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Región</label>
+                  <MultiSelect
+                    options={regions.map(r => ({ value: r, label: r }))}
+                    selected={selectedRegiones}
+                    onChange={setSelectedRegiones}
+                    placeholder="Todas las regiones"
+                  />
+                </div>
+              </div>
+
+              {hasActiveFilters && (
+                <div className="flex justify-end">
+                  <Button variant="outline" size="sm" onClick={clearFilters}>
+                    <X className="h-3 w-3 mr-1" />
+                    Limpiar filtros
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Senadores ({filteredCongresistas.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="w-[36px]" />
+                      <TableHead className="w-[50px]" />
+                      <SortableHead column="nombre" sort={sort} onSort={toggleSort} className="w-[200px]">Nombre</SortableHead>
+                      <SortableHead column="partido" sort={sort} onSort={toggleSort} className="w-[150px]">Bancada</SortableHead>
+                      <SortableHead column="region" sort={sort} onSort={toggleSort} className="w-[120px]">Región</SortableHead>
+                      <TableHead className="w-[200px]">Top 3 sectores</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedCongresistas.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                          No se encontraron senadores
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      sortedCongresistas.map((congresista) => (
+                        <TableRow key={congresista.id} className="hover:bg-muted/50">
+                          <TableCell className="pr-0">
+                            <button
+                              onClick={() => onToggleFavoriteCongresista?.(congresista.id)}
+                              className="p-1 rounded hover:bg-muted transition-colors"
+                              title={favoriteCongresistas.includes(congresista.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                            >
+                              <Star className={`h-3.5 w-3.5 ${favoriteCongresistas.includes(congresista.id) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`} />
+                            </button>
+                          </TableCell>
+                          <TableCell>
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-primary/10 text-xs">
+                                {congresista.nombre.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TableCell>
+                          <TableCell>
+                            <button
+                              onClick={() => setSelectedCongresista(congresista)}
+                              className="font-medium text-primary hover:underline cursor-pointer"
+                            >
+                              {congresista.nombre}
+                            </button>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={`text-[10px] ${getPartyColor(congresista.partido)}`}>
+                              {congresista.partido}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {congresista.region}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {congresista.topComisiones?.slice(0, 3).map((comision) => {
+                                const sectorName = sectores.find(s => s.id === comision.sectorId)?.name
+                                return (
+                                  <Badge key={comision.sectorId} variant="secondary" className="text-[9px]">
+                                    {sectorName}
+                                  </Badge>
+                                )
+                              }) || <span className="text-xs text-muted-foreground">—</span>}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Contenido de Análisis de Tuits */}
