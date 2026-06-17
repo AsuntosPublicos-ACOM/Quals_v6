@@ -2,12 +2,15 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { Loader2 } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { Congresista, Sector, TweetFilters } from '@/lib/types'
 import { fetchMultipleCongresistaTweets } from '@/lib/twitter-service'
 import { filterTweetsByFilters, generateWordFrequencies } from '@/lib/tweet-utils'
 import { TweetFiltersPanel } from './tweet-filters'
 import { TweetWordCloud } from './tweet-word-cloud'
 import { TweetList } from './tweet-list'
+import { TweetsLegislativeChart } from './tweets-legislative-chart'
+import { PostingFrequencyHeatmap } from './posting-frequency-heatmap'
 
 interface TweetAnalysisProps {
   congresistas: Congresista[]
@@ -17,6 +20,7 @@ interface TweetAnalysisProps {
 export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
   const [tweets, setTweets] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('actividad-x')
   const [filters, setFilters] = useState<TweetFilters>({
     fechaDesde: undefined,
     fechaHasta: undefined,
@@ -72,6 +76,12 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
     return congresistas.map(c => ({ id: c.id, nombre: c.nombre })).sort((a, b) => a.nombre.localeCompare(b.nombre))
   }, [congresistas])
 
+  // Obtener autores de los tweets filtrados
+  const authorCount = useMemo(() => {
+    const authors = new Set(filteredTweets.map(t => t.autor?.id || t.autorId))
+    return authors.size
+  }, [filteredTweets])
+
   const handleWordClick = (word: string) => {
     setSelectedWord(selectedWord === word ? undefined : word)
   }
@@ -86,49 +96,60 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Resumen de datos - Tarjetas mejoradas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="rounded-xl border border-blue-200 dark:border-blue-800/50 p-4 bg-gradient-to-br from-blue-50 to-blue-50/50 dark:from-blue-900/20 dark:to-blue-900/10 hover:border-blue-300 dark:hover:border-blue-700 transition-all">
-          <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Total</p>
-          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{tweets.length}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">tweets disponibles</p>
-        </div>
-        <div className="rounded-xl border border-cyan-200 dark:border-cyan-800/50 p-4 bg-gradient-to-br from-cyan-50 to-cyan-50/50 dark:from-cyan-900/20 dark:to-cyan-900/10 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all">
-          <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Filtrados</p>
-          <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400 mt-1">{filteredTweets.length}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">en resultados</p>
-        </div>
-        <div className="rounded-xl border border-purple-200 dark:border-purple-800/50 p-4 bg-gradient-to-br from-purple-50 to-purple-50/50 dark:from-purple-900/20 dark:to-purple-900/10 hover:border-purple-300 dark:hover:border-purple-700 transition-all">
-          <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Palabras</p>
-          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{wordFrequencies.length}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">únicas detectadas</p>
-        </div>
-        <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/50 p-4 bg-gradient-to-br from-emerald-50 to-emerald-50/50 dark:from-emerald-900/20 dark:to-emerald-900/10 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all">
-          <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Autores</p>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{congresistas.length}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">legisladores</p>
-        </div>
-      </div>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="actividad-x">Actividad en X</TabsTrigger>
+        <TabsTrigger value="produccion-legislativa">Producción legislativa/redes</TabsTrigger>
+      </TabsList>
 
-      {/* Grid principal: Filtros + Nube + Tweets */}
-      <div className="grid grid-cols-12 gap-4">
-        {/* Filtros */}
-        <TweetFiltersPanel
-          filters={filters}
-          onFiltersChange={setFilters}
-          partidos={partidos}
-          legisladores={legisladores}
-          sectores={sectores}
-        />
+      {/* TAB 1: ACTIVIDAD EN X */}
+      <TabsContent value="actividad-x" className="space-y-6">
+        {/* Resumen de datos - Tarjetas simplificadas */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="rounded-xl border border-blue-200 dark:border-blue-800/50 p-4 bg-gradient-to-br from-blue-50 to-blue-50/50 dark:from-blue-900/20 dark:to-blue-900/10">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Total de publicaciones</p>
+            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">{tweets.length}</p>
+          </div>
+          <div className="rounded-xl border border-cyan-200 dark:border-cyan-800/50 p-4 bg-gradient-to-br from-cyan-50 to-cyan-50/50 dark:from-cyan-900/20 dark:to-cyan-900/10">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Publicaciones filtradas</p>
+            <p className="text-3xl font-bold text-cyan-600 dark:text-cyan-400 mt-2">{filteredTweets.length}</p>
+          </div>
+          <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/50 p-4 bg-gradient-to-br from-emerald-50 to-emerald-50/50 dark:from-emerald-900/20 dark:to-emerald-900/10">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Autores</p>
+            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{authorCount}</p>
+          </div>
+        </div>
 
-        {/* Nube de palabras y lista de tweets */}
-        <div className="col-span-12 lg:col-span-9 grid grid-cols-12 gap-4">
-          <TweetWordCloud
-            words={wordFrequencies}
-            onWordClick={handleWordClick}
-            selectedWord={selectedWord}
-          />
+        {/* Grid principal: Filtros + Nube + Tweets */}
+        <div className="grid grid-cols-12 gap-4">
+          {/* Filtros - Reordenados */}
+          <div className="col-span-12 lg:col-span-3">
+            <TweetFiltersPanel
+              filters={filters}
+              onFiltersChange={setFilters}
+              partidos={partidos}
+              legisladores={legisladores}
+              sectores={sectores}
+              filterOrder={['fechas', 'sectores', 'partidos', 'legisladores']}
+            />
+          </div>
+
+          {/* Nube de palabras - Ocupa todo el lado derecho */}
+          <div className="col-span-12 lg:col-span-9">
+            <div className="rounded-lg border border-border bg-card p-6 h-96 lg:h-[500px]">
+              <h3 className="text-sm font-semibold mb-4">Nube de palabras</h3>
+              <TweetWordCloud
+                words={wordFrequencies}
+                onWordClick={handleWordClick}
+                selectedWord={selectedWord}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Tweets - Full width abajo */}
+        <div className="rounded-lg border border-border bg-card p-6">
+          <h3 className="text-sm font-semibold mb-4">Tweets</h3>
           <TweetList
             tweets={filteredTweets}
             highlightWord={selectedWord}
@@ -139,7 +160,43 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
             }
           />
         </div>
-      </div>
-    </div>
+      </TabsContent>
+
+      {/* TAB 2: PRODUCCIÓN LEGISLATIVA/REDES */}
+      <TabsContent value="produccion-legislativa" className="space-y-6">
+        {/* Filtros - Igual que en Actividad en X */}
+        <div className="rounded-lg border border-border bg-card p-6">
+          <h3 className="text-sm font-semibold mb-4">Filtros</h3>
+          <TweetFiltersPanel
+            filters={filters}
+            onFiltersChange={setFilters}
+            partidos={partidos}
+            legisladores={legisladores}
+            sectores={sectores}
+            filterOrder={['fechas', 'sectores', 'partidos', 'legisladores']}
+          />
+        </div>
+
+        {/* Gráfico 1: Tweets vs Producción Legislativa */}
+        <div className="rounded-lg border border-border bg-card p-6">
+          <h3 className="text-sm font-semibold mb-4">Tweets mensual vs Producción legislativa</h3>
+          <TweetsLegislativeChart
+            tweets={filteredTweets}
+            congresistas={congresistas}
+            filters={filters}
+          />
+        </div>
+
+        {/* Gráfico 2: Heatmap de Frecuencia de Posteos vs Proyectos */}
+        <div className="rounded-lg border border-border bg-card p-6">
+          <h3 className="text-sm font-semibold mb-4">Frecuencia de posteos vs Proyectos de ley presentados</h3>
+          <PostingFrequencyHeatmap
+            tweets={filteredTweets}
+            congresistas={congresistas}
+            filters={filters}
+          />
+        </div>
+      </TabsContent>
+    </Tabs>
   )
 }

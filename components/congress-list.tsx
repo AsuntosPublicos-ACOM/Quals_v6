@@ -137,7 +137,7 @@ export function CongressList({ onBack, favoriteCongresistas = [], onToggleFavori
           </TabsTrigger>
           <TabsTrigger value="analisis" className="flex items-center gap-2">
             <Building2 className="h-4 w-4" />
-            Análisis de Tuits
+            Análisis de redes sociales
           </TabsTrigger>
         </TabsList>
 

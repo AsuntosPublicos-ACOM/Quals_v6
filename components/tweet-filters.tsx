@@ -14,6 +14,7 @@ interface TweetFiltersProps {
   partidos: string[]
   legisladores: Array<{ id: string; nombre: string }>
   sectores: Array<{ id: string; name: string }>
+  filterOrder?: ('fechas' | 'sectores' | 'partidos' | 'legisladores')[]
 }
 
 export function TweetFiltersPanel({
@@ -21,7 +22,8 @@ export function TweetFiltersPanel({
   onFiltersChange,
   partidos,
   legisladores,
-  sectores
+  sectores,
+  filterOrder = ['fechas', 'partidos', 'sectores', 'legisladores']
 }: TweetFiltersProps) {
   const [fechaDesde, setFechaDesde] = useState(filters.fechaDesde || '')
   const [fechaHasta, setFechaHasta] = useState(filters.fechaHasta || '')
@@ -120,146 +122,162 @@ export function TweetFiltersPanel({
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pt-4">
-        {/* Filtro de Fechas */}
-        <div className="space-y-3 pb-4 border-b border-slate-200 dark:border-slate-700">
-          <button
-            onClick={() => toggleSection('fecha')}
-            className="w-full flex items-center justify-between group hover:opacity-75 transition-opacity"
-          >
-            <label className="text-sm font-semibold flex items-center gap-2 cursor-pointer">
-              <div className="p-1.5 rounded bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
-                <Calendar className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-              </div>
-              Período
-            </label>
-            <span className="text-xs text-slate-400 dark:text-slate-500">
-              {expandedSections.fecha ? '−' : '+'}
-            </span>
-          </button>
-          {expandedSections.fecha && (
-            <div className="space-y-2 pl-6">
-              <div>
-                <label className="text-xs text-muted-foreground font-medium">Desde</label>
-                <input
-                  type="date"
-                  value={fechaDesde}
-                  onChange={(e) => setFechaDesde(e.target.value)}
-                  onBlur={handleDateChange}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-800 hover:border-blue-400 dark:hover:border-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground font-medium">Hasta</label>
-                <input
-                  type="date"
-                  value={fechaHasta}
-                  onChange={(e) => setFechaHasta(e.target.value)}
-                  onBlur={handleDateChange}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-800 hover:border-blue-400 dark:hover:border-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
-                />
-              </div>
+        {filterOrder.includes('fechas') && (
+          <>
+            {/* Filtro de Fechas */}
+            <div className="space-y-3 pb-4 border-b border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => toggleSection('fecha')}
+                className="w-full flex items-center justify-between group hover:opacity-75 transition-opacity"
+              >
+                <label className="text-sm font-semibold flex items-center gap-2 cursor-pointer">
+                  <div className="p-1.5 rounded bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
+                    <Calendar className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  Período
+                </label>
+                <span className="text-xs text-slate-400 dark:text-slate-500">
+                  {expandedSections.fecha ? '−' : '+'}
+                </span>
+              </button>
+              {expandedSections.fecha && (
+                <div className="space-y-2 pl-6">
+                  <div>
+                    <label className="text-xs text-muted-foreground font-medium">Desde</label>
+                    <input
+                      type="date"
+                      value={fechaDesde}
+                      onChange={(e) => setFechaDesde(e.target.value)}
+                      onBlur={handleDateChange}
+                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-800 hover:border-blue-400 dark:hover:border-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground font-medium">Hasta</label>
+                    <input
+                      type="date"
+                      value={fechaHasta}
+                      onChange={(e) => setFechaHasta(e.target.value)}
+                      onBlur={handleDateChange}
+                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-800 hover:border-blue-400 dark:hover:border-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
 
-        {/* Filtro de Partidos */}
-        <div className="space-y-3 pb-4 border-b border-slate-200 dark:border-slate-700">
-          <button
-            onClick={() => toggleSection('partido')}
-            className="w-full flex items-center justify-between group hover:opacity-75 transition-opacity"
-          >
-            <label className="text-sm font-semibold flex items-center gap-2 cursor-pointer">
-              <div className="p-1.5 rounded bg-purple-100 dark:bg-purple-900/30 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
-                <span className="text-base">🏛️</span>
-              </div>
-              Partido
-            </label>
-            {filters.partidos.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {filters.partidos.length}
-              </Badge>
-            )}
-            <span className="text-xs text-slate-400 dark:text-slate-500">
-              {expandedSections.partido ? '−' : '+'}
-            </span>
-          </button>
-          {expandedSections.partido && (
-            <div className="pl-6">
-              <MultiSelect
-                options={partidos.map(p => ({ value: p, label: p }))}
-                selected={filters.partidos}
-                onSelectionChange={handlePartidosChange}
-                placeholder="Seleccionar partidos..."
-              />
+        {filterOrder.includes('sectores') && (
+          <>
+            {/* Filtro de Sectores */}
+            <div className="space-y-3 pb-4 border-b border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => toggleSection('sector')}
+                className="w-full flex items-center justify-between group hover:opacity-75 transition-opacity"
+              >
+                <label className="text-sm font-semibold flex items-center gap-2 cursor-pointer">
+                  <div className="p-1.5 rounded bg-green-100 dark:bg-green-900/30 group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
+                    <span className="text-base">📊</span>
+                  </div>
+                  Sector
+                </label>
+                {filters.sectores.length > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {filters.sectores.length}
+                  </Badge>
+                )}
+                <span className="text-xs text-slate-400 dark:text-slate-500">
+                  {expandedSections.sector ? '−' : '+'}
+                </span>
+              </button>
+              {expandedSections.sector && (
+                <div className="pl-6">
+                  <MultiSelect
+                    options={sectores.map(s => ({ value: s.id, label: s.name }))}
+                    selected={filters.sectores}
+                    onSelectionChange={handleSectoresChange}
+                    placeholder="Seleccionar sectores..."
+                  />
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
 
-        {/* Filtro de Sectores */}
-        <div className="space-y-3 pb-4 border-b border-slate-200 dark:border-slate-700">
-          <button
-            onClick={() => toggleSection('sector')}
-            className="w-full flex items-center justify-between group hover:opacity-75 transition-opacity"
-          >
-            <label className="text-sm font-semibold flex items-center gap-2 cursor-pointer">
-              <div className="p-1.5 rounded bg-green-100 dark:bg-green-900/30 group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
-                <span className="text-base">📊</span>
-              </div>
-              Sector
-            </label>
-            {filters.sectores.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {filters.sectores.length}
-              </Badge>
-            )}
-            <span className="text-xs text-slate-400 dark:text-slate-500">
-              {expandedSections.sector ? '−' : '+'}
-            </span>
-          </button>
-          {expandedSections.sector && (
-            <div className="pl-6">
-              <MultiSelect
-                options={sectores.map(s => ({ value: s.id, label: s.name }))}
-                selected={filters.sectores}
-                onSelectionChange={handleSectoresChange}
-                placeholder="Seleccionar sectores..."
-              />
+        {filterOrder.includes('partidos') && (
+          <>
+            {/* Filtro de Partidos */}
+            <div className="space-y-3 pb-4 border-b border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => toggleSection('partido')}
+                className="w-full flex items-center justify-between group hover:opacity-75 transition-opacity"
+              >
+                <label className="text-sm font-semibold flex items-center gap-2 cursor-pointer">
+                  <div className="p-1.5 rounded bg-purple-100 dark:bg-purple-900/30 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
+                    <span className="text-base">🏛️</span>
+                  </div>
+                  Partido
+                </label>
+                {filters.partidos.length > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {filters.partidos.length}
+                  </Badge>
+                )}
+                <span className="text-xs text-slate-400 dark:text-slate-500">
+                  {expandedSections.partido ? '−' : '+'}
+                </span>
+              </button>
+              {expandedSections.partido && (
+                <div className="pl-6">
+                  <MultiSelect
+                    options={partidos.map(p => ({ value: p, label: p }))}
+                    selected={filters.partidos}
+                    onSelectionChange={handlePartidosChange}
+                    placeholder="Seleccionar partidos..."
+                  />
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
 
-        {/* Filtro de Legisladores */}
-        <div className="space-y-3">
-          <button
-            onClick={() => toggleSection('legislador')}
-            className="w-full flex items-center justify-between group hover:opacity-75 transition-opacity"
-          >
-            <label className="text-sm font-semibold flex items-center gap-2 cursor-pointer">
-              <div className="p-1.5 rounded bg-amber-100 dark:bg-amber-900/30 group-hover:bg-amber-200 dark:group-hover:bg-amber-900/50 transition-colors">
-                <span className="text-base">👤</span>
-              </div>
-              Legislador
-            </label>
-            {filters.legisladores.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {filters.legisladores.length}
-              </Badge>
-            )}
-            <span className="text-xs text-slate-400 dark:text-slate-500">
-              {expandedSections.legislador ? '−' : '+'}
-            </span>
-          </button>
-          {expandedSections.legislador && (
-            <div className="pl-6">
-              <MultiSelect
-                options={legisladores.map(l => ({ value: l.id, label: l.nombre }))}
-                selected={filters.legisladores}
-                onSelectionChange={handleLegisladoresChange}
-                placeholder="Seleccionar legisladores..."
-              />
+        {filterOrder.includes('legisladores') && (
+          <>
+            {/* Filtro de Legisladores */}
+            <div className="space-y-3">
+              <button
+                onClick={() => toggleSection('legislador')}
+                className="w-full flex items-center justify-between group hover:opacity-75 transition-opacity"
+              >
+                <label className="text-sm font-semibold flex items-center gap-2 cursor-pointer">
+                  <div className="p-1.5 rounded bg-amber-100 dark:bg-amber-900/30 group-hover:bg-amber-200 dark:group-hover:bg-amber-900/50 transition-colors">
+                    <span className="text-base">👤</span>
+                  </div>
+                  Legislador
+                </label>
+                {filters.legisladores.length > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {filters.legisladores.length}
+                  </Badge>
+                )}
+                <span className="text-xs text-slate-400 dark:text-slate-500">
+                  {expandedSections.legislador ? '−' : '+'}
+                </span>
+              </button>
+              {expandedSections.legislador && (
+                <div className="pl-6">
+                  <MultiSelect
+                    options={legisladores.map(l => ({ value: l.id, label: l.nombre }))}
+                    selected={filters.legisladores}
+                    onSelectionChange={handleLegisladoresChange}
+                    placeholder="Seleccionar legisladores..."
+                  />
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </CardContent>
     </Card>
   )
