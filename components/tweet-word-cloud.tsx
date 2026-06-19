@@ -61,10 +61,7 @@ export function TweetWordCloud({ words, onWordClick, selectedWord }: TweetWordCl
     return (
       <Card className="col-span-12 lg:col-span-6">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span className="text-xl">☁️</span>
-            Nube de Palabras
-          </CardTitle>
+          <CardTitle>Nube de Palabras</CardTitle>
         </CardHeader>
         <CardContent className="h-96 flex items-center justify-center">
           <p className="text-muted-foreground">No hay tweets disponibles</p>
@@ -81,7 +78,6 @@ export function TweetWordCloud({ words, onWordClick, selectedWord }: TweetWordCl
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <span className="text-2xl">☁️</span>
               Nube de Palabras
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-2">Haz clic en una palabra para filtrar</p>
@@ -141,26 +137,6 @@ export function TweetWordCloud({ words, onWordClick, selectedWord }: TweetWordCl
                 </button>
               )
             })}
-          </div>
-        </div>
-
-        {/* Estadísticas estilizadas */}
-        <div className="mt-6 space-y-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="relative overflow-hidden rounded-xl border border-blue-200 dark:border-blue-800/50 p-4 bg-gradient-to-br from-blue-50 to-blue-50/50 dark:from-blue-900/20 dark:to-blue-900/10 hover:border-blue-300 dark:hover:border-blue-700 transition-all group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-blue-400/5 to-blue-400/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative">
-                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Palabras Únicas</p>
-                <p className="text-3xl font-black text-blue-600 dark:text-blue-400 mt-2">{words.length}</p>
-              </div>
-            </div>
-            <div className="relative overflow-hidden rounded-xl border border-cyan-200 dark:border-cyan-800/50 p-4 bg-gradient-to-br from-cyan-50 to-cyan-50/50 dark:from-cyan-900/20 dark:to-cyan-900/10 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all group">
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/0 via-cyan-400/5 to-cyan-400/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative">
-                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Top Palabra</p>
-                <p className="text-lg font-black text-cyan-600 dark:text-cyan-400 mt-2 truncate">{words[0]?.word || '-'}</p>
-              </div>
-            </div>
           </div>
         </div>
       </CardContent>
