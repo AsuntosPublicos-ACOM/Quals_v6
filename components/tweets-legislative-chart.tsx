@@ -12,11 +12,14 @@ interface TweetsLegislativeChartProps {
 
 export function TweetsLegislativeChart({ tweets, congresistas, filters }: TweetsLegislativeChartProps) {
   const chartData = useMemo(() => {
+    // If no tweets filtered, use all tweets
+    const tweetsToUse = tweets.length === 0 ? congresistas.flatMap(c => c.tweets || []) : tweets
+    
     // Group tweets by month
     const tweetsByMonth = new Map<string, number>()
     const legislativeByMonth = new Map<string, number>()
 
-    tweets.forEach(tweet => {
+    tweetsToUse.forEach(tweet => {
       const date = new Date(tweet.fecha)
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
       tweetsByMonth.set(monthKey, (tweetsByMonth.get(monthKey) || 0) + 1)

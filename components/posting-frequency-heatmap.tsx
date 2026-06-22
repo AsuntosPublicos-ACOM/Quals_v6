@@ -21,9 +21,27 @@ interface HeatmapData {
 
 export function PostingFrequencyHeatmap({ tweets, congresistas, filters }: PostingFrequencyHeatmapProps) {
   const heatmapData = useMemo(() => {
+    // If no tweets filtered, get top 3 congresistas by total tweet count
+    const tweetsToUse = tweets.length === 0 
+      ? congresistas.flatMap(c => c.tweets || [])
+      : tweets
+
+    // If no tweets, use top 3 by total tweet count
+    let congreistasToAnalyze = congresistas
+    if (tweets.length === 0) {
+      const tweetCountsByIds = new Map<string, number>()
+      congresistas.forEach(c => {
+        const count = c.tweets?.length || 0
+        tweetCountsByIds.set(c.id, count)
+      })
+      congreistasToAnalyze = congresistas
+        .sort((a, b) => (tweetCountsByIds.get(b.id) || 0) - (tweetCountsByIds.get(a.id) || 0))
+        .slice(0, 3)
+    }
+
     // Count tweets per legislator
     const tweetCounts: Map<string, number> = new Map()
-    tweets.forEach(tweet => {
+    tweetsToUse.forEach(tweet => {
       const autorId = tweet.autor?.id || tweet.autorId
       tweetCounts.set(autorId, (tweetCounts.get(autorId) || 0) + 1)
     })
@@ -32,7 +50,7 @@ export function PostingFrequencyHeatmap({ tweets, congresistas, filters }: Posti
     const postingFrequency: Map<string, PostingFrequency> = new Map()
     const projectCounts: Map<string, ProjectCount> = new Map()
 
-    congresistas.forEach(c => {
+    congreistasToAnalyze.forEach(c => {
       const tweetCount = tweetCounts.get(c.id) || 0
       const projectCount = c.proyectos?.length || 0
 
@@ -78,7 +96,7 @@ export function PostingFrequencyHeatmap({ tweets, congresistas, filters }: Posti
     ]
 
     // Fill matrix with legislator counts
-    congresistas.forEach(c => {
+    congreistasToAnalyze.forEach(c => {
       const freq = postingFrequency.get(c.id)
       const projCount = projectCounts.get(c.id)
       if (freq && projCount) {
