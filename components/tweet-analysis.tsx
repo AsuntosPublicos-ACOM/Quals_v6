@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, ChevronDown } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { Congresista, Sector, TweetFilters } from '@/lib/types'
 import { fetchMultipleCongresistaTweets } from '@/lib/twitter-service'
@@ -29,6 +29,7 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
     legisladores: []
   })
   const [selectedWord, setSelectedWord] = useState<string>()
+  const [filtersExpanded, setFiltersExpanded] = useState(false)
 
   // Cargar tweets al montar el componente
   useEffect(() => {
@@ -164,17 +165,32 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
 
       {/* TAB 2: PRODUCCIÓN LEGISLATIVA/REDES */}
       <TabsContent value="produccion-legislativa" className="space-y-8">
-        {/* Filtros integrados - Sin borde separado */}
+        {/* Filtros colapsables */}
         <div className="space-y-2 pb-6 border-b border-border/50">
-          <h3 className="text-sm font-semibold text-foreground">Filtros</h3>
-          <TweetFiltersPanel
-            filters={filters}
-            onFiltersChange={setFilters}
-            partidos={partidos}
-            legisladores={legisladores}
-            sectores={sectores}
-            filterOrder={['fechas', 'sectores', 'partidos', 'legisladores']}
-          />
+          <button
+            onClick={() => setFiltersExpanded(!filtersExpanded)}
+            className="flex items-center justify-between w-full hover:opacity-75 transition-opacity"
+          >
+            <h3 className="text-sm font-semibold text-foreground">Filtros</h3>
+            <ChevronDown 
+              className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+                filtersExpanded ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          
+          {filtersExpanded && (
+            <div className="pt-4 animate-in fade-in-50 duration-200">
+              <TweetFiltersPanel
+                filters={filters}
+                onFiltersChange={setFilters}
+                partidos={partidos}
+                legisladores={legisladores}
+                sectores={sectores}
+                filterOrder={['fechas', 'sectores', 'partidos', 'legisladores']}
+              />
+            </div>
+          )}
         </div>
 
         {/* Gráfico 1: Tweets vs Producción Legislativa */}
