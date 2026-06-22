@@ -93,44 +93,70 @@ export function PostingFrequencyHeatmap({ tweets, congresistas, filters }: Posti
   }, [tweets, congresistas])
 
   const getCellColor = (value: number) => {
-    if (value === 0) return 'bg-muted/20'
-    if (value < 3) return 'bg-blue-100 dark:bg-blue-900/30'
-    if (value < 7) return 'bg-blue-300 dark:bg-blue-700/60'
-    return 'bg-blue-600 dark:bg-blue-900'
+    if (value === 0) return 'bg-muted/10 hover:bg-muted/20'
+    if (value === 1) return 'bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
+    if (value === 2) return 'bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
+    if (value < 5) return 'bg-cyan-200 dark:bg-cyan-900/40 hover:bg-cyan-300 dark:hover:bg-cyan-900/60'
+    return 'bg-blue-500 dark:bg-blue-900/70 hover:bg-blue-600 dark:hover:bg-blue-800'
   }
 
   const getTextColor = (value: number) => {
-    if (value < 7) return 'text-foreground'
-    return 'text-white'
+    if (value === 0 || value === 1 || value === 2) return 'text-foreground'
+    if (value < 5) return 'text-foreground'
+    return 'text-white dark:text-slate-100'
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr>
-            <th className="border border-border bg-muted/50 p-3 text-left font-semibold">Frecuencia de posteos</th>
-            <th className="border border-border bg-muted/50 p-3 text-center font-semibold">Pocos (1-5)</th>
-            <th className="border border-border bg-muted/50 p-3 text-center font-semibold">Moderados (6-15)</th>
-            <th className="border border-border bg-muted/50 p-3 text-center font-semibold">Muchos (16+)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {heatmapData.map((row) => (
-            <tr key={row.positing}>
-              <td className="border border-border bg-muted/30 p-3 font-medium">{row.positing}</td>
-              {(['Pocos (1-5)', 'Moderados (6-15)', 'Muchos (16+)'] as const).map((colKey) => (
-                <td
-                  key={`${row.positing}-${colKey}`}
-                  className={`border border-border p-3 text-center font-semibold transition-colors ${getCellColor(row[colKey])} ${getTextColor(row[colKey])}`}
-                >
-                  {row[colKey]}
-                </td>
-              ))}
+    <div className="space-y-4">
+      <div className="overflow-x-auto rounded-lg border border-border">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="bg-muted/50 px-4 py-3 text-left text-sm font-semibold text-foreground">Frecuencia de posteos</th>
+              <th className="bg-muted/50 px-4 py-3 text-center text-sm font-semibold text-foreground border-l border-border">Pocos (1-5)</th>
+              <th className="bg-muted/50 px-4 py-3 text-center text-sm font-semibold text-foreground border-l border-border">Moderados (6-15)</th>
+              <th className="bg-muted/50 px-4 py-3 text-center text-sm font-semibold text-foreground border-l border-border">Muchos (16+)</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {heatmapData.map((row, rowIdx) => (
+              <tr key={row.positing} className={rowIdx < heatmapData.length - 1 ? 'border-b border-border' : ''}>
+                <td className="bg-muted/30 px-4 py-3 text-sm font-medium text-foreground">{row.positing}</td>
+                {(['Pocos (1-5)', 'Moderados (6-15)', 'Muchos (16+)'] as const).map((colKey) => (
+                  <td
+                    key={`${row.positing}-${colKey}`}
+                    className={`border-l border-border px-4 py-3 text-center font-bold text-base transition-all duration-200 ${getCellColor(row[colKey])} ${getTextColor(row[colKey])}`}
+                  >
+                    <div className="flex items-center justify-center">
+                      <span>{row[colKey]}</span>
+                    </div>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Leyenda */}
+      <div className="grid grid-cols-4 gap-3 pt-2">
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 rounded bg-muted/10"></div>
+          <span className="text-muted-foreground">Sin datos</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 rounded bg-emerald-100 dark:bg-emerald-900/30"></div>
+          <span className="text-muted-foreground">Bajo (1-2)</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 rounded bg-cyan-200 dark:bg-cyan-900/40"></div>
+          <span className="text-muted-foreground">Medio (3-4)</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-4 h-4 rounded bg-blue-500 dark:bg-blue-900/70"></div>
+          <span className="text-muted-foreground">Alto (5+)</span>
+        </div>
+      </div>
     </div>
   )
 }

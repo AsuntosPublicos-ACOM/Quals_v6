@@ -163,10 +163,10 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
       </TabsContent>
 
       {/* TAB 2: PRODUCCIÓN LEGISLATIVA/REDES */}
-      <TabsContent value="produccion-legislativa" className="space-y-6">
-        {/* Filtros - Igual que en Actividad en X */}
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h3 className="text-sm font-semibold mb-4">Filtros</h3>
+      <TabsContent value="produccion-legislativa" className="space-y-8">
+        {/* Filtros integrados - Sin borde separado */}
+        <div className="space-y-2 pb-6 border-b border-border/50">
+          <h3 className="text-sm font-semibold text-foreground">Filtros</h3>
           <TweetFiltersPanel
             filters={filters}
             onFiltersChange={setFilters}
@@ -178,23 +178,33 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
         </div>
 
         {/* Gráfico 1: Tweets vs Producción Legislativa */}
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h3 className="text-sm font-semibold mb-4">Tweets mensual vs Producción legislativa</h3>
-          <TweetsLegislativeChart
-            tweets={filteredTweets}
-            congresistas={congresistas}
-            filters={filters}
-          />
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-foreground">Actividad en redes vs Producción legislativa</h3>
+            <p className="text-xs text-muted-foreground">Comparativa mensual entre publicaciones en X y proyectos de ley presentados</p>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-6">
+            <TweetsLegislativeChart
+              tweets={filteredTweets}
+              congresistas={congresistas}
+              filters={filters}
+            />
+          </div>
         </div>
 
         {/* Gráfico 2: Heatmap de Frecuencia de Posteos vs Proyectos */}
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h3 className="text-sm font-semibold mb-4">Frecuencia de posteos vs Proyectos de ley presentados</h3>
-          <PostingFrequencyHeatmap
-            tweets={filteredTweets}
-            congresistas={congresistas}
-            filters={filters}
-          />
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-foreground">Correlación: Frecuencia de posteos vs Proyectos presentados</h3>
+            <p className="text-xs text-muted-foreground">Matriz que muestra la relación entre actividad en redes y producción legislativa por congresista</p>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-6">
+            <PostingFrequencyHeatmap
+              tweets={filteredTweets}
+              congresistas={congresistas}
+              filters={filters}
+            />
+          </div>
         </div>
       </TabsContent>
     </Tabs>

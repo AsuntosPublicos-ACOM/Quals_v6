@@ -43,6 +43,29 @@ export function TweetsLegislativeChart({ tweets, congresistas, filters }: Tweets
       }))
   }, [tweets, congresistas])
 
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
+          <p className="text-xs font-medium text-foreground mb-2">{payload[0]?.payload?.month}</p>
+          <div className="space-y-1">
+            {payload.map((entry: any, idx: number) => (
+              <div key={idx} className="flex items-center gap-2">
+                <div 
+                  className="w-2 h-2 rounded-full" 
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span className="text-xs text-muted-foreground">{entry.name}:</span>
+                <span className="text-xs font-semibold text-foreground">{entry.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+    return null
+  }
+
   if (chartData.length === 0) {
     return (
       <div className="h-80 flex items-center justify-center text-muted-foreground">
@@ -52,37 +75,65 @@ export function TweetsLegislativeChart({ tweets, congresistas, filters }: Tweets
   }
 
   return (
-    <ResponsiveContainer width="100%" height={400}>
-      <ComposedChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-        <XAxis dataKey="month" className="text-xs fill-muted-foreground" />
-        <YAxis yAxisId="left" className="text-xs fill-muted-foreground" />
-        <YAxis yAxisId="right" orientation="right" className="text-xs fill-muted-foreground" />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: 'hsl(var(--background))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '8px'
-          }}
-          labelStyle={{ color: 'hsl(var(--foreground))' }}
-          formatter={(value) => [value, value]}
+    <ResponsiveContainer width="100%" height={420}>
+      <ComposedChart data={chartData} margin={{ top: 20, right: 40, left: 10, bottom: 50 }}>
+        <defs>
+          <linearGradient id="colorTweets" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.9}/>
+            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.6}/>
+          </linearGradient>
+        </defs>
+        <CartesianGrid 
+          strokeDasharray="3 3" 
+          stroke="hsl(var(--border))" 
+          vertical={false}
+          opacity={0.5}
         />
-        <Legend />
+        <XAxis 
+          dataKey="month" 
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+          angle={-45}
+          textAnchor="end"
+          height={70}
+        />
+        <YAxis 
+          yAxisId="left" 
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+          label={{ value: 'Publicaciones en X', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 11, fill: 'hsl(var(--foreground))' } }}
+        />
+        <YAxis 
+          yAxisId="right" 
+          orientation="right"
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+          label={{ value: 'Proyectos de ley', angle: 90, position: 'insideRight', offset: 10, style: { fontSize: 11, fill: 'hsl(var(--foreground))' } }}
+        />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--accent) / 0.1)' }} />
+        <Legend 
+          wrapperStyle={{ paddingTop: 20 }}
+          iconType="square"
+          formatter={(value) => (
+            <span style={{ fontSize: 12, color: 'hsl(var(--foreground))' }}>
+              {value === 'tweets' ? 'Publicaciones en X' : 'Proyectos presentados'}
+            </span>
+          )}
+        />
         <Bar
           yAxisId="left"
           dataKey="tweets"
-          fill="hsl(var(--primary))"
-          name="Tweets publicados"
-          radius={[8, 8, 0, 0]}
+          fill="url(#colorTweets)"
+          name="tweets"
+          radius={[6, 6, 0, 0]}
+          opacity={0.9}
         />
         <Line
           yAxisId="right"
-          type="monotone"
+          type="natural"
           dataKey="proyectos"
-          stroke="hsl(var(--chart-1))"
-          name="Proyectos de ley"
-          strokeWidth={2}
-          dot={{ fill: 'hsl(var(--chart-1))', r: 4 }}
+          stroke="hsl(var(--destructive))"
+          name="proyectos"
+          strokeWidth={3}
+          dot={{ fill: 'hsl(var(--destructive))', r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+          activeDot={{ r: 7 }}
         />
       </ComposedChart>
     </ResponsiveContainer>
