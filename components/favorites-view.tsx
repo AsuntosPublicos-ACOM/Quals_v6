@@ -90,15 +90,13 @@ export function FavoritesView({
 
   const { sort: plSort, toggleSort: togglePlSort, sortedData: sortedPL } = useSortableTable(filteredPL, { column: 'fechaPresentacion', direction: 'desc' })
 
-  // Funnel counts: nivel N includes all projects with nivel >= N
-  const funnelSteps = [
-    { label: 'Todos', nivel: null, count: favoriteProjects.length },
-    { label: 'Nivel 2+', nivel: 2, count: favoriteProjects.filter(p => (p.nivel ?? 1) >= 2).length },
-    { label: 'Nivel 3+', nivel: 3, count: favoriteProjects.filter(p => (p.nivel ?? 1) >= 3).length },
-    { label: 'Nivel 4+', nivel: 4, count: favoriteProjects.filter(p => (p.nivel ?? 1) >= 4).length },
-    { label: 'Nivel 5', nivel: 5, count: favoriteProjects.filter(p => (p.nivel ?? 1) >= 5).length },
+  // Timeline phases for legislative process
+  const timelinePhases = [
+    { id: 'pl', label: 'PL', count: favoriteProjects.filter(p => p.tipoMedida === 'proyecto_ley').length },
+    { id: 'dictamen', label: 'Dictámenes', count: favoriteProjects.filter(p => p.tipoMedida === 'dictamen').length },
+    { id: 'debate', label: 'En agenda/debate', count: favoriteProjects.filter(p => p.estado === 'En Pleno').length },
+    { id: 'aprobada', label: 'Ley aprobada', count: favoriteProjects.filter(p => p.tipoMedida === 'ley_aprobada' || p.estado === 'Aprobado').length },
   ]
-  const maxCount = funnelSteps[0].count || 1
 
   // Congresista data
   const favoriteCongList = congresistas.filter(c => favoriteCongresistas.includes(c.id))
@@ -172,53 +170,37 @@ export function FavoritesView({
             </div>
           ) : (
             <>
-              {/* Funnel - Pyramid Shape */}
-              <div className="rounded-lg border border-border bg-card p-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">Embudo de avance</p>
-                <div className="flex flex-col items-center gap-0">
-                  {funnelSteps.map((step, i) => {
-                    const widthPct = 100 - (i * 15) // 100%, 85%, 70%, 55%, 40%
-                    const isActive = selectedNivel === step.nivel
-                    const colors = [
-                      'bg-sky-500',
-                      'bg-sky-400',
-                      'bg-emerald-500',
-                      'bg-amber-500',
-                      'bg-rose-500',
-                    ]
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setSelectedNivel(isActive ? null : step.nivel)}
-                        className={`relative transition-all hover:opacity-90 ${isActive ? 'opacity-100 outline outline-2 outline-offset-1 outline-primary' : ''}`}
-                        style={{ width: `${widthPct}%` }}
-                      >
-                        {/* Trapezoid background */}
-                        <div
-                          className={`h-10 w-full ${colors[i]}`}
-                          style={{
-                            clipPath: i === funnelSteps.length - 1
-                              ? 'polygon(5% 0, 95% 0, 100% 100%, 0 100%)'
-                              : 'polygon(0 0, 100% 0, 95% 100%, 5% 100%)'
-                          }}
-                        />
-                        {/* Text centered absolutely over the shape */}
-                        <div className="absolute inset-0 flex items-center justify-center gap-2 pointer-events-none">
-                          <span className="text-white font-medium text-sm drop-shadow">{step.label}</span>
-                          <span className="text-white font-bold text-sm drop-shadow">{step.count} PL</span>
+              {/* Timeline - Horizontal Process */}
+              <div className="rounded-lg border border-border bg-card p-6">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-6">Fases del proceso legislativo</p>
+                <div className="flex items-start justify-between gap-4">
+                  {timelinePhases.map((phase, i) => (
+                    <div key={phase.id} className="flex-1 flex flex-col items-center gap-3">
+                      {/* Node with number */}
+                      <div className="flex flex-col items-center gap-2 w-full">
+                        <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-primary">{phase.count}</div>
+                            <div className="text-xs text-muted-foreground">proyectos</div>
+                          </div>
                         </div>
-                      </button>
-                    )
-                  })}
+                        <div className="text-center">
+                          <p className="text-sm font-semibold text-foreground">{phase.label}</p>
+                          {favoriteProjects.length > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              {Math.round((phase.count / favoriteProjects.length) * 100)}%
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Connector arrow */}
+                      {i < timelinePhases.length - 1 && (
+                        <div className="hidden sm:block text-primary opacity-40 text-lg">→</div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                {selectedNivel !== null && (
-                  <button
-                    onClick={() => setSelectedNivel(null)}
-                    className="text-xs text-primary hover:underline mt-3 block mx-auto"
-                  >
-                    Ver todos los niveles
-                  </button>
-                )}
               </div>
 
               <div className="flex flex-wrap items-end gap-3">
