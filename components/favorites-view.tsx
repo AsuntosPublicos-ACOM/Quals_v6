@@ -90,13 +90,11 @@ export function FavoritesView({
 
   const { sort: plSort, toggleSort: togglePlSort, sortedData: sortedPL } = useSortableTable(filteredPL, { column: 'fechaPresentacion', direction: 'desc' })
 
-  // Timeline phases for legislative process with colors (mutually exclusive)
-  // Count projects by state to ensure each project is counted only once
-  const plCount = favoriteProjects.filter(p => !p.estado || p.estado === 'Presentado' || p.estado === 'Nuevo').length
-  const dictamenCount = favoriteProjects.filter(p => p.estado === 'En Comisión').length
-  const debateCount = favoriteProjects.filter(p => p.estado === 'En Pleno').length
-  const aprobadaCount = favoriteProjects.filter(p => p.estado === 'Aprobado').length
-  const otherCount = favoriteProjects.length - (plCount + dictamenCount + debateCount + aprobadaCount)
+  // Timeline phases for legislative process - count based on tipoMedida
+  const plCount = favoriteProjects.filter(p => p.tipoMedida === 'proyecto_ley').length
+  const dictamenCount = favoriteProjects.filter(p => p.tipoMedida === 'dictamen').length
+  const debateCount = favoriteProjects.filter(p => p.tipoMedida === 'proyecto_ley' && p.estado === 'En Pleno').length
+  const aprobadaCount = favoriteProjects.filter(p => p.tipoMedida === 'ley_aprobada').length
   
   const timelinePhases = [
     { 
@@ -134,16 +132,7 @@ export function FavoritesView({
       borderColor: 'border-purple-400 dark:border-purple-500',
       progressColor: 'bg-purple-500',
       lightBg: 'bg-purple-50 dark:bg-purple-950/40'
-    },
-    ...(otherCount > 0 ? [{
-      id: 'otro',
-      label: 'Otros',
-      count: otherCount,
-      textColor: 'text-slate-600 dark:text-slate-400',
-      borderColor: 'border-slate-400 dark:border-slate-500',
-      progressColor: 'bg-slate-500',
-      lightBg: 'bg-slate-50 dark:bg-slate-950/40'
-    }] : [])
+    }
   ]
 
   // Congresista data
@@ -227,7 +216,7 @@ export function FavoritesView({
                   {/* Nodes Row */}
                   <div className="flex items-center justify-between gap-2 px-2">
                     {timelinePhases.map((phase, i) => {
-                      const totalProjects = favoriteProjects.length
+                      const totalProjects = plCount + dictamenCount + debateCount + aprobadaCount
                       const percentage = totalProjects > 0 ? Math.round((phase.count / totalProjects) * 100) : 0
                       return (
                         <div key={phase.id} className="flex flex-col items-center flex-1">
