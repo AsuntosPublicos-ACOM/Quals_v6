@@ -90,12 +90,19 @@ export function FavoritesView({
 
   const { sort: plSort, toggleSort: togglePlSort, sortedData: sortedPL } = useSortableTable(filteredPL, { column: 'fechaPresentacion', direction: 'desc' })
 
-  // Timeline phases for legislative process with colors
+  // Timeline phases for legislative process with colors (mutually exclusive)
+  // Count projects by state to ensure each project is counted only once
+  const plCount = favoriteProjects.filter(p => !p.estado || p.estado === 'Presentado' || p.estado === 'Nuevo').length
+  const dictamenCount = favoriteProjects.filter(p => p.estado === 'En Comisión').length
+  const debateCount = favoriteProjects.filter(p => p.estado === 'En Pleno').length
+  const aprobadaCount = favoriteProjects.filter(p => p.estado === 'Aprobado').length
+  const otherCount = favoriteProjects.length - (plCount + dictamenCount + debateCount + aprobadaCount)
+  
   const timelinePhases = [
     { 
       id: 'pl', 
       label: 'PL', 
-      count: favoriteProjects.filter(p => p.tipoMedida === 'proyecto_ley').length,
+      count: plCount,
       textColor: 'text-sky-600 dark:text-sky-400',
       borderColor: 'border-sky-400 dark:border-sky-500',
       progressColor: 'bg-sky-500',
@@ -104,7 +111,7 @@ export function FavoritesView({
     { 
       id: 'dictamen', 
       label: 'Dictámenes', 
-      count: favoriteProjects.filter(p => p.tipoMedida === 'dictamen').length,
+      count: dictamenCount,
       textColor: 'text-green-600 dark:text-green-400',
       borderColor: 'border-green-400 dark:border-green-500',
       progressColor: 'bg-green-500',
@@ -113,7 +120,7 @@ export function FavoritesView({
     { 
       id: 'debate', 
       label: 'En agenda/debate', 
-      count: favoriteProjects.filter(p => p.estado === 'En Pleno').length,
+      count: debateCount,
       textColor: 'text-amber-600 dark:text-amber-400',
       borderColor: 'border-amber-400 dark:border-amber-500',
       progressColor: 'bg-amber-500',
@@ -122,12 +129,21 @@ export function FavoritesView({
     { 
       id: 'aprobada', 
       label: 'Ley aprobada', 
-      count: favoriteProjects.filter(p => p.tipoMedida === 'ley_aprobada' || p.estado === 'Aprobado').length,
+      count: aprobadaCount,
       textColor: 'text-purple-600 dark:text-purple-400',
       borderColor: 'border-purple-400 dark:border-purple-500',
       progressColor: 'bg-purple-500',
       lightBg: 'bg-purple-50 dark:bg-purple-950/40'
     },
+    ...(otherCount > 0 ? [{
+      id: 'otro',
+      label: 'Otros',
+      count: otherCount,
+      textColor: 'text-slate-600 dark:text-slate-400',
+      borderColor: 'border-slate-400 dark:border-slate-500',
+      progressColor: 'bg-slate-500',
+      lightBg: 'bg-slate-50 dark:bg-slate-950/40'
+    }] : [])
   ]
 
   // Congresista data
