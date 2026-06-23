@@ -211,15 +211,15 @@ export function FavoritesView({
                   {/* Nodes Row */}
                   <div className="flex items-center justify-between gap-2 px-2">
                     {timelinePhases.map((phase, i) => {
-                      const percentage = favoriteProjects.length > 0 ? Math.round((phase.count / favoriteProjects.length) * 100) : 0
+                      const totalProjects = favoriteProjects.length
+                      const percentage = totalProjects > 0 ? Math.round((phase.count / totalProjects) * 100) : 0
                       return (
                         <div key={phase.id} className="flex flex-col items-center flex-1">
                           {/* Circle Node */}
-                          <div className={`w-20 h-20 rounded-full ${phase.lightBg} border-4 ${phase.borderColor} flex items-center justify-center flex-col gap-1 mb-4 shadow-sm`}>
+                          <div className={`w-20 h-20 rounded-full ${phase.lightBg} border-4 ${phase.borderColor} flex items-center justify-center mb-4 shadow-sm`}>
                             <div className={`text-2xl font-bold text-center ${phase.textColor}`}>
                               {phase.count}
                             </div>
-                            <div className="text-xs text-muted-foreground text-center leading-tight">proyectos</div>
                           </div>
                           
                           {/* Phase Label and Percentage */}
