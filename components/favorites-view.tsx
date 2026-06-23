@@ -90,12 +90,44 @@ export function FavoritesView({
 
   const { sort: plSort, toggleSort: togglePlSort, sortedData: sortedPL } = useSortableTable(filteredPL, { column: 'fechaPresentacion', direction: 'desc' })
 
-  // Timeline phases for legislative process
+  // Timeline phases for legislative process with colors
   const timelinePhases = [
-    { id: 'pl', label: 'PL', count: favoriteProjects.filter(p => p.tipoMedida === 'proyecto_ley').length },
-    { id: 'dictamen', label: 'Dictámenes', count: favoriteProjects.filter(p => p.tipoMedida === 'dictamen').length },
-    { id: 'debate', label: 'En agenda/debate', count: favoriteProjects.filter(p => p.estado === 'En Pleno').length },
-    { id: 'aprobada', label: 'Ley aprobada', count: favoriteProjects.filter(p => p.tipoMedida === 'ley_aprobada' || p.estado === 'Aprobado').length },
+    { 
+      id: 'pl', 
+      label: 'PL', 
+      count: favoriteProjects.filter(p => p.tipoMedida === 'proyecto_ley').length,
+      textColor: 'text-sky-600 dark:text-sky-400',
+      borderColor: 'border-sky-400 dark:border-sky-500',
+      progressColor: 'bg-sky-500',
+      lightBg: 'bg-sky-50 dark:bg-sky-950/40'
+    },
+    { 
+      id: 'dictamen', 
+      label: 'Dictámenes', 
+      count: favoriteProjects.filter(p => p.tipoMedida === 'dictamen').length,
+      textColor: 'text-green-600 dark:text-green-400',
+      borderColor: 'border-green-400 dark:border-green-500',
+      progressColor: 'bg-green-500',
+      lightBg: 'bg-green-50 dark:bg-green-950/40'
+    },
+    { 
+      id: 'debate', 
+      label: 'En agenda/debate', 
+      count: favoriteProjects.filter(p => p.estado === 'En Pleno').length,
+      textColor: 'text-amber-600 dark:text-amber-400',
+      borderColor: 'border-amber-400 dark:border-amber-500',
+      progressColor: 'bg-amber-500',
+      lightBg: 'bg-amber-50 dark:bg-amber-950/40'
+    },
+    { 
+      id: 'aprobada', 
+      label: 'Ley aprobada', 
+      count: favoriteProjects.filter(p => p.tipoMedida === 'ley_aprobada' || p.estado === 'Aprobado').length,
+      textColor: 'text-purple-600 dark:text-purple-400',
+      borderColor: 'border-purple-400 dark:border-purple-500',
+      progressColor: 'bg-purple-500',
+      lightBg: 'bg-purple-50 dark:bg-purple-950/40'
+    },
   ]
 
   // Congresista data
@@ -170,36 +202,59 @@ export function FavoritesView({
             </div>
           ) : (
             <>
-              {/* Timeline - Horizontal Process */}
-              <div className="rounded-lg border border-border bg-card p-6">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-6">Fases del proceso legislativo</p>
-                <div className="flex items-start justify-between gap-4">
-                  {timelinePhases.map((phase, i) => (
-                    <div key={phase.id} className="flex-1 flex flex-col items-center gap-3">
-                      {/* Node with number */}
-                      <div className="flex flex-col items-center gap-2 w-full">
-                        <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-lg font-bold text-primary">{phase.count}</div>
-                            <div className="text-xs text-muted-foreground">proyectos</div>
+              {/* Timeline - Horizontal Process with improved design */}
+              <div className="rounded-lg border border-border bg-card p-8">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-8">Fases del proceso legislativo</p>
+                
+                {/* Timeline Container */}
+                <div className="space-y-8">
+                  {/* Nodes Row */}
+                  <div className="flex items-center justify-between gap-2 px-2">
+                    {timelinePhases.map((phase, i) => {
+                      const percentage = favoriteProjects.length > 0 ? Math.round((phase.count / favoriteProjects.length) * 100) : 0
+                      return (
+                        <div key={phase.id} className="flex flex-col items-center flex-1">
+                          {/* Circle Node */}
+                          <div className={`w-20 h-20 rounded-full ${phase.lightBg} border-4 ${phase.borderColor} flex items-center justify-center flex-col gap-1 mb-4 shadow-sm`}>
+                            <div className={`text-2xl font-bold text-center ${phase.textColor}`}>
+                              {phase.count}
+                            </div>
+                            <div className="text-xs text-muted-foreground text-center leading-tight">proyectos</div>
                           </div>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm font-semibold text-foreground">{phase.label}</p>
-                          {favoriteProjects.length > 0 && (
-                            <p className="text-xs text-muted-foreground">
-                              {Math.round((phase.count / favoriteProjects.length) * 100)}%
-                            </p>
+                          
+                          {/* Phase Label and Percentage */}
+                          <div className="text-center min-h-12 flex flex-col justify-center">
+                            <p className="text-sm font-semibold text-foreground">{phase.label}</p>
+                            <p className="text-xs font-medium text-muted-foreground">{percentage}%</p>
+                          </div>
+                          
+                          {/* Progress Bar */}
+                          <div className="w-12 h-1.5 bg-muted rounded-full mt-3 overflow-hidden">
+                            <div 
+                              className={`h-full ${phase.progressColor} rounded-full transition-all duration-500`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          
+                          {/* Connector */}
+                          {i < timelinePhases.length - 1 && (
+                            <div className="absolute w-8 h-0.5 bg-muted mt-10 ml-10 transform translate-x-20" />
                           )}
                         </div>
+                      )
+                    })}
+                  </div>
+                  
+                  {/* Horizontal connector line */}
+                  <div className="flex items-center justify-between px-2 -mt-6">
+                    {timelinePhases.map((_, i) => (
+                      <div key={i} className="flex-1">
+                        {i < timelinePhases.length - 1 && (
+                          <div className="h-0.5 bg-muted mx-2" />
+                        )}
                       </div>
-                      
-                      {/* Connector arrow */}
-                      {i < timelinePhases.length - 1 && (
-                        <div className="hidden sm:block text-primary opacity-40 text-lg">→</div>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
 
