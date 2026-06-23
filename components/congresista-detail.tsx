@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { getCongresistaTotalStats } from '@/lib/congresistas-utils'
 import { proyectos, sectores } from '@/lib/data'
 import type { Congresista, ProyectoLey } from '@/lib/types'
@@ -32,6 +32,7 @@ import { SortableHead } from '@/components/ui/sortable-head'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { Input } from '@/components/ui/input'
 import { HitosClaveCard } from '@/components/hitos-clave-card'
+import { ProcessTimeline } from '@/components/process-timeline'
 
 interface CongresistDetailProps {
   congresista: Congresista
@@ -646,41 +647,29 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
           </CardContent>
         </Card>
 
-        {/* Estado de proyectos */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Proyectos regulatorios por estado</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {statusChartData && statusChartData.length > 0 ? (
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statusChartData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ estado, count }) => `${estado}: ${count}`}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="count"
-                    >
-                      {statusChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => `${value} proyectos`} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="h-[300px] flex items-center justify-center">
+        {/* Estado de proyectos - Fases del proceso legislativo */}
+        {statusChartData && statusChartData.length > 0 ? (
+          <ProcessTimeline
+            phases={statusChartData.map(item => ({
+              id: item.estado,
+              label: item.estado,
+              count: item.count
+            }))}
+            title="Fases del proceso legislativo"
+            description="Distribución de proyectos por estado en el proceso legislativo"
+          />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Fases del proceso legislativo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[200px] flex items-center justify-center">
                 <p className="text-muted-foreground">No hay datos disponibles</p>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
       )}
 
