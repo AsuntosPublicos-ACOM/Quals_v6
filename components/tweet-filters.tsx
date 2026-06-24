@@ -92,17 +92,17 @@ export function TweetFiltersPanel({
   const hasActiveFilters = activeFilterCount > 0
 
   return (
-    <Card className="col-span-12 lg:col-span-3 border-slate-200 dark:border-slate-700 sticky top-4 max-h-[calc(100vh-120px)] overflow-y-auto">
+    <Card className="border-slate-200 dark:border-slate-700 bg-gradient-to-br from-slate-50 to-slate-50/50 dark:from-slate-900/20 dark:to-slate-900/10">
       <CardHeader className="pb-4 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-              <Settings2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 shadow-sm">
+              <Settings2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <CardTitle className="text-base">Filtros</CardTitle>
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-slate-50">Filtros</CardTitle>
               {hasActiveFilters && (
-                <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-0.5">
+                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-0.5">
                   {activeFilterCount} activo{activeFilterCount > 1 ? 's' : ''}
                 </p>
               )}
@@ -121,7 +121,7 @@ export function TweetFiltersPanel({
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 pt-4">
+      <CardContent className="space-y-4 pt-5">
         {filterOrder.includes('fechas') && (
           <>
             {/* Filtro de Fechas */}
