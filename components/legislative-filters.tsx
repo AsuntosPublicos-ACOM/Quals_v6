@@ -3,9 +3,13 @@
 import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ChevronDown, X } from 'lucide-react'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ChevronDown, X, Calendar as CalendarIcon } from 'lucide-react'
 import { MultiSelect } from '@/components/ui/multi-select'
 import type { Congresista } from '@/lib/types'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 
 interface LegislativeFiltersProps {
   congresistas: Congresista[]
@@ -219,31 +223,76 @@ export function LegislativeFilters({ congresistas, onFiltersChange }: Legislativ
           <div className="space-y-2">
             <label className="text-xs font-semibold text-foreground">Período</label>
             <div className="grid grid-cols-2 gap-3">
+              {/* Desde */}
               <div className="space-y-1">
                 <label htmlFor="dateFrom" className="text-xs text-muted-foreground">Desde</label>
-                <input
-                  id="dateFrom"
-                  type="text"
-                  placeholder="dd/mm/aaaa"
-                  value={dateFrom}
-                  onChange={(e) => handleDateFromChange(e.target.value)}
-                  onBlur={() => validateDateRange(dateFrom, dateTo)}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label="Fecha desde"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                      id="dateFrom"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateFrom ? dateFrom : 'Seleccionar fecha'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateFrom ? parseDate(dateFrom) || undefined : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          handleDateFromChange(formatDate(date))
+                        }
+                      }}
+                      disabled={(date) => {
+                        if (dateTo) {
+                          const toDate = parseDate(dateTo)
+                          return toDate ? date > toDate : false
+                        }
+                        return false
+                      }}
+                      locale={es}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
+
+              {/* Hasta */}
               <div className="space-y-1">
                 <label htmlFor="dateTo" className="text-xs text-muted-foreground">Hasta</label>
-                <input
-                  id="dateTo"
-                  type="text"
-                  placeholder="dd/mm/aaaa"
-                  value={dateTo}
-                  onChange={(e) => handleDateToChange(e.target.value)}
-                  onBlur={() => validateDateRange(dateFrom, dateTo)}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label="Fecha hasta"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                      id="dateTo"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateTo ? dateTo : 'Seleccionar fecha'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateTo ? parseDate(dateTo) || undefined : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          handleDateToChange(formatDate(date))
+                        }
+                      }}
+                      disabled={(date) => {
+                        if (dateFrom) {
+                          const fromDate = parseDate(dateFrom)
+                          return fromDate ? date < fromDate : false
+                        }
+                        return false
+                      }}
+                      locale={es}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
             {dateError && (
