@@ -45,6 +45,7 @@ export interface Congresista {
   partido: string
   region: string
   tipo: TipoLegislador
+  sector?: string // Sector principal del congresista
   foto?: string
   cargo?: string // Cargo relevante (ej: "Presidente de Comision")
   proyectosCount?: number // Proyectos presentados en este sector
