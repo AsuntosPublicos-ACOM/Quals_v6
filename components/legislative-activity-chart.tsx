@@ -190,12 +190,8 @@ export function LegislativeActivityChart({
       <ComposedChart data={chartData} margin={{ top: 20, right: 40, left: 10, bottom: 50 }}>
         <defs>
           <linearGradient id="colorSector" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.9}/>
-            <stop offset="95%" stopColor="#ef4444" stopOpacity={0.6}/>
-          </linearGradient>
-          <linearGradient id="colorOtros" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#d1d5db" stopOpacity={0.6}/>
-            <stop offset="95%" stopColor="#d1d5db" stopOpacity={0.3}/>
+            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+            <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.5} />
@@ -220,13 +216,10 @@ export function LegislativeActivityChart({
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--accent) / 0.1)' }} />
         <Legend wrapperStyle={{ paddingTop: 20 }} formatter={(value) => (
           <span style={{ fontSize: 12 }}>
-            {value === 'publicacionesSector' ? 'Publicaciones (sector)' : 
-             value === 'publicacionesOtros' ? 'Publicaciones (otros)' :
-             'Proyectos presentados'}
+            {value === 'publicacionesSector' ? 'Publicaciones (sector)' : 'Proyectos presentados'}
           </span>
         )} />
-        <Bar yAxisId="left" dataKey="publicacionesSector" fill="url(#colorSector)" stackId="a" radius={[6, 6, 0, 0]} />
-        <Bar yAxisId="left" dataKey="publicacionesOtros" fill="url(#colorOtros)" stackId="a" />
+        <Bar yAxisId="left" dataKey="publicacionesSector" fill="url(#colorSector)" radius={[6, 6, 0, 0]} />
         <Line yAxisId="right" type="natural" dataKey="proyectosLey" stroke="#000000" strokeWidth={3} dot={{ fill: '#000000', r: 5, stroke: 'hsl(var(--background))', strokeWidth: 2 }} />
       </ComposedChart>
       </ResponsiveContainer>
