@@ -1,154 +1,228 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import type { Congresista } from '@/lib/types'
-import type { LegislativeFilterState } from './legislative-filters'
+import type { HeatmapFilterState } from './heatmap-filters'
+import { HeatmapFilters } from './heatmap-filters'
 
 interface PostingFrequencyHeatmapProps {
   tweets: any[]
   congresistas: Congresista[]
-  filters: LegislativeFilterState
+  filters?: HeatmapFilterState
 }
 
-type PostingFrequency = 'Muy activo' | 'Activo regular' | 'Poco activo'
-type ProjectCount = 'Pocos (1-5)' | 'Moderados (6-15)' | 'Muchos (16+)'
+type TweetRange = 'Más de 60 tuits' | 'Entre 21 y 60 tuits' | 'Menos de 20 tuits'
+type ProjectRange = 'Ningún PL' | '1 a 2 PL' | '3 a 5 PL'
 
-interface HeatmapData {
-  positing: PostingFrequency
-  'Pocos (1-5)': number
-  'Moderados (6-15)': number
-  'Muchos (16+)': number
+// Mock data generator con nombres realistas
+function generateMockLegislators(): Array<{
+  nombre: string
+  tuits: number
+  proyectos: number
+  sector: string
+}> {
+  const nombres = [
+    'Juan García López', 'María Rodríguez Silva', 'Carlos Pérez Martínez',
+    'Ana López García', 'David Sánchez Ruiz', 'Laura Martín García',
+    'Roberto Díaz López', 'Carmen Fernández García', 'Miguel Angel Reyes',
+    'Isabel García López', 'Francisco Rodríguez García', 'Teresa Sánchez Martín',
+    'José Luis García Ruiz', 'Marta López Fernández', 'Antonio Pérez García',
+    'Rosa María Martínez López', 'Manuel García López', 'Susana Rodríguez García',
+    'Pedro Sánchez García', 'Marta Martínez Ruiz', 'Luis García Fernández',
+    'Elena López García', 'Javier Pérez López', 'Beatriz García Martínez',
+    'Fernando Rodríguez López', 'Marta García López', 'Raúl Sánchez Ruiz',
+    'Marina López Pérez', 'Sergio García Rodríguez', 'Claudia Martínez García',
+    'Andrés Pérez García', 'Paola López Rodríguez', 'Cristian García López',
+    'Victoria Sánchez García', 'Bruno López Martínez', 'Alejandra García Ruiz',
+    'Eduardo Rodríguez García', 'Daniela López García', 'Guillermo Pérez López',
+    'Gabriela García Martínez', 'Marcelo Sánchez López', 'Roxana López García',
+    'Hernán Rodríguez Pérez', 'Silvina García López', 'Jorge López Rodríguez',
+    'Natalia Sánchez García', 'Matías García López', 'Verónica Pérez García'
+  ]
+
+  const sectores = ['Salud', 'Educación', 'Economía', 'Infraestructura', 'Agricultura', 'Energía', 'Minería']
+
+  return nombres.map(nombre => ({
+    nombre,
+    tuits: Math.floor(Math.random() * 90) + 5,
+    proyectos: Math.floor(Math.random() * 6),
+    sector: sectores[Math.floor(Math.random() * sectores.length)]
+  }))
 }
 
-export function PostingFrequencyHeatmap({ tweets, congresistas, filters }: PostingFrequencyHeatmapProps) {
-  const heatmapData = useMemo(() => {
-    // If no tweets filtered, get top 3 congresistas by total tweet count
-    const tweetsToUse = tweets.length === 0 
-      ? congresistas.flatMap(c => c.tweets || [])
-      : tweets
+interface CellData {
+  nombres: string[]
+  count: number
+}
 
-    // If no tweets, use top 3 by total tweet count
-    let congreistasToAnalyze = congresistas
-    if (tweets.length === 0) {
-      const tweetCountsByIds = new Map<string, number>()
-      congresistas.forEach(c => {
-        const count = c.tweets?.length || 0
-        tweetCountsByIds.set(c.id, count)
-      })
-      congreistasToAnalyze = congresistas
-        .sort((a, b) => (tweetCountsByIds.get(b.id) || 0) - (tweetCountsByIds.get(a.id) || 0))
-        .slice(0, 3)
+interface ExpandedCell {
+  row: TweetRange
+  col: ProjectRange
+}
+
+export function PostingFrequencyHeatmap({
+  tweets,
+  congresistas,
+  filters
+}: PostingFrequencyHeatmapProps) {
+  const [localFilters, setLocalFilters] = useState<HeatmapFilterState>({
+    dateFrom: filters?.dateFrom,
+    dateTo: filters?.dateTo,
+    sectors: filters?.sectors || []
+  })
+  const [expandedCell, setExpandedCell] = useState<ExpandedCell | null>(null)
+
+  const { tableData, selectedSector, allSectors } = useMemo(() => {
+    const mockData = generateMockLegislators()
+
+    // Apply filters
+    let filteredData = mockData
+    if (localFilters.sectors.length > 0) {
+      filteredData = filteredData.filter(l => localFilters.sectors.includes(l.sector))
     }
 
-    // Count tweets per legislator
-    const tweetCounts: Map<string, number> = new Map()
-    tweetsToUse.forEach(tweet => {
-      const autorId = tweet.autor?.id || tweet.autorId
-      tweetCounts.set(autorId, (tweetCounts.get(autorId) || 0) + 1)
-    })
-
-    // Categorize legislators
-    const postingFrequency: Map<string, PostingFrequency> = new Map()
-    const projectCounts: Map<string, ProjectCount> = new Map()
-
-    congreistasToAnalyze.forEach(c => {
-      const tweetCount = tweetCounts.get(c.id) || 0
-      const projectCount = c.proyectos?.length || 0
-
-      // Categorize posting frequency
-      if (tweetCount > 50) {
-        postingFrequency.set(c.id, 'Muy activo')
-      } else if (tweetCount >= 20) {
-        postingFrequency.set(c.id, 'Activo regular')
-      } else {
-        postingFrequency.set(c.id, 'Poco activo')
-      }
-
-      // Categorize project count
-      if (projectCount >= 16) {
-        projectCounts.set(c.id, 'Muchos (16+)')
-      } else if (projectCount >= 6) {
-        projectCounts.set(c.id, 'Moderados (6-15)')
-      } else {
-        projectCounts.set(c.id, 'Pocos (1-5)')
-      }
-    })
-
-    // Build heatmap matrix
-    const matrix: HeatmapData[] = [
-      {
-        positing: 'Muy activo',
-        'Pocos (1-5)': 0,
-        'Moderados (6-15)': 0,
-        'Muchos (16+)': 0
+    // Categorize by tweet range and project range
+    const matrix: Record<TweetRange, Record<ProjectRange, CellData>> = {
+      'Más de 60 tuits': {
+        'Ningún PL': { nombres: [], count: 0 },
+        '1 a 2 PL': { nombres: [], count: 0 },
+        '3 a 5 PL': { nombres: [], count: 0 }
       },
-      {
-        positing: 'Activo regular',
-        'Pocos (1-5)': 0,
-        'Moderados (6-15)': 0,
-        'Muchos (16+)': 0
+      'Entre 21 y 60 tuits': {
+        'Ningún PL': { nombres: [], count: 0 },
+        '1 a 2 PL': { nombres: [], count: 0 },
+        '3 a 5 PL': { nombres: [], count: 0 }
       },
-      {
-        positing: 'Poco activo',
-        'Pocos (1-5)': 0,
-        'Moderados (6-15)': 0,
-        'Muchos (16+)': 0
+      'Menos de 20 tuits': {
+        'Ningún PL': { nombres: [], count: 0 },
+        '1 a 2 PL': { nombres: [], count: 0 },
+        '3 a 5 PL': { nombres: [], count: 0 }
       }
-    ]
+    }
 
-    // Fill matrix with legislator counts
-    congreistasToAnalyze.forEach(c => {
-      const freq = postingFrequency.get(c.id)
-      const projCount = projectCounts.get(c.id)
-      if (freq && projCount) {
-        const row = matrix.find(r => r.positing === freq)
-        if (row) {
-          row[projCount as ProjectCount]++
-        }
+    filteredData.forEach(legislator => {
+      let tweetRange: TweetRange
+      if (legislator.tuits > 60) tweetRange = 'Más de 60 tuits'
+      else if (legislator.tuits >= 21) tweetRange = 'Entre 21 y 60 tuits'
+      else tweetRange = 'Menos de 20 tuits'
+
+      let projectRange: ProjectRange
+      if (legislator.proyectos === 0) projectRange = 'Ningún PL'
+      else if (legislator.proyectos <= 2) projectRange = '1 a 2 PL'
+      else projectRange = '3 a 5 PL'
+
+      matrix[tweetRange][projectRange].nombres.push(legislator.nombre)
+      matrix[tweetRange][projectRange].count++
+    })
+
+    // Find sector with most activity
+    const sectorCounts = new Map<string, number>()
+    mockData.forEach(l => {
+      sectorCounts.set(l.sector, (sectorCounts.get(l.sector) || 0) + 1)
+    })
+
+    let topSector = 'Minería' // default
+    let maxCount = 0
+    sectorCounts.forEach((count, sector) => {
+      if (count > maxCount) {
+        maxCount = count
+        topSector = sector
       }
     })
 
-    return matrix
-  }, [tweets, congresistas])
+    return {
+      tableData: matrix,
+      selectedSector: topSector,
+      allSectors: Array.from(sectorCounts.keys())
+    }
+  }, [localFilters])
 
-  const getCellColor = (value: number) => {
-    if (value === 0) return 'bg-muted/10 hover:bg-muted/20'
-    if (value === 1) return 'bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
-    if (value === 2) return 'bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
-    if (value < 5) return 'bg-cyan-200 dark:bg-cyan-900/40 hover:bg-cyan-300 dark:hover:bg-cyan-900/60'
-    return 'bg-blue-500 dark:bg-blue-900/70 hover:bg-blue-600 dark:hover:bg-blue-800'
-  }
+  const tweetRanges: TweetRange[] = ['Más de 60 tuits', 'Entre 21 y 60 tuits', 'Menos de 20 tuits']
+  const projectRanges: ProjectRange[] = ['Ningún PL', '1 a 2 PL', '3 a 5 PL']
 
-  const getTextColor = (value: number) => {
-    if (value === 0 || value === 1 || value === 2) return 'text-foreground'
-    if (value < 5) return 'text-foreground'
-    return 'text-white dark:text-slate-100'
+  const renderCellContent = (cellData: CellData): React.ReactNode => {
+    if (cellData.count === 0) {
+      return <span className="text-muted-foreground text-xs">—</span>
+    }
+
+    if (cellData.count <= 8) {
+      return (
+        <div className="text-xs space-y-0.5">
+          {cellData.nombres.map((nombre, idx) => (
+            <div key={idx} className="text-foreground">
+              {nombre}
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    return (
+      <button
+        onClick={() => {
+          // Find the row and col this cell belongs to
+          for (const row of tweetRanges) {
+            for (const col of projectRanges) {
+              if (tableData[row][col] === cellData) {
+                setExpandedCell({ row, col })
+                return
+              }
+            }
+          }
+        }}
+        className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+      >
+        {cellData.count} congresistas
+      </button>
+    )
   }
 
   return (
     <div className="space-y-4">
+      <HeatmapFilters
+        congresistas={congresistas}
+        onFiltersChange={setLocalFilters}
+      />
+
+      {/* Subtitle with selected sector */}
+      <p className="text-xs text-muted-foreground">
+        Sector: <span className="font-semibold text-foreground">{selectedSector}</span>
+      </p>
+
+      {/* Table */}
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-border">
-              <th className="bg-muted/50 px-4 py-3 text-left text-sm font-semibold text-foreground">Frecuencia de posteos</th>
-              <th className="bg-muted/50 px-4 py-3 text-center text-sm font-semibold text-foreground border-l border-border">Pocos (1-5)</th>
-              <th className="bg-muted/50 px-4 py-3 text-center text-sm font-semibold text-foreground border-l border-border">Moderados (6-15)</th>
-              <th className="bg-muted/50 px-4 py-3 text-center text-sm font-semibold text-foreground border-l border-border">Muchos (16+)</th>
+            <tr className="border-b border-border bg-muted/50">
+              <th className="px-4 py-3 text-left text-sm font-bold text-foreground border-r border-border">
+                Frecuencia de tuits
+              </th>
+              {projectRanges.map(range => (
+                <th
+                  key={range}
+                  className="px-4 py-3 text-center text-sm font-bold text-foreground border-r border-border last:border-r-0"
+                >
+                  {range}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {heatmapData.map((row, rowIdx) => (
-              <tr key={row.positing} className={rowIdx < heatmapData.length - 1 ? 'border-b border-border' : ''}>
-                <td className="bg-muted/30 px-4 py-3 text-sm font-medium text-foreground">{row.positing}</td>
-                {(['Pocos (1-5)', 'Moderados (6-15)', 'Muchos (16+)'] as const).map((colKey) => (
+            {tweetRanges.map((tweetRange, rowIdx) => (
+              <tr
+                key={tweetRange}
+                className={rowIdx < tweetRanges.length - 1 ? 'border-b border-border' : ''}
+              >
+                <td className="px-4 py-3 text-sm font-bold text-foreground bg-muted/30 border-r border-border">
+                  {tweetRange}
+                </td>
+                {projectRanges.map(projectRange => (
                   <td
-                    key={`${row.positing}-${colKey}`}
-                    className={`border-l border-border px-4 py-3 text-center font-bold text-base transition-all duration-200 ${getCellColor(row[colKey])} ${getTextColor(row[colKey])}`}
+                    key={`${tweetRange}-${projectRange}`}
+                    className="px-4 py-3 text-sm border-r border-border last:border-r-0 bg-background hover:bg-muted/30 transition-colors"
                   >
-                    <div className="flex items-center justify-center">
-                      <span>{row[colKey]}</span>
-                    </div>
+                    {renderCellContent(tableData[tweetRange][projectRange])}
                   </td>
                 ))}
               </tr>
@@ -156,26 +230,32 @@ export function PostingFrequencyHeatmap({ tweets, congresistas, filters }: Posti
           </tbody>
         </table>
       </div>
-      
-      {/* Leyenda */}
-      <div className="grid grid-cols-4 gap-3 pt-2">
-        <div className="flex items-center gap-2 text-xs">
-          <div className="w-4 h-4 rounded bg-muted/10"></div>
-          <span className="text-muted-foreground">Sin datos</span>
+
+      {/* Expanded cell modal */}
+      {expandedCell && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-lg border border-border max-w-2xl w-full max-h-96 overflow-y-auto p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-sm">
+                {expandedCell.row} × {expandedCell.col}
+              </h3>
+              <button
+                onClick={() => setExpandedCell(null)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-2">
+              {tableData[expandedCell.row][expandedCell.col].nombres.map((nombre, idx) => (
+                <div key={idx} className="text-xs text-foreground py-1">
+                  {nombre}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <div className="w-4 h-4 rounded bg-emerald-100 dark:bg-emerald-900/30"></div>
-          <span className="text-muted-foreground">Bajo (1-2)</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs">
-          <div className="w-4 h-4 rounded bg-cyan-200 dark:bg-cyan-900/40"></div>
-          <span className="text-muted-foreground">Medio (3-4)</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs">
-          <div className="w-4 h-4 rounded bg-blue-500 dark:bg-blue-900/70"></div>
-          <span className="text-muted-foreground">Alto (5+)</span>
-        </div>
-      </div>
+      )}
     </div>
   )
 }

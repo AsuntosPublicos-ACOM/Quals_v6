@@ -169,18 +169,15 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
         </div>
 
         {/* Gráfico 2: Heatmap de Frecuencia de Posteos vs Proyectos */}
-        <div className="space-y-3">
-          <div className="space-y-1">
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="mb-4 space-y-1">
             <h3 className="text-sm font-semibold text-foreground">Correlación: Frecuencia de posteos vs Proyectos presentados</h3>
-            <p className="text-xs text-muted-foreground">Matriz que muestra la relación entre actividad en redes y producción legislativa</p>
+            <p className="text-xs text-muted-foreground">Tabla de contingencia que muestra la relación entre actividad en redes y producción legislativa</p>
           </div>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <PostingFrequencyHeatmap
-              tweets={tweets}
-              congresistas={congresistas}
-              filters={legislativeFilters}
-            />
-          </div>
+          <PostingFrequencyHeatmap
+            tweets={tweets}
+            congresistas={congresistas}
+          />
         </div>
       </TabsContent>
     </Tabs>
