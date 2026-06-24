@@ -13,7 +13,6 @@ interface LegislativeFiltersProps {
 }
 
 export interface LegislativeFilterState {
-  periodPreset: 'year' | '2021-2025' | 'all'
   dateFrom?: Date
   dateTo?: Date
   sectors: string[]
@@ -23,10 +22,55 @@ export interface LegislativeFilterState {
 
 export function LegislativeFilters({ congresistas, onFiltersChange }: LegislativeFiltersProps) {
   const [isExpanded, setIsExpanded] = useState(true)
-  const [periodPreset, setPeriodPreset] = useState<'year' | '2021-2025' | 'all'>('all')
+  const [dateFrom, setDateFrom] = useState<string>('')
+  const [dateTo, setDateTo] = useState<string>('')
+  const [dateError, setDateError] = useState<string>('')
   const [selectedSectors, setSelectedSectors] = useState<string[]>([])
   const [selectedPartidos, setSelectedPartidos] = useState<string[]>([])
   const [selectedLegisladores, setSelectedLegisladores] = useState<string[]>([])
+
+  // Parse dd/mm/yyyy to Date
+  const parseDate = (dateStr: string): Date | null => {
+    if (!dateStr) return null
+    const parts = dateStr.split('/')
+    if (parts.length !== 3) return null
+    const [day, month, year] = parts.map(Number)
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return null
+    if (day < 1 || day > 31 || month < 1 || month > 12) return null
+    const date = new Date(year, month - 1, day)
+    if (date.getDate() !== day) return null // Invalid day for month
+    return date
+  }
+
+  // Format Date to dd/mm/yyyy
+  const formatDate = (date: Date): string => {
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}/${month}/${year}`
+  }
+
+  // Validate date range
+  const validateDateRange = (from: string, to: string) => {
+    if (!from && !to) {
+      setDateError('')
+      return true
+    }
+    if (from && to) {
+      const fromDate = parseDate(from)
+      const toDate = parseDate(to)
+      if (!fromDate || !toDate) {
+        setDateError('Formato de fecha inválido. Use dd/mm/aaaa')
+        return false
+      }
+      if (toDate < fromDate) {
+        setDateError('Hasta no puede ser anterior a Desde')
+        return false
+      }
+    }
+    setDateError('')
+    return true
+  }
 
   // Extract unique values
   const sectors = useMemo(() => 
@@ -37,21 +81,45 @@ export function LegislativeFilters({ congresistas, onFiltersChange }: Legislativ
     [...new Set(congresistas.map(c => c.partido).filter(Boolean))] as string[]
   , [congresistas])
 
-  // Propagate changes
-  const handleChange = () => {
-    onFiltersChange({
-      periodPreset,
-      sectors: selectedSectors,
-      partidos: selectedPartidos,
-      legisladores: selectedLegisladores
-    })
+  // Update date fields with validation
+  const handleDateFromChange = (value: string) => {
+    setDateFrom(value)
+    if (validateDateRange(value, dateTo)) {
+      const fromDate = value ? parseDate(value) : undefined
+      const toDate = dateTo ? parseDate(dateTo) : undefined
+      onFiltersChange({
+        dateFrom: fromDate,
+        dateTo: toDate,
+        sectors: selectedSectors,
+        partidos: selectedPartidos,
+        legisladores: selectedLegisladores
+      })
+    }
+  }
+
+  const handleDateToChange = (value: string) => {
+    setDateTo(value)
+    if (validateDateRange(dateFrom, value)) {
+      const fromDate = dateFrom ? parseDate(dateFrom) : undefined
+      const toDate = value ? parseDate(value) : undefined
+      onFiltersChange({
+        dateFrom: fromDate,
+        dateTo: toDate,
+        sectors: selectedSectors,
+        partidos: selectedPartidos,
+        legisladores: selectedLegisladores
+      })
+    }
   }
 
   const updateSectors = (newSectors: string[]) => {
     setSelectedSectors(newSectors)
     setTimeout(() => {
+      const fromDate = dateFrom ? parseDate(dateFrom) : undefined
+      const toDate = dateTo ? parseDate(dateTo) : undefined
       onFiltersChange({
-        periodPreset,
+        dateFrom: fromDate,
+        dateTo: toDate,
         sectors: newSectors,
         partidos: selectedPartidos,
         legisladores: selectedLegisladores
@@ -62,8 +130,11 @@ export function LegislativeFilters({ congresistas, onFiltersChange }: Legislativ
   const updatePartidos = (newPartidos: string[]) => {
     setSelectedPartidos(newPartidos)
     setTimeout(() => {
+      const fromDate = dateFrom ? parseDate(dateFrom) : undefined
+      const toDate = dateTo ? parseDate(dateTo) : undefined
       onFiltersChange({
-        periodPreset,
+        dateFrom: fromDate,
+        dateTo: toDate,
         sectors: selectedSectors,
         partidos: newPartidos,
         legisladores: selectedLegisladores
@@ -74,8 +145,11 @@ export function LegislativeFilters({ congresistas, onFiltersChange }: Legislativ
   const updateLegisladores = (newLegisladores: string[]) => {
     setSelectedLegisladores(newLegisladores)
     setTimeout(() => {
+      const fromDate = dateFrom ? parseDate(dateFrom) : undefined
+      const toDate = dateTo ? parseDate(dateTo) : undefined
       onFiltersChange({
-        periodPreset,
+        dateFrom: fromDate,
+        dateTo: toDate,
         sectors: selectedSectors,
         partidos: selectedPartidos,
         legisladores: newLegisladores
@@ -83,31 +157,22 @@ export function LegislativeFilters({ congresistas, onFiltersChange }: Legislativ
     }, 0)
   }
 
-  const updatePeriod = (preset: 'year' | '2021-2025' | 'all') => {
-    setPeriodPreset(preset)
-    setTimeout(() => {
-      onFiltersChange({
-        periodPreset: preset,
-        sectors: selectedSectors,
-        partidos: selectedPartidos,
-        legisladores: selectedLegisladores
-      })
-    }, 0)
-  }
-
   const activeFiltersCount = 
-    (periodPreset !== 'all' ? 1 : 0) +
+    (dateFrom || dateTo ? 1 : 0) +
     selectedSectors.length +
     selectedPartidos.length +
     selectedLegisladores.length
 
   const handleClearAll = () => {
-    setPeriodPreset('all')
+    setDateFrom('')
+    setDateTo('')
+    setDateError('')
     setSelectedSectors([])
     setSelectedPartidos([])
     setSelectedLegisladores([])
     onFiltersChange({
-      periodPreset: 'all',
+      dateFrom: undefined,
+      dateTo: undefined,
       sectors: [],
       partidos: [],
       legisladores: []
@@ -150,32 +215,40 @@ export function LegislativeFilters({ congresistas, onFiltersChange }: Legislativ
       {/* Contenido expandible */}
       {isExpanded && (
         <div className="border-t border-border p-4 space-y-4">
-          {/* Período */}
+          {/* Período - Rango de fechas */}
           <div className="space-y-2">
             <label className="text-xs font-semibold text-foreground">Período</label>
-            <div className="flex gap-2 flex-wrap">
-              <Button
-                variant={periodPreset === 'year' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => updatePeriod('year')}
-              >
-                Último año
-              </Button>
-              <Button
-                variant={periodPreset === '2021-2025' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => updatePeriod('2021-2025')}
-              >
-                2021-2025
-              </Button>
-              <Button
-                variant={periodPreset === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => updatePeriod('all')}
-              >
-                Todo
-              </Button>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label htmlFor="dateFrom" className="text-xs text-muted-foreground">Desde</label>
+                <input
+                  id="dateFrom"
+                  type="text"
+                  placeholder="dd/mm/aaaa"
+                  value={dateFrom}
+                  onChange={(e) => handleDateFromChange(e.target.value)}
+                  onBlur={() => validateDateRange(dateFrom, dateTo)}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label="Fecha desde"
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="dateTo" className="text-xs text-muted-foreground">Hasta</label>
+                <input
+                  id="dateTo"
+                  type="text"
+                  placeholder="dd/mm/aaaa"
+                  value={dateTo}
+                  onChange={(e) => handleDateToChange(e.target.value)}
+                  onBlur={() => validateDateRange(dateFrom, dateTo)}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label="Fecha hasta"
+                />
+              </div>
             </div>
+            {dateError && (
+              <p className="text-xs text-red-600 dark:text-red-400">{dateError}</p>
+            )}
           </div>
 
           {/* Sector, Partido, Legislador */}

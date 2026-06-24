@@ -43,24 +43,9 @@ export function LegislativeActivityChart({
     // Use mock data if no tweets provided
     const mockCongresistas = generateMockData(congresistas)
     
-    // Determine period range
-    const getPeriodRange = () => {
-      const now = new Date()
-      if (filters.periodPreset === 'year') {
-        const start = new Date()
-        start.setFullYear(start.getFullYear() - 1)
-        return { start, end: now }
-      }
-      if (filters.periodPreset === '2021-2025') {
-        return { 
-          start: new Date(2021, 0, 1), 
-          end: new Date(2025, 11, 31) 
-        }
-      }
-      return { start: new Date(2020, 0, 1), end: now }
-    }
-
-    const { start: dateStart, end: dateEnd } = getPeriodRange()
+    // Determine period range - use dateFrom/dateTo or full range by default
+    const dateStart = filters.dateFrom || new Date(2020, 0, 1)
+    const dateEnd = filters.dateTo || new Date()
 
     // Apply filters
     let targetCongresistas = mockCongresistas
