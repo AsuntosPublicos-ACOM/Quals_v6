@@ -1,12 +1,13 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { Congresista, TweetFilters } from '@/lib/types'
+import type { Congresista } from '@/lib/types'
+import type { LegislativeFilterState } from './legislative-filters'
 
 interface PostingFrequencyHeatmapProps {
   tweets: any[]
   congresistas: Congresista[]
-  filters: TweetFilters
+  filters: LegislativeFilterState
 }
 
 type PostingFrequency = 'Muy activo' | 'Activo regular' | 'Poco activo'

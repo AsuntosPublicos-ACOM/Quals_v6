@@ -11,6 +11,8 @@ import { TweetWordCloud } from './tweet-word-cloud'
 import { TweetList } from './tweet-list'
 import { TweetsLegislativeChart } from './tweets-legislative-chart'
 import { PostingFrequencyHeatmap } from './posting-frequency-heatmap'
+import { LegislativeFilters, type LegislativeFilterState } from './legislative-filters'
+import { LegislativeActivityChart } from './legislative-activity-chart'
 
 interface TweetAnalysisProps {
   congresistas: Congresista[]
@@ -25,6 +27,12 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
     fechaDesde: undefined,
     fechaHasta: undefined,
     sectores: [],
+    partidos: [],
+    legisladores: []
+  })
+  const [legislativeFilters, setLegislativeFilters] = useState<LegislativeFilterState>({
+    periodPreset: 'all',
+    sectors: [],
     partidos: [],
     legisladores: []
   })
@@ -177,17 +185,23 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
           )}
         </div>
 
+        {/* Filtros consolidados */}
+        <LegislativeFilters
+          congresistas={congresistas}
+          onFiltersChange={setLegislativeFilters}
+        />
+
         {/* Gráfico 1: Tweets vs Producción Legislativa */}
         <div className="space-y-3">
           <div className="space-y-1">
             <h3 className="text-sm font-semibold text-foreground">Actividad en redes vs Producción legislativa</h3>
-            <p className="text-xs text-muted-foreground">Comparativa mensual entre publicaciones en X y proyectos de ley presentados</p>
+            <p className="text-xs text-muted-foreground">Top 10 legisladores: comparativa entre publicaciones en X y proyectos de ley presentados</p>
           </div>
           <div className="rounded-lg border border-border bg-card p-6">
-            <TweetsLegislativeChart
+            <LegislativeActivityChart
               tweets={tweets}
               congresistas={congresistas}
-              filters={filters}
+              filters={legislativeFilters}
             />
           </div>
         </div>
@@ -196,13 +210,13 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
         <div className="space-y-3">
           <div className="space-y-1">
             <h3 className="text-sm font-semibold text-foreground">Correlación: Frecuencia de posteos vs Proyectos presentados</h3>
-            <p className="text-xs text-muted-foreground">Matriz que muestra la relación entre actividad en redes y producción legislativa por congresista</p>
+            <p className="text-xs text-muted-foreground">Matriz que muestra la relación entre actividad en redes y producción legislativa</p>
           </div>
           <div className="rounded-lg border border-border bg-card p-6">
             <PostingFrequencyHeatmap
               tweets={tweets}
               congresistas={congresistas}
-              filters={filters}
+              filters={legislativeFilters}
             />
           </div>
         </div>
