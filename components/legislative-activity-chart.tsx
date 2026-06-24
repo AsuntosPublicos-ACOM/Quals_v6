@@ -188,12 +188,6 @@ export function LegislativeActivityChart({
       />
       <ResponsiveContainer width="100%" height={400}>
       <ComposedChart data={chartData} margin={{ top: 20, right: 40, left: 10, bottom: 50 }}>
-        <defs>
-          <linearGradient id="colorSector" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
-            <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
-          </linearGradient>
-        </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.5} />
         <XAxis 
           dataKey="periodo" 
@@ -219,7 +213,7 @@ export function LegislativeActivityChart({
             {value === 'publicacionesSector' ? 'Publicaciones (sector)' : 'Proyectos presentados'}
           </span>
         )} />
-        <Bar yAxisId="left" dataKey="publicacionesSector" fill="url(#colorSector)" radius={[6, 6, 0, 0]} />
+        <Bar yAxisId="left" dataKey="publicacionesSector" fill="#ef4444" radius={[6, 6, 0, 0]} />
         <Line yAxisId="right" type="natural" dataKey="proyectosLey" stroke="#000000" strokeWidth={3} dot={{ fill: '#000000', r: 5, stroke: 'hsl(var(--background))', strokeWidth: 2 }} />
       </ComposedChart>
       </ResponsiveContainer>
