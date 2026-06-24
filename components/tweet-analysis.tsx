@@ -105,24 +105,8 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
 
       {/* TAB 1: ACTIVIDAD EN X */}
       <TabsContent value="actividad-x" className="space-y-6">
-        {/* Resumen de datos - Tarjetas simplificadas */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-xl border border-blue-200 dark:border-blue-800/50 p-4 bg-gradient-to-br from-blue-50 to-blue-50/50 dark:from-blue-900/20 dark:to-blue-900/10">
-            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Total de publicaciones</p>
-            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">{tweets.length}</p>
-          </div>
-          <div className="rounded-xl border border-cyan-200 dark:border-cyan-800/50 p-4 bg-gradient-to-br from-cyan-50 to-cyan-50/50 dark:from-cyan-900/20 dark:to-cyan-900/10">
-            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Publicaciones filtradas</p>
-            <p className="text-3xl font-bold text-cyan-600 dark:text-cyan-400 mt-2">{filteredTweets.length}</p>
-          </div>
-          <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/50 p-4 bg-gradient-to-br from-emerald-50 to-emerald-50/50 dark:from-emerald-900/20 dark:to-emerald-900/10">
-            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Autores</p>
-            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{authorCount}</p>
-          </div>
-        </div>
-
-        {/* Grid principal: Filtros (Izquierda) + Nube (Derecha) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Grid principal: Filtros (Izquierda) + Nube (Derecha) - Same height */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Filtros - Izquierda (1/3) */}
           <div className="lg:col-span-1">
             <TweetFiltersPanel
@@ -136,8 +120,8 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
           </div>
 
           {/* Nube de palabras - Derecha (2/3) */}
-          <div className="lg:col-span-2">
-            <div className="rounded-lg border border-border bg-card p-6 h-96 lg:h-[500px]">
+          <div className="lg:col-span-2 h-full">
+            <div className="rounded-lg border border-border bg-card p-6 h-full min-h-96">
               <h3 className="text-sm font-semibold mb-4">Nube de palabras</h3>
               <TweetWordCloud
                 words={wordFrequencies}
