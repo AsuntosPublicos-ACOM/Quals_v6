@@ -185,7 +185,7 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
           </div>
           <div className="rounded-lg border border-border bg-card p-6">
             <TweetsLegislativeChart
-              tweets={filteredTweets}
+              tweets={tweets}
               congresistas={congresistas}
               filters={filters}
             />
@@ -200,7 +200,7 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
           </div>
           <div className="rounded-lg border border-border bg-card p-6">
             <PostingFrequencyHeatmap
-              tweets={filteredTweets}
+              tweets={tweets}
               congresistas={congresistas}
               filters={filters}
             />
