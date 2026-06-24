@@ -156,25 +156,16 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
 
       {/* TAB 2: PRODUCCIÓN LEGISLATIVA/REDES */}
       <TabsContent value="produccion-legislativa" className="space-y-8">
-        {/* Filtros consolidados */}
-        <LegislativeFilters
-          congresistas={congresistas}
-          onFiltersChange={setLegislativeFilters}
-        />
-
         {/* Gráfico 1: Tweets vs Producción Legislativa */}
-        <div className="space-y-3">
-          <div className="space-y-1">
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="mb-4 space-y-1">
             <h3 className="text-sm font-semibold text-foreground">Actividad en redes vs Producción legislativa</h3>
-            <p className="text-xs text-muted-foreground">Top 10 legisladores: comparativa entre publicaciones en X y proyectos de ley presentados</p>
+            <p className="text-xs text-muted-foreground">Comparativa entre publicaciones en X y proyectos de ley presentados por semestre</p>
           </div>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <LegislativeActivityChart
-              tweets={tweets}
-              congresistas={congresistas}
-              filters={legislativeFilters}
-            />
-          </div>
+          <LegislativeActivityChart
+            tweets={tweets}
+            congresistas={congresistas}
+          />
         </div>
 
         {/* Gráfico 2: Heatmap de Frecuencia de Posteos vs Proyectos */}
