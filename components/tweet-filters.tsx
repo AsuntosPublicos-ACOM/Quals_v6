@@ -196,7 +196,7 @@ export function TweetFiltersPanel({
                   <MultiSelect
                     options={sectores.map(s => ({ value: s.id, label: s.name }))}
                     selected={filters.sectores}
-                    onSelectionChange={handleSectoresChange}
+                    onChange={handleSectoresChange}
                     placeholder="Seleccionar sectores..."
                   />
                 </div>
@@ -233,7 +233,7 @@ export function TweetFiltersPanel({
                   <MultiSelect
                     options={partidos.map(p => ({ value: p, label: p }))}
                     selected={filters.partidos}
-                    onSelectionChange={handlePartidosChange}
+                    onChange={handlePartidosChange}
                     placeholder="Seleccionar partidos..."
                   />
                 </div>
@@ -270,7 +270,7 @@ export function TweetFiltersPanel({
                   <MultiSelect
                     options={legisladores.map(l => ({ value: l.id, label: l.nombre }))}
                     selected={filters.legisladores}
-                    onSelectionChange={handleLegisladoresChange}
+                    onChange={handleLegisladoresChange}
                     placeholder="Seleccionar legisladores..."
                   />
                 </div>
