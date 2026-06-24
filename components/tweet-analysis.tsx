@@ -9,7 +9,6 @@ import { filterTweetsByFilters, generateWordFrequencies } from '@/lib/tweet-util
 import { TweetFiltersPanel } from './tweet-filters'
 import { TweetWordCloud } from './tweet-word-cloud'
 import { TweetList } from './tweet-list'
-import { TweetsActivityChart } from './tweets-activity-chart'
 import { TweetsLegislativeChart } from './tweets-legislative-chart'
 import { PostingFrequencyHeatmap } from './posting-frequency-heatmap'
 
@@ -146,21 +145,6 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
                 selectedWord={selectedWord}
               />
             </div>
-          </div>
-        </div>
-
-        {/* Gráfico: Actividad en X vs Producción Legislativa */}
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-foreground">Actividad en X vs Producción legislativa</h3>
-            <p className="text-xs text-muted-foreground">Comparativa mensual entre publicaciones en X y proyectos de ley presentados</p>
-          </div>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <TweetsActivityChart
-              tweets={filteredTweets}
-              congresistas={congresistas}
-              filters={filters}
-            />
           </div>
         </div>
 
