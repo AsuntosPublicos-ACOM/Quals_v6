@@ -299,37 +299,40 @@ export function ChartActivityFilters({ congresistas, onFiltersChange }: ChartAct
             )}
           </div>
 
-          {/* Sector */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">Sector</label>
-            <MultiSelect
-              options={sectors.map(s => ({ id: s, label: s }))}
-              selected={selectedSectors}
-              onSelectionChange={updateSectors}
-              placeholder="Seleccionar sectores..."
-            />
-          </div>
+          {/* Sector, Partido, Legislador - Lado a lado */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Sector */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">Sector</label>
+              <MultiSelect
+                options={sectors.map(s => ({ id: s, label: s }))}
+                selected={selectedSectors}
+                onSelectionChange={updateSectors}
+                placeholder="Seleccionar..."
+              />
+            </div>
 
-          {/* Partido */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">Partido</label>
-            <MultiSelect
-              options={partidos.map(p => ({ id: p, label: p }))}
-              selected={selectedPartidos}
-              onSelectionChange={updatePartidos}
-              placeholder="Seleccionar partidos..."
-            />
-          </div>
+            {/* Partido */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">Partido</label>
+              <MultiSelect
+                options={partidos.map(p => ({ id: p, label: p }))}
+                selected={selectedPartidos}
+                onSelectionChange={updatePartidos}
+                placeholder="Seleccionar..."
+              />
+            </div>
 
-          {/* Legislador */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">Legislador</label>
-            <MultiSelect
-              options={legisladores}
-              selected={selectedLegisladores}
-              onSelectionChange={updateLegisladores}
-              placeholder="Seleccionar legisladores..."
-            />
+            {/* Legislador */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">Legislador</label>
+              <MultiSelect
+                options={legisladores}
+                selected={selectedLegisladores}
+                onSelectionChange={updateLegisladores}
+                placeholder="Seleccionar..."
+              />
+            </div>
           </div>
         </div>
       )}
