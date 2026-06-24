@@ -121,21 +121,9 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
           </div>
         </div>
 
-        {/* Grid principal: Nube (Izquierda) + Filtros (Derecha) */}
+        {/* Grid principal: Filtros (Izquierda) + Nube (Derecha) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Nube de palabras - Izquierda (2/3) */}
-          <div className="lg:col-span-2">
-            <div className="rounded-lg border border-border bg-card p-6 h-96 lg:h-[500px]">
-              <h3 className="text-sm font-semibold mb-4">Nube de palabras</h3>
-              <TweetWordCloud
-                words={wordFrequencies}
-                onWordClick={handleWordClick}
-                selectedWord={selectedWord}
-              />
-            </div>
-          </div>
-
-          {/* Filtros - Derecha (1/3) */}
+          {/* Filtros - Izquierda (1/3) */}
           <div className="lg:col-span-1">
             <TweetFiltersPanel
               filters={filters}
@@ -145,6 +133,18 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
               sectores={sectores}
               filterOrder={['fechas', 'sectores', 'partidos', 'legisladores']}
             />
+          </div>
+
+          {/* Nube de palabras - Derecha (2/3) */}
+          <div className="lg:col-span-2">
+            <div className="rounded-lg border border-border bg-card p-6 h-96 lg:h-[500px]">
+              <h3 className="text-sm font-semibold mb-4">Nube de palabras</h3>
+              <TweetWordCloud
+                words={wordFrequencies}
+                onWordClick={handleWordClick}
+                selectedWord={selectedWord}
+              />
+            </div>
           </div>
         </div>
 
