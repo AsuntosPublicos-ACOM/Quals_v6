@@ -105,29 +105,32 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
 
       {/* TAB 1: ACTIVIDAD EN X */}
       <TabsContent value="actividad-x" className="space-y-6">
-        {/* Grid principal: Filtros (Izquierda 50%) + Nube (Derecha 50%) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          {/* Filtros - Izquierda (50%) */}
-          <div>
-            <TweetFiltersPanel
-              filters={filters}
-              onFiltersChange={setFilters}
-              partidos={partidos}
-              legisladores={legisladores}
-              sectores={sectores}
-              filterOrder={['fechas', 'sectores', 'partidos', 'legisladores']}
-            />
-          </div>
-
-          {/* Nube de palabras - Derecha (50%) */}
-          <div className="h-full">
-            <div className="rounded-lg border border-border bg-card p-6 h-full min-h-96">
-              <h3 className="text-sm font-semibold mb-4">Nube de palabras</h3>
-              <TweetWordCloud
-                words={wordFrequencies}
-                onWordClick={handleWordClick}
-                selectedWord={selectedWord}
+        {/* Filtros + Nube juntos en una sección */}
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Filtros - Izquierda (50%) */}
+            <div>
+              <h3 className="text-sm font-semibold mb-4">Filtros</h3>
+              <TweetFiltersPanel
+                filters={filters}
+                onFiltersChange={setFilters}
+                partidos={partidos}
+                legisladores={legisladores}
+                sectores={sectores}
+                filterOrder={['fechas', 'sectores', 'partidos', 'legisladores']}
               />
+            </div>
+
+            {/* Nube de palabras - Derecha (50%) */}
+            <div>
+              <h3 className="text-sm font-semibold mb-4">Nube de palabras</h3>
+              <div className="h-full">
+                <TweetWordCloud
+                  words={wordFrequencies}
+                  onWordClick={handleWordClick}
+                  selectedWord={selectedWord}
+                />
+              </div>
             </div>
           </div>
         </div>
