@@ -105,10 +105,10 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
 
       {/* TAB 1: ACTIVIDAD EN X */}
       <TabsContent value="actividad-x" className="space-y-6">
-        {/* Grid principal: Filtros (Izquierda) + Nube (Derecha) - Same height */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* Filtros - Izquierda (1/3) */}
-          <div className="lg:col-span-1">
+        {/* Grid principal: Filtros (Izquierda 50%) + Nube (Derecha 50%) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* Filtros - Izquierda (50%) */}
+          <div>
             <TweetFiltersPanel
               filters={filters}
               onFiltersChange={setFilters}
@@ -119,8 +119,8 @@ export function TweetAnalysis({ congresistas, sectores }: TweetAnalysisProps) {
             />
           </div>
 
-          {/* Nube de palabras - Derecha (2/3) */}
-          <div className="lg:col-span-2 h-full">
+          {/* Nube de palabras - Derecha (50%) */}
+          <div className="h-full">
             <div className="rounded-lg border border-border bg-card p-6 h-full min-h-96">
               <h3 className="text-sm font-semibold mb-4">Nube de palabras</h3>
               <TweetWordCloud
