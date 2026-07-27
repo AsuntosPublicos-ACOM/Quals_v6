@@ -90,15 +90,50 @@ export function FavoritesView({
 
   const { sort: plSort, toggleSort: togglePlSort, sortedData: sortedPL } = useSortableTable(filteredPL, { column: 'fechaPresentacion', direction: 'desc' })
 
-  // Funnel counts: nivel N includes all projects with nivel >= N
-  const funnelSteps = [
-    { label: 'Todos', nivel: null, count: favoriteProjects.length },
-    { label: 'Nivel 2+', nivel: 2, count: favoriteProjects.filter(p => (p.nivel ?? 1) >= 2).length },
-    { label: 'Nivel 3+', nivel: 3, count: favoriteProjects.filter(p => (p.nivel ?? 1) >= 3).length },
-    { label: 'Nivel 4+', nivel: 4, count: favoriteProjects.filter(p => (p.nivel ?? 1) >= 4).length },
-    { label: 'Nivel 5', nivel: 5, count: favoriteProjects.filter(p => (p.nivel ?? 1) >= 5).length },
+  // Timeline phases for legislative process - count based on tipoMedida
+  const plCount = favoriteProjects.filter(p => p.tipoMedida === 'proyecto_ley').length
+  const dictamenCount = favoriteProjects.filter(p => p.tipoMedida === 'dictamen').length
+  const debateCount = favoriteProjects.filter(p => p.tipoMedida === 'proyecto_ley' && p.estado === 'En Pleno').length
+  const aprobadaCount = favoriteProjects.filter(p => p.tipoMedida === 'ley_aprobada').length
+  
+  const timelinePhases = [
+    { 
+      id: 'pl', 
+      label: 'PL', 
+      count: plCount,
+      textColor: 'text-sky-600 dark:text-sky-400',
+      borderColor: 'border-sky-400 dark:border-sky-500',
+      progressColor: 'bg-sky-500',
+      lightBg: 'bg-sky-50 dark:bg-sky-950/40'
+    },
+    { 
+      id: 'dictamen', 
+      label: 'Dictámenes', 
+      count: dictamenCount,
+      textColor: 'text-green-600 dark:text-green-400',
+      borderColor: 'border-green-400 dark:border-green-500',
+      progressColor: 'bg-green-500',
+      lightBg: 'bg-green-50 dark:bg-green-950/40'
+    },
+    { 
+      id: 'debate', 
+      label: 'En agenda/debate', 
+      count: debateCount,
+      textColor: 'text-amber-600 dark:text-amber-400',
+      borderColor: 'border-amber-400 dark:border-amber-500',
+      progressColor: 'bg-amber-500',
+      lightBg: 'bg-amber-50 dark:bg-amber-950/40'
+    },
+    { 
+      id: 'aprobada', 
+      label: 'Ley aprobada', 
+      count: aprobadaCount,
+      textColor: 'text-purple-600 dark:text-purple-400',
+      borderColor: 'border-purple-400 dark:border-purple-500',
+      progressColor: 'bg-purple-500',
+      lightBg: 'bg-purple-50 dark:bg-purple-950/40'
+    }
   ]
-  const maxCount = funnelSteps[0].count || 1
 
   // Congresista data
   const favoriteCongList = congresistas.filter(c => favoriteCongresistas.includes(c.id))
@@ -172,53 +207,60 @@ export function FavoritesView({
             </div>
           ) : (
             <>
-              {/* Funnel - Pyramid Shape */}
-              <div className="rounded-lg border border-border bg-card p-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">Embudo de avance</p>
-                <div className="flex flex-col items-center gap-0">
-                  {funnelSteps.map((step, i) => {
-                    const widthPct = 100 - (i * 15) // 100%, 85%, 70%, 55%, 40%
-                    const isActive = selectedNivel === step.nivel
-                    const colors = [
-                      'bg-sky-500',
-                      'bg-sky-400',
-                      'bg-emerald-500',
-                      'bg-amber-500',
-                      'bg-rose-500',
-                    ]
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setSelectedNivel(isActive ? null : step.nivel)}
-                        className={`relative transition-all hover:opacity-90 ${isActive ? 'opacity-100 outline outline-2 outline-offset-1 outline-primary' : ''}`}
-                        style={{ width: `${widthPct}%` }}
-                      >
-                        {/* Trapezoid background */}
-                        <div
-                          className={`h-10 w-full ${colors[i]}`}
-                          style={{
-                            clipPath: i === funnelSteps.length - 1
-                              ? 'polygon(5% 0, 95% 0, 100% 100%, 0 100%)'
-                              : 'polygon(0 0, 100% 0, 95% 100%, 5% 100%)'
-                          }}
-                        />
-                        {/* Text centered absolutely over the shape */}
-                        <div className="absolute inset-0 flex items-center justify-center gap-2 pointer-events-none">
-                          <span className="text-white font-medium text-sm drop-shadow">{step.label}</span>
-                          <span className="text-white font-bold text-sm drop-shadow">{step.count} PL</span>
+              {/* Timeline - Horizontal Process with improved design */}
+              <div className="rounded-lg border border-border bg-card p-8">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-8">Fases del proceso legislativo</p>
+                
+                {/* Timeline Container */}
+                <div className="space-y-8">
+                  {/* Nodes Row */}
+                  <div className="flex items-center justify-between gap-2 px-2">
+                    {timelinePhases.map((phase, i) => {
+                      const totalProjects = plCount + dictamenCount + debateCount + aprobadaCount
+                      const percentage = totalProjects > 0 ? Math.round((phase.count / totalProjects) * 100) : 0
+                      return (
+                        <div key={phase.id} className="flex flex-col items-center flex-1">
+                          {/* Circle Node */}
+                          <div className={`w-20 h-20 rounded-full ${phase.lightBg} border-4 ${phase.borderColor} flex items-center justify-center mb-4 shadow-sm`}>
+                            <div className={`text-2xl font-bold text-center ${phase.textColor}`}>
+                              {phase.count}
+                            </div>
+                          </div>
+                          
+                          {/* Phase Label and Percentage */}
+                          <div className="text-center min-h-12 flex flex-col justify-center">
+                            <p className="text-sm font-semibold text-foreground">{phase.label}</p>
+                            <p className="text-xs font-medium text-muted-foreground">{percentage}%</p>
+                          </div>
+                          
+                          {/* Progress Bar */}
+                          <div className="w-12 h-1.5 bg-muted rounded-full mt-3 overflow-hidden">
+                            <div 
+                              className={`h-full ${phase.progressColor} rounded-full transition-all duration-500`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          
+                          {/* Connector */}
+                          {i < timelinePhases.length - 1 && (
+                            <div className="absolute w-8 h-0.5 bg-muted mt-10 ml-10 transform translate-x-20" />
+                          )}
                         </div>
-                      </button>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
+                  
+                  {/* Horizontal connector line */}
+                  <div className="flex items-center justify-between px-2 -mt-6">
+                    {timelinePhases.map((_, i) => (
+                      <div key={i} className="flex-1">
+                        {i < timelinePhases.length - 1 && (
+                          <div className="h-0.5 bg-muted mx-2" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                {selectedNivel !== null && (
-                  <button
-                    onClick={() => setSelectedNivel(null)}
-                    className="text-xs text-primary hover:underline mt-3 block mx-auto"
-                  >
-                    Ver todos los niveles
-                  </button>
-                )}
               </div>
 
               <div className="flex flex-wrap items-end gap-3">

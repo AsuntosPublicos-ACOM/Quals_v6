@@ -31,6 +31,7 @@ import { useSortableTable } from '@/hooks/use-sortable-table'
 import { SortableHead } from '@/components/ui/sortable-head'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { Input } from '@/components/ui/input'
+import { HitosClaveCard } from '@/components/hitos-clave-card'
 
 interface CongresistDetailProps {
   congresista: Congresista
@@ -203,182 +204,6 @@ function getUniqueTweets(tweets: typeof mockTweets): string[] {
   return Array.from(topics).sort()
 }
 
-interface TwitterActivitySectionProps {
-  congresista: Congresista
-  selectedTopic: string | null
-  onTopicSelect: (topic: string | null) => void
-}
-
-function TwitterActivitySection({ congresista, selectedTopic, onTopicSelect }: TwitterActivitySectionProps) {
-  const wordCloudData = useMemo(() => extractWordFrequencies(mockTweets), [])
-  const allTopics = useMemo(() => getUniqueTweets(mockTweets), [])
-  
-  const filteredTweets = useMemo(() => {
-    if (!selectedTopic) return mockTweets
-    return mockTweets.filter(tweet => 
-      tweet.topics.some(t => t.toLowerCase() === selectedTopic.toLowerCase()) ||
-      tweet.texto.toLowerCase().includes(selectedTopic.toLowerCase())
-    )
-  }, [selectedTopic])
-
-  const handleWordClick = (word: string) => {
-    if (selectedTopic === word) {
-      onTopicSelect(null)
-    } else {
-      onTopicSelect(word)
-    }
-  }
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Twitter className="h-4 w-4 text-sky-500" />
-          <CardTitle className="text-base">Actividad en X (Twitter)</CardTitle>
-        </div>
-        <a
-          href={`https://twitter.com/${congresista.nombre.toLowerCase().replace(/\s+/g, '')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
-        >
-          Ver perfil completo
-          <ExternalLink className="h-3 w-3" />
-        </a>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Word Cloud Section */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-foreground">Nube de palabras</h4>
-            <p className="text-xs text-muted-foreground">Haz clic en una palabra para filtrar</p>
-          </div>
-          <div className="bg-muted/30 rounded-lg p-4 border border-border">
-            <WordCloud 
-              words={wordCloudData} 
-              onWordClick={handleWordClick}
-              selectedWord={selectedTopic}
-            />
-          </div>
-        </div>
-
-        {/* Topic Filter Pills */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground">Filtrar por tema:</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => onTopicSelect(null)}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
-                !selectedTopic
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              )}
-            >
-              Todos
-            </button>
-            {allTopics.map(topic => (
-              <button
-                key={topic}
-                onClick={() => onTopicSelect(selectedTopic === topic ? null : topic)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-medium transition-colors capitalize",
-                  selectedTopic === topic
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                )}
-              >
-                {topic}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Tweets List */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-foreground">
-              Tweets recientes
-              {selectedTopic && (
-                <span className="ml-2 text-xs font-normal text-muted-foreground">
-                  ({filteredTweets.length} sobre &ldquo;{selectedTopic}&rdquo;)
-                </span>
-              )}
-            </h4>
-          </div>
-          
-          <div className="divide-y divide-border">
-            {filteredTweets.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                No se encontraron tweets sobre este tema
-              </div>
-            ) : (
-              filteredTweets.map((tweet) => (
-                <div key={tweet.id} className="py-3 first:pt-0 flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <p className="text-sm text-foreground leading-relaxed">{tweet.texto}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {tweet.topics.map(topic => (
-                        <button
-                          key={topic}
-                          onClick={() => onTopicSelect(selectedTopic === topic ? null : topic)}
-                          className={cn(
-                            "px-2 py-0.5 rounded text-[10px] font-medium transition-colors capitalize",
-                            selectedTopic === topic
-                              ? "bg-primary/20 text-primary"
-                              : "bg-muted text-muted-foreground hover:bg-muted/80"
-                          )}
-                        >
-                          {topic}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                      {new Date(tweet.fecha).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <MessageCircle className="h-3.5 w-3.5" />
-                        <span className="text-[11px]">{tweet.respuestas}</span>
-                      </span>
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Repeat2 className="h-3.5 w-3.5" />
-                        <span className="text-[11px]">{tweet.retweets}</span>
-                      </span>
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Heart className="h-3.5 w-3.5" />
-                        <span className="text-[11px]">{tweet.likes}</span>
-                      </span>
-                    </div>
-                    <a
-                      href={tweet.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-[11px] text-sky-500 hover:underline"
-                    >
-                      Ver en X
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        <p className="text-xs text-muted-foreground pt-4 border-t border-border">
-          Los tweets se actualizan automáticamente desde la API de X. Última actualización: hace 5 minutos.
-        </p>
-      </CardContent>
-    </Card>
-  )
-}
 
 function PerfilCualitativoCard({ texto }: { texto: string }) {
   const [expanded, setExpanded] = useState(false)
@@ -438,7 +263,6 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
   const [selectedTipoAutor, setSelectedTipoAutor] = useState<string[]>([])
   const [fechaDesde, setFechaDesde] = useState('')
   const [fechaHasta, setFechaHasta] = useState('')
-  const [selectedTweetTopic, setSelectedTweetTopic] = useState<string | null>(null)
   // Mock specific data for María Elena Torres (ID: '1')
   const isMariaTorres = congresista.id === '1' || congresista.nombre === 'Maria Elena Torres'
   
@@ -461,24 +285,24 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
   // Get all projects for this congressperson
   const congresistProjects = useMemo(() => {
     if (isMariaTorres) {
-      // Mock 16 projects for María Elena Torres
+      // Mock 16 projects for María Elena Torres with coauthors
       const mockProjects = [
-        { id: 'm001', numero: '12345-2022-CR', titulo: 'Ley de Protección de Derechos del Consumidor en Transacciones Digitales', comision: 'Economía', sectorId: 'economia', estado: 'Aprobado', probabilidadAprobacion: 85, fechaPresentacion: '2022-03-15', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Fuerza Nacional', region: 'Lima' }] },
-        { id: 'm002', numero: '12346-2022-CR', titulo: 'Modificación del Código de Protección al Consumidor', comision: 'Derechos del Consumidor', sectorId: 'derechos', estado: 'Aprobado', probabilidadAprobacion: 90, fechaPresentacion: '2022-04-10', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Fuerza Nacional', region: 'Lima' }] },
-        { id: 'm003', numero: '12347-2022-CR', titulo: 'Regulación de Servicios Financieros en Plataformas Virtuales', comision: 'Economía', sectorId: 'economia', estado: 'En Pleno', probabilidadAprobacion: 75, fechaPresentacion: '2022-05-20', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Fuerza Nacional', region: 'Lima' }] },
-        { id: 'm004', numero: '12348-2022-CR', titulo: 'Fortalecimiento de la Superintendencia de Economía', comision: 'Economía', sectorId: 'economia', estado: 'En Comisión', probabilidadAprobacion: 60, fechaPresentacion: '2022-06-05', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Fuerza Nacional', region: 'Lima' }] },
-        { id: 'm005', numero: '12349-2022-CR', titulo: 'Ley de Protección al Consumidor en Servicios de Telecomunicaciones', comision: 'Derechos del Consumidor', sectorId: 'derechos', estado: 'Aprobado', probabilidadAprobacion: 88, fechaPresentacion: '2022-07-12', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Fuerza Nacional', region: 'Lima' }] },
-        { id: 'm006', numero: '12350-2023-CR', titulo: 'Regulación de Comercio Electrónico', comision: 'Economía', sectorId: 'economia', estado: 'En Comisión', probabilidadAprobacion: 70, fechaPresentacion: '2023-01-08', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Accion Popular', region: 'Lima' }] },
-        { id: 'm007', numero: '12351-2023-CR', titulo: 'Protección de Datos Personales en Consumo', comision: 'Derechos del Consumidor', sectorId: 'derechos', estado: 'En Pleno', probabilidadAprobacion: 72, fechaPresentacion: '2023-02-14', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Accion Popular', region: 'Lima' }] },
-        { id: 'm008', numero: '12352-2023-CR', titulo: 'Estándares de Calidad en Servicios Financieros', comision: 'Economía', sectorId: 'economia', estado: 'En Comisión', probabilidadAprobacion: 55, fechaPresentacion: '2023-03-10', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Accion Popular', region: 'Lima' }] },
-        { id: 'm009', numero: '12353-2023-CR', titulo: 'Defensa del Consumidor en Seguros', comision: 'Derechos del Consumidor', sectorId: 'derechos', estado: 'En Comisión', probabilidadAprobacion: 65, fechaPresentacion: '2023-04-05', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Accion Popular', region: 'Lima' }] },
-        { id: 'm010', numero: '12354-2023-CR', titulo: 'Reforma Tributaria para MYPES', comision: 'Trabajo', sectorId: 'trabajo', estado: 'Archivado', probabilidadAprobacion: 25, fechaPresentacion: '2023-05-18', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Accion Popular', region: 'Lima' }] },
-        { id: 'm011', numero: '12355-2023-CR', titulo: 'Inclusión Financiera para Emprendedores', comision: 'Economía', sectorId: 'economia', estado: 'En Comisión', probabilidadAprobacion: 68, fechaPresentacion: '2023-06-22', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Accion Popular', region: 'Lima' }] },
-        { id: 'm012', numero: '12356-2024-CR', titulo: 'Protección de Consumidores Vulnerables', comision: 'Derechos del Consumidor', sectorId: 'derechos', estado: 'En Pleno', probabilidadAprobacion: 80, fechaPresentacion: '2024-01-09', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Alianza para el Progreso', region: 'Lima' }] },
-        { id: 'm013', numero: '12357-2024-CR', titulo: 'Modernización del Sistema de Crédito', comision: 'Economía', sectorId: 'economia', estado: 'En Comisión', probabilidadAprobacion: 62, fechaPresentacion: '2024-02-01', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Alianza para el Progreso', region: 'Lima' }] },
-        { id: 'm014', numero: '12358-2024-CR', titulo: 'Regulación de Plataformas de Compra y Venta', comision: 'Derechos del Consumidor', sectorId: 'derechos', estado: 'En Comisión', probabilidadAprobacion: 58, fechaPresentacion: '2024-02-15', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Alianza para el Progreso', region: 'Lima' }] },
-        { id: 'm015', numero: '12359-2024-CR', titulo: 'Promoción de Ahorro en Familia Peruana', comision: 'Trabajo', sectorId: 'trabajo', estado: 'En Comisión', probabilidadAprobacion: 50, fechaPresentacion: '2024-03-05', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Alianza para el Progreso', region: 'Lima' }] },
-        { id: 'm016', numero: '12360-2024-CR', titulo: 'Acceso a Servicios Financieros en Zonas Rurales', comision: 'Trabajo', sectorId: 'trabajo', estado: 'En Comisión', probabilidadAprobacion: 55, fechaPresentacion: '2024-03-20', autores: [{ id: 'cong002', nombre: 'María Elena Torres', partido: 'Alianza para el Progreso', region: 'Lima' }] },
+        { id: 'm001', numero: '12345-2022-CR', titulo: 'Ley de Protección de Derechos del Consumidor en Transacciones Digitales', comision: 'Economía', sectorId: 'economia', estado: 'Aprobado', probabilidadAprobacion: 85, fechaPresentacion: '2022-03-15', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Fuerza Nacional', region: 'Lima' }, { id: '3', nombre: 'Rosa Gutierrez Perez', partido: 'Fuerza Nacional', region: 'La Libertad' }] },
+        { id: 'm002', numero: '12346-2022-CR', titulo: 'Modificación del Código de Protección al Consumidor', comision: 'Derechos del Consumidor', sectorId: 'derechos', estado: 'Aprobado', probabilidadAprobacion: 90, fechaPresentacion: '2022-04-10', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Fuerza Nacional', region: 'Lima' }, { id: '4', nombre: 'Jorge Ramirez Silva', partido: 'Partido Popular', region: 'Cusco' }] },
+        { id: 'm003', numero: '12347-2022-CR', titulo: 'Regulación de Servicios Financieros en Plataformas Virtuales', comision: 'Economía', sectorId: 'economia', estado: 'En Pleno', probabilidadAprobacion: 75, fechaPresentacion: '2022-05-20', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Fuerza Nacional', region: 'Lima' }, { id: '5', nombre: 'Ana Lucia Fernandez', partido: 'Alianza para el Progreso', region: 'Ancash' }] },
+        { id: 'm004', numero: '12348-2022-CR', titulo: 'Fortalecimiento de la Superintendencia de Economía', comision: 'Economía', sectorId: 'economia', estado: 'En Comisión', probabilidadAprobacion: 60, fechaPresentacion: '2022-06-05', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Fuerza Nacional', region: 'Lima' }, { id: '2', nombre: 'Carlos Mendez Lopez', partido: 'Alianza para el Progreso', region: 'Arequipa' }] },
+        { id: 'm005', numero: '12349-2022-CR', titulo: 'Ley de Protección al Consumidor en Servicios de Telecomunicaciones', comision: 'Derechos del Consumidor', sectorId: 'derechos', estado: 'Aprobado', probabilidadAprobacion: 88, fechaPresentacion: '2022-07-12', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Fuerza Nacional', region: 'Lima' }, { id: '3', nombre: 'Rosa Gutierrez Perez', partido: 'Fuerza Nacional', region: 'La Libertad' }] },
+        { id: 'm006', numero: '12350-2023-CR', titulo: 'Regulación de Comercio Electrónico', comision: 'Economía', sectorId: 'economia', estado: 'En Comisión', probabilidadAprobacion: 70, fechaPresentacion: '2023-01-08', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Accion Popular', region: 'Lima' }, { id: '4', nombre: 'Jorge Ramirez Silva', partido: 'Partido Popular', region: 'Cusco' }] },
+        { id: 'm007', numero: '12351-2023-CR', titulo: 'Protección de Datos Personales en Consumo', comision: 'Derechos del Consumidor', sectorId: 'derechos', estado: 'En Pleno', probabilidadAprobacion: 72, fechaPresentacion: '2023-02-14', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Accion Popular', region: 'Lima' }, { id: '5', nombre: 'Ana Lucia Fernandez', partido: 'Alianza para el Progreso', region: 'Ancash' }] },
+        { id: 'm008', numero: '12352-2023-CR', titulo: 'Estándares de Calidad en Servicios Financieros', comision: 'Economía', sectorId: 'economia', estado: 'En Comisión', probabilidadAprobacion: 55, fechaPresentacion: '2023-03-10', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Accion Popular', region: 'Lima' }, { id: '2', nombre: 'Carlos Mendez Lopez', partido: 'Alianza para el Progreso', region: 'Arequipa' }] },
+        { id: 'm009', numero: '12353-2023-CR', titulo: 'Defensa del Consumidor en Seguros', comision: 'Derechos del Consumidor', sectorId: 'derechos', estado: 'En Comisión', probabilidadAprobacion: 65, fechaPresentacion: '2023-04-05', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Accion Popular', region: 'Lima' }, { id: '3', nombre: 'Rosa Gutierrez Perez', partido: 'Fuerza Nacional', region: 'La Libertad' }] },
+        { id: 'm010', numero: '12354-2023-CR', titulo: 'Reforma Tributaria para MYPES', comision: 'Trabajo', sectorId: 'trabajo', estado: 'Archivado', probabilidadAprobacion: 25, fechaPresentacion: '2023-05-18', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Accion Popular', region: 'Lima' }, { id: '4', nombre: 'Jorge Ramirez Silva', partido: 'Partido Popular', region: 'Cusco' }] },
+        { id: 'm011', numero: '12355-2023-CR', titulo: 'Inclusión Financiera para Emprendedores', comision: 'Economía', sectorId: 'economia', estado: 'En Comisión', probabilidadAprobacion: 68, fechaPresentacion: '2023-06-22', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Accion Popular', region: 'Lima' }, { id: '5', nombre: 'Ana Lucia Fernandez', partido: 'Alianza para el Progreso', region: 'Ancash' }] },
+        { id: 'm012', numero: '12356-2024-CR', titulo: 'Protección de Consumidores Vulnerables', comision: 'Derechos del Consumidor', sectorId: 'derechos', estado: 'En Pleno', probabilidadAprobacion: 80, fechaPresentacion: '2024-01-09', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Alianza para el Progreso', region: 'Lima' }, { id: '2', nombre: 'Carlos Mendez Lopez', partido: 'Alianza para el Progreso', region: 'Arequipa' }] },
+        { id: 'm013', numero: '12357-2024-CR', titulo: 'Modernización del Sistema de Crédito', comision: 'Economía', sectorId: 'economia', estado: 'En Comisión', probabilidadAprobacion: 62, fechaPresentacion: '2024-02-01', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Alianza para el Progreso', region: 'Lima' }, { id: '3', nombre: 'Rosa Gutierrez Perez', partido: 'Fuerza Nacional', region: 'La Libertad' }] },
+        { id: 'm014', numero: '12358-2024-CR', titulo: 'Regulación de Plataformas de Compra y Venta', comision: 'Derechos del Consumidor', sectorId: 'derechos', estado: 'En Comisión', probabilidadAprobacion: 58, fechaPresentacion: '2024-02-15', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Alianza para el Progreso', region: 'Lima' }, { id: '4', nombre: 'Jorge Ramirez Silva', partido: 'Partido Popular', region: 'Cusco' }] },
+        { id: 'm015', numero: '12359-2024-CR', titulo: 'Promoción de Ahorro en Familia Peruana', comision: 'Trabajo', sectorId: 'trabajo', estado: 'En Comisión', probabilidadAprobacion: 50, fechaPresentacion: '2024-03-05', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Alianza para el Progreso', region: 'Lima' }, { id: '5', nombre: 'Ana Lucia Fernandez', partido: 'Alianza para el Progreso', region: 'Ancash' }] },
+        { id: 'm016', numero: '12360-2024-CR', titulo: 'Acceso a Servicios Financieros en Zonas Rurales', comision: 'Trabajo', sectorId: 'trabajo', estado: 'En Comisión', probabilidadAprobacion: 55, fechaPresentacion: '2024-03-20', autores: [{ id: '1', nombre: 'María Elena Torres', partido: 'Alianza para el Progreso', region: 'Lima' }, { id: '2', nombre: 'Carlos Mendez Lopez', partido: 'Alianza para el Progreso', region: 'Arequipa' }] },
       ]
       return mockProjects as any
     }
@@ -590,7 +414,7 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
   }, [congresistProjects, congresista.id])
 
   // Mock party history for María Elena Torres
-  const partieHistory = isMariaTorres 
+  const partieHistory = (isMariaTorres 
     ? [
         { partido: 'Fuerza Nacional', fechaInicio: '2020-09', fechaFin: '2022-04' },
         { partido: 'Accion Popular', fechaInicio: '2022-05', fechaFin: '2023-08' },
@@ -598,10 +422,14 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
       ]
     : congresista.partidosHistoria || [
         { partido: congresista.partido, fechaInicio: '2024-01', fechaFin: undefined },
-      ]
+      ]).sort((a, b) => {
+        const dateA = a.fechaFin || a.fechaInicio
+        const dateB = b.fechaFin || b.fechaInicio
+        return dateB.localeCompare(dateA)
+      })
 
   // Mock positions history for María Elena Torres
-  const positionsHistory = isMariaTorres
+  const positionsHistory = (isMariaTorres
     ? [
         { cargo: 'Vicepresidenta del Congreso', fechaInicio: '2020-09', fechaFin: '2021-08' },
         { cargo: 'Miembro Comisión de Economía', fechaInicio: '2020-09', fechaFin: '2022-02' },
@@ -611,7 +439,11 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
       ]
     : congresista.cargosHistoria || (congresista.cargo ? [
         { cargo: congresista.cargo, fechaInicio: '2024-01', fechaFin: undefined }
-      ] : [])
+      ] : [])).sort((a, b) => {
+        const dateA = a.fechaFin || a.fechaInicio
+        const dateB = b.fechaFin || b.fechaInicio
+        return dateB.localeCompare(dateA)
+      })
 
   const getPartidoColor = (partido: string) => {
     const colors: Record<string, string> = {
@@ -634,16 +466,27 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
       <div className="flex flex-col lg:flex-row lg:items-start gap-6">
         {/* Name / meta */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-3">
-            <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8 shrink-0">
+          <div className="flex items-start gap-3 mb-3 flex-wrap">
+            <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8 shrink-0 mt-0.5">
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-bold text-foreground leading-tight">{congresista.nombre}</h1>
+            <div className="flex-1 flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold text-foreground leading-tight">{congresista.nombre}</h1>
+              {congresista.interesesPrincipales && congresista.interesesPrincipales.length > 0 && (
+                <div className="flex gap-1 flex-wrap">
+                  {congresista.interesesPrincipales.map((interes, idx) => (
+                    <Badge key={idx} variant="outline" className="text-[10px]">
+                      {interes}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setExportModalOpen(true)}
-              className="ml-2 gap-1.5 text-xs h-7 px-2.5 shrink-0"
+              className="gap-1.5 text-xs h-7 px-2.5 shrink-0"
             >
               <FileText className="h-3.5 w-3.5" />
               Exportar Word
@@ -704,19 +547,30 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
         )}
       </div>
 
+      {/* Perfil Cualitativo y Hitos Clave */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Perfil Cualitativo */}
+        {congresista.perfilCualitativo && (
+          <PerfilCualitativoCard texto={congresista.perfilCualitativo} />
+        )}
+        
+        {/* Hitos Clave */}
+        <HitosClaveCard hitos={congresista.hitosClaves} />
+      </div>
+
       {/* Parties and Positions History */}
-      <div className={`grid gap-6 ${congresista.tipo === 'diputado' ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
+      <div className={`grid gap-6 ${['diputado', 'senador'].includes(congresista.tipo) ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
         {/* Party History */}
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="text-base">Historial de partidos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {partieHistory.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between gap-4 p-2 border-b border-border last:border-b-0">
-                  <p className="font-medium text-sm text-foreground">{item.partido}</p>
-                  <p className="text-xs text-muted-foreground whitespace-nowrap">
+                <div key={idx} className="flex items-center justify-between gap-2 text-xs">
+                  <p className="font-medium text-foreground truncate">{item.partido}</p>
+                  <p className="text-muted-foreground whitespace-nowrap flex-shrink-0">
                     {item.fechaInicio} {item.fechaFin ? `- ${item.fechaFin}` : ''}
                   </p>
                 </div>
@@ -725,39 +579,36 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
           </CardContent>
         </Card>
 
-        {/* Positions History - solo para diputados */}
-        {congresista.tipo === 'diputado' && (
+        {/* Positions History - para diputados y senadores */}
+        {['diputado', 'senador'].includes(congresista.tipo) && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Cargos en el Congreso</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">
+              {congresista.tipo === 'diputado' ? 'Cargos en el Congreso' : 'Cargos en el Senado'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {positionsHistory.length > 0 ? (
                 positionsHistory.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between gap-4 p-2 border-b border-border last:border-b-0">
-                    <p className="font-medium text-sm text-foreground flex items-center gap-2 min-w-0">
-                      <Briefcase className="h-3.5 w-3.5 flex-shrink-0" />
+                  <div key={idx} className="flex items-center justify-between gap-2 text-xs">
+                    <p className="font-medium text-foreground flex items-center gap-1.5 min-w-0 truncate">
+                      <Briefcase className="h-3 w-3 flex-shrink-0" />
                       <span className="truncate">{item.cargo}</span>
                     </p>
-                    <p className="text-xs text-muted-foreground whitespace-nowrap">
+                    <p className="text-muted-foreground whitespace-nowrap flex-shrink-0">
                       {item.fechaInicio} {item.fechaFin ? `- ${item.fechaFin}` : ''}
                     </p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">Sin cargos registrados</p>
+                <p className="text-xs text-muted-foreground">Sin cargos registrados</p>
               )}
             </div>
           </CardContent>
         </Card>
         )}
       </div>
-
-      {/* Perfil Cualitativo */}
-      {congresista.perfilCualitativo && (
-        <PerfilCualitativoCard texto={congresista.perfilCualitativo} />
-      )}
 
       {/* Charts - solo para diputados */}
       {congresista.tipo === 'diputado' && (
@@ -795,41 +646,46 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
           </CardContent>
         </Card>
 
-        {/* Estado de proyectos */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Proyectos regulatorios por estado</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {statusChartData && statusChartData.length > 0 ? (
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statusChartData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ estado, count }) => `${estado}: ${count}`}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="count"
-                    >
-                      {statusChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => `${value} proyectos`} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
+        {/* Distribución de PL por estado - Pie chart */}
+        {statusChartData && statusChartData.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Distribución de PL por estado</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={statusChartData}
+                    dataKey="count"
+                    nameKey="estado"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label
+                  >
+                    {statusChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `${value} proyectos`} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Distribución de PL por estado</CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="h-[300px] flex items-center justify-center">
                 <p className="text-muted-foreground">No hay datos disponibles</p>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
       )}
 
@@ -1023,13 +879,6 @@ export function CongresistDetail({ congresista, onBack, onViewProject }: Congres
         </CardContent>
       </Card>
       )}
-
-      {/* Actividad en X (Twitter) con Word Cloud y filtros */}
-      <TwitterActivitySection
-        congresista={congresista}
-        selectedTopic={selectedTweetTopic}
-        onTopicSelect={setSelectedTweetTopic}
-      />
     </div>
 
     {/* Export Word Modal */}

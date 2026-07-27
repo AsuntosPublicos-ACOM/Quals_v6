@@ -32,12 +32,20 @@ export interface SectorCongresista {
   porcentajeAprobacion: number
 }
 
+export interface HitoClave {
+  id: string
+  descripcion: string
+  fecha: string // ISO 8601 format
+  tipo: 'votacion' | 'investigacion' | 'entrevista' | 'evento' | 'otro'
+}
+
 export interface Congresista {
   id: string
   nombre: string
   partido: string
   region: string
   tipo: TipoLegislador
+  sector?: string // Sector principal del congresista
   foto?: string
   cargo?: string // Cargo relevante (ej: "Presidente de Comision")
   proyectosCount?: number // Proyectos presentados en este sector
@@ -47,6 +55,8 @@ export interface Congresista {
   partidosHistoria?: Array<{ partido: string; fechaInicio: string; fechaFin?: string }>
   cargosHistoria?: Array<{ cargo: string; fechaInicio: string; fechaFin?: string }>
   perfilCualitativo?: string // Descripción cualitativa del perfil político y legislativo
+  hitosClaves?: HitoClave[] // Hitos clave cronológicos del congresista
+  interesesPrincipales?: string[] // Intereses temáticos principales (máximo 3, solo para senadores)
 }
 
 export interface ProyectoLey {
