@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Bell, User, Mail, Menu, LayoutGrid, Users, FileText, BookOpen, ChevronDown, Layers, Star } from 'lucide-react'
+import { Search, Bell, User, Mail, Menu, LayoutGrid, Users, FileText, BookOpen, ChevronDown, Layers, Star, LayoutDashboard } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -22,7 +22,7 @@ const IS_ADMIN = true
 interface HeaderProps {
   searchQuery: string
   onSearchChange: (query: string) => void
-  onNavigate?: (view: 'home' | 'sectores' | 'congresistas' | 'proyectos' | 'elperuano' | 'favoritos' | 'perfil' | 'alertas') => void
+  onNavigate?: (view: 'home' | 'sectores' | 'congresistas' | 'proyectos' | 'elperuano' | 'favoritos' | 'perfil' | 'alertas' | 'dashboard') => void
   onNavigateSector?: (sectorId: string) => void
 }
 
@@ -124,6 +124,16 @@ export function Header({ searchQuery, onSearchChange, onNavigate, onNavigateSect
               <Mail className="h-5 w-5" />
             </Button>
           )}
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onNavigate?.('dashboard')}
+            title="Dashboard"
+          >
+            <LayoutDashboard className="h-5 w-5" />
+            <span className="sr-only">Ver dashboard</span>
+          </Button>
 
           <Button
             variant="ghost"

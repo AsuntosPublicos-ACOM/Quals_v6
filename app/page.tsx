@@ -11,6 +11,7 @@ import { ElPeruanoView } from '@/components/el-peruano-view'
 import { SearchResults } from '@/components/search-results'
 import { ProfileView } from '@/components/profile-view'
 import { AlertsView } from '@/components/alerts-view'
+import { DashboardView } from '@/components/dashboard-view'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { proyectos, sectores, availableMonths, congresistas } from '@/lib/data'
@@ -34,7 +35,7 @@ export default function Home() {
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
     )
   }
-  const [mainView, setMainView] = useState<'home' | 'sectores' | 'congresistas' | 'proyectos' | 'elperuano' | 'favoritos' | 'perfil' | 'alertas'>('home')
+  const [mainView, setMainView] = useState<'home' | 'sectores' | 'congresistas' | 'proyectos' | 'elperuano' | 'favoritos' | 'perfil' | 'alertas' | 'dashboard'>('home')
   const [initialSectorId, setInitialSectorId] = useState<string | undefined>(undefined)
   const [sectorViewState, setSectorViewState] = useState<'grid' | 'sector' | 'detail'>('grid')
   const [selectedProyecto, setSelectedProyecto] = useState<ProyectoLey | null>(null)
@@ -166,6 +167,10 @@ export default function Home() {
 
         {!searchQuery.trim() && mainView === 'perfil' && (
           <ProfileView onBack={() => setMainView('home')} />
+        )}
+
+        {!searchQuery.trim() && mainView === 'dashboard' && (
+          <DashboardView onBack={() => setMainView('home')} />
         )}
 
         {!searchQuery.trim() && mainView === 'alertas' && (
