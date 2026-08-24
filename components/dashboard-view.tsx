@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   FileText,
   Target,
@@ -212,11 +212,54 @@ interface DashboardViewProps {
   onBack?: () => void
 }
 
+/** Ancho de diseño del tablero: el contenido se escala para caber en pantalla. */
+const BASE_WIDTH = 1560
+
 export function DashboardView({ onBack }: DashboardViewProps) {
   const [tab, setTab] = useState('general')
+  const frameRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
+  const [frameHeight, setFrameHeight] = useState<number | undefined>(undefined)
+
+  useEffect(() => {
+    const compute = () => {
+      const frame = frameRef.current
+      const content = contentRef.current
+      if (!frame || !content) return
+
+      const availableWidth = frame.clientWidth
+      const availableHeight = window.innerHeight - frame.getBoundingClientRect().top - 28
+      const contentHeight = content.scrollHeight
+
+      if (availableWidth <= 0 || contentHeight <= 0) return
+
+      const next = Math.min(availableWidth / BASE_WIDTH, availableHeight / contentHeight, 1)
+      setScale(next)
+      setFrameHeight(contentHeight * next)
+    }
+
+    compute()
+    const observer = new ResizeObserver(compute)
+    if (contentRef.current) observer.observe(contentRef.current)
+    window.addEventListener('resize', compute)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', compute)
+    }
+  }, [tab])
 
   return (
-    <div className="space-y-6">
+    <div ref={frameRef} className="w-full overflow-hidden" style={{ height: frameHeight }}>
+      <div
+        ref={contentRef}
+        className="flex flex-col gap-4"
+        style={{
+          width: BASE_WIDTH,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+        }}
+      >
       {/* Title + actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -269,7 +312,7 @@ export function DashboardView({ onBack }: DashboardViewProps) {
       </div>
 
       {/* KPIs */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-5 gap-4">
         {kpis.map((kpi) => (
           <Card key={kpi.label}>
             <CardContent className="flex items-start gap-3 p-4">
@@ -300,7 +343,7 @@ export function DashboardView({ onBack }: DashboardViewProps) {
       </div>
 
       {/* Temas + chart */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="p-5">
             <div className="mb-4 flex items-center justify-between">
@@ -312,7 +355,7 @@ export function DashboardView({ onBack }: DashboardViewProps) {
                 Ver todos <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-3 gap-3">
               {temas.map((tema) => (
                 <div key={tema.name} className="rounded-lg border border-border p-3">
                   <div className="flex items-start gap-2">
@@ -360,7 +403,7 @@ export function DashboardView({ onBack }: DashboardViewProps) {
               <Info className="h-4 w-4 text-muted-foreground" />
             </h2>
             <p className="mb-4 text-xs text-muted-foreground">Comparación semanal de proyectos por etapa</p>
-            <div className="h-[300px] w-full">
+            <div className="h-[236px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={evolucion} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
                   <CartesianGrid stroke="var(--color-border)" vertical={false} />
@@ -414,7 +457,7 @@ export function DashboardView({ onBack }: DashboardViewProps) {
       </div>
 
       {/* Tabla + top congresistas */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="p-5">
             <div className="mb-4 flex items-center justify-between">
@@ -498,7 +541,7 @@ export function DashboardView({ onBack }: DashboardViewProps) {
                     <span className="text-sm font-bold text-foreground">{c.pl}</span>{' '}
                     <span className="text-[10px] text-muted-foreground">PL relevantes</span>
                   </div>
-                  <div className="hidden w-40 shrink-0 text-right sm:block">
+                  <div className="w-40 shrink-0 text-right">
                     <p className="text-[10px] text-muted-foreground">Tema principal</p>
                     <p className={`truncate text-xs font-semibold ${c.temaColor}`}>{c.tema}</p>
                   </div>
@@ -510,7 +553,7 @@ export function DashboardView({ onBack }: DashboardViewProps) {
       </div>
 
       {/* Footer note */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pb-4 text-[11px] text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5" />
           Actualizado: 18/05/2025 11:30 am
@@ -519,6 +562,7 @@ export function DashboardView({ onBack }: DashboardViewProps) {
           <Info className="h-3.5 w-3.5" />
           Los niveles de impacto y probabilidad se calculan en base a votaciones, participación y señales públicas.
         </span>
+      </div>
       </div>
     </div>
   )
