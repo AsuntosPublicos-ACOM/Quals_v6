@@ -6,6 +6,7 @@
 
 export type Impacto = 'Alto' | 'Medio' | 'Bajo'
 export type Estado = 'En dictamen' | 'En agenda / debate' | 'Presentado'
+export type Probabilidad = 'Alta' | 'Media' | 'Baja'
 
 export type IconKey =
   | 'file'
@@ -45,9 +46,12 @@ export interface ProyectoTransversal {
   tema: string
   temaTone: string
   impacto: Impacto
+  probabilidad: Probabilidad
   alcance: string
   estado: Estado
   cambio: string
+  /** Fecha ISO del último cambio, usada por el filtro de periodo. */
+  fecha: string
   motivo: string
 }
 
@@ -99,9 +103,11 @@ export const proyectosTransversales: ProyectoTransversal[] = [
     tema: 'Laboral',
     temaTone: 'bg-destructive/10 text-destructive',
     impacto: 'Alto',
+    probabilidad: 'Alta',
     alcance: 'Nacional',
     estado: 'En dictamen',
     cambio: '15 may 2025',
+    fecha: '2025-05-15',
     motivo: 'Afecta costos laborales y formalización de MIPYME.',
   },
   {
@@ -109,19 +115,35 @@ export const proyectosTransversales: ProyectoTransversal[] = [
     tema: 'Tributario',
     temaTone: 'bg-chart-3/15 text-chart-3',
     impacto: 'Alto',
+    probabilidad: 'Alta',
     alcance: 'Nacional',
     estado: 'En agenda / debate',
     cambio: '14 may 2025',
+    fecha: '2025-05-14',
     motivo: 'Modifica deducciones y beneficios tributarios.',
+  },
+  {
+    pl: 'PL 6301/2024-CR',
+    tema: 'Competitividad',
+    temaTone: 'bg-info/10 text-info',
+    impacto: 'Alto',
+    probabilidad: 'Media',
+    alcance: 'Nacional',
+    estado: 'En agenda / debate',
+    cambio: '13 may 2025',
+    fecha: '2025-05-13',
+    motivo: 'Fija reglas de promoción y estabilidad jurídica.',
   },
   {
     pl: 'PL 6123/2024-CR',
     tema: 'Infraestructura',
     temaTone: 'bg-chart-5/15 text-chart-5',
     impacto: 'Medio',
+    probabilidad: 'Media',
     alcance: 'Nacional',
     estado: 'En dictamen',
     cambio: '12 may 2025',
+    fecha: '2025-05-12',
     motivo: 'Impulsa APP para obras regionales.',
   },
   {
@@ -129,9 +151,11 @@ export const proyectosTransversales: ProyectoTransversal[] = [
     tema: 'Transporte / Energía',
     temaTone: 'bg-success/10 text-success',
     impacto: 'Medio',
+    probabilidad: 'Baja',
     alcance: 'Nacional',
     estado: 'Presentado',
     cambio: '09 may 2025',
+    fecha: '2025-05-09',
     motivo: 'Incentiva la movilidad eléctrica.',
   },
   {
@@ -139,10 +163,36 @@ export const proyectosTransversales: ProyectoTransversal[] = [
     tema: 'Ambiente de negocios',
     temaTone: 'bg-success/10 text-success',
     impacto: 'Bajo',
+    probabilidad: 'Baja',
     alcance: 'Nacional',
     estado: 'En dictamen',
     cambio: '08 may 2025',
+    fecha: '2025-05-08',
     motivo: 'Simplifica licencias y permisos.',
+  },
+  {
+    pl: 'PL 5210/2024-CR',
+    tema: 'Laboral',
+    temaTone: 'bg-destructive/10 text-destructive',
+    impacto: 'Medio',
+    probabilidad: 'Media',
+    alcance: 'Nacional',
+    estado: 'Presentado',
+    cambio: '05 may 2025',
+    fecha: '2025-05-05',
+    motivo: 'Moderniza la negociación colectiva.',
+  },
+  {
+    pl: 'PL 4987/2024-CR',
+    tema: 'Tributario',
+    temaTone: 'bg-chart-3/15 text-chart-3',
+    impacto: 'Bajo',
+    probabilidad: 'Baja',
+    alcance: 'Nacional',
+    estado: 'Presentado',
+    cambio: '28 abr 2025',
+    fecha: '2025-04-28',
+    motivo: 'Ajusta detracciones y retenciones.',
   },
 ]
 
@@ -154,13 +204,63 @@ export const topCongresistas = [
   { nombre: 'Luis Martínez', bancada: 'Avanza País', pl: 4, tema: 'Transporte / Energía', temaColor: 'text-success' },
 ]
 
-export const filtros = [
-  { label: 'Fecha', value: PERIODO },
-  { label: 'Sector', value: 'Todas' },
-  { label: 'Estado', value: 'Todos' },
-  { label: 'Probabilidad', value: 'Todos' },
-  { label: 'Impacto', value: 'Todos' },
+/* -------------------------------- filtros -------------------------------- */
+
+export type FiltroKey = 'fecha' | 'sector' | 'estado' | 'probabilidad' | 'impacto'
+
+export interface FiltroDef {
+  key: FiltroKey
+  label: string
+  /** Opción por defecto (sin filtrar). */
+  all: string
+  options: string[]
+}
+
+/** Periodos disponibles: cada uno define su ventana de fechas ISO. */
+export const periodos: { label: string; desde: string; hasta: string }[] = [
+  { label: '12 – 18 may 2025', desde: '2025-05-12', hasta: '2025-05-18' },
+  { label: '05 – 18 may 2025', desde: '2025-05-05', hasta: '2025-05-18' },
+  { label: 'Mayo 2025', desde: '2025-05-01', hasta: '2025-05-31' },
+  { label: 'Últimos 90 días', desde: '2025-02-18', hasta: '2025-05-18' },
 ]
+
+export const filtrosDef: FiltroDef[] = [
+  { key: 'fecha', label: 'Fecha', all: PERIODO, options: periodos.map((p) => p.label) },
+  { key: 'sector', label: 'Sector', all: 'Todas', options: temas.map((t) => t.name) },
+  {
+    key: 'estado',
+    label: 'Estado',
+    all: 'Todos',
+    options: ['En dictamen', 'En agenda / debate', 'Presentado'],
+  },
+  { key: 'probabilidad', label: 'Probabilidad', all: 'Todos', options: ['Alta', 'Media', 'Baja'] },
+  { key: 'impacto', label: 'Impacto', all: 'Todos', options: ['Alto', 'Medio', 'Bajo'] },
+]
+
+/** Aplica los filtros activos sobre los proyectos transversales. */
+export function filtrarProyectos(
+  proyectos: ProyectoTransversal[],
+  filtros: Record<FiltroKey, string>,
+): ProyectoTransversal[] {
+  const periodo = periodos.find((p) => p.label === filtros.fecha)
+
+  return proyectos.filter((p) => {
+    if (periodo && (p.fecha < periodo.desde || p.fecha > periodo.hasta)) return false
+    if (filtros.sector !== 'Todas' && p.tema !== filtros.sector) return false
+    if (filtros.estado !== 'Todos' && p.estado !== filtros.estado) return false
+    if (filtros.probabilidad !== 'Todos' && p.probabilidad !== filtros.probabilidad) return false
+    if (filtros.impacto !== 'Todos' && p.impacto !== filtros.impacto) return false
+    return true
+  })
+}
+
+export const filtrosIniciales: Record<FiltroKey, string> = {
+  fecha: PERIODO,
+  sector: 'Todas',
+  estado: 'Todos',
+  probabilidad: 'Todos',
+  impacto: 'Todos',
+}
 
 /** Alertas destacadas usadas por el reporte semanal. */
 export const alertasSemana = [

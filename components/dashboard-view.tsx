@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   FileText,
   Target,
@@ -19,10 +19,11 @@ import {
   Leaf,
   FileDown,
   CalendarDays,
-  Bookmark,
   Filter,
   Clock,
   ArrowLeft,
+  ChevronDown,
+  Star,
 } from 'lucide-react'
 import {
   LineChart,
@@ -39,9 +40,17 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
   ACTUALIZADO,
   evolucion,
-  filtros,
+  filtrarProyectos,
+  filtrosDef,
+  filtrosIniciales,
   kpis,
   nivelesTema,
   proyectosTransversales,
@@ -49,6 +58,7 @@ import {
   temas,
   topCongresistas,
   type Estado,
+  type FiltroKey,
   type IconKey,
   type Impacto,
 } from '@/lib/dashboard-data'
@@ -101,6 +111,21 @@ interface DashboardViewProps {
 export function DashboardView({ onBack }: DashboardViewProps) {
   const [tab, setTab] = useState('general')
   const [exportMode, setExportMode] = useState<DashboardExportMode | null>(null)
+  const [filtros, setFiltros] = useState<Record<FiltroKey, string>>(filtrosIniciales)
+  const [favoritos, setFavoritos] = useState<string[]>(['PL 6789/2024-CR'])
+
+  const setFiltro = (key: FiltroKey, value: string) =>
+    setFiltros((prev) => ({ ...prev, [key]: value }))
+
+  const toggleFavorito = (pl: string) =>
+    setFavoritos((prev) => (prev.includes(pl) ? prev.filter((p) => p !== pl) : [...prev, pl]))
+
+  const hayFiltrosActivos = filtrosDef.some((f) => filtros[f.key] !== f.all)
+
+  const proyectosVisibles = useMemo(() => {
+    const filtrados = filtrarProyectos(proyectosTransversales, filtros)
+    return tab === 'favoritos' ? filtrados.filter((p) => favoritos.includes(p.pl)) : filtrados
+  }, [filtros, tab, favoritos])
 
   return (
     <div className="w-full">
@@ -124,10 +149,6 @@ export function DashboardView({ onBack }: DashboardViewProps) {
             <CalendarDays className="h-4 w-4" />
             Reporte semanal
           </Button>
-          <Button size="sm" className="gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            <Bookmark className="h-4 w-4" />
-            Guardar vista
-          </Button>
         </div>
       </div>
 
@@ -141,16 +162,41 @@ export function DashboardView({ onBack }: DashboardViewProps) {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        {filtros.map((f) => (
-          <div
-            key={f.label}
-            className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-xs"
-          >
-            <span className="text-muted-foreground">{f.label}</span>
-            <span className="font-medium text-foreground">{f.value}</span>
-          </div>
-        ))}
-        <button className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground">
+        {filtrosDef.map((f) => {
+          const active = filtros[f.key] !== f.all
+          return (
+            <DropdownMenu key={f.key}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                    active
+                      ? 'border-info bg-info/5 text-foreground'
+                      : 'border-border bg-card hover:bg-muted'
+                  }`}
+                >
+                  <span className="text-muted-foreground">{f.label}</span>
+                  <span className="font-medium text-foreground">{filtros[f.key]}</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-44">
+                {f.key !== 'fecha' && (
+                  <DropdownMenuItem onSelect={() => setFiltro(f.key, f.all)}>{f.all}</DropdownMenuItem>
+                )}
+                {f.options.map((opt) => (
+                  <DropdownMenuItem key={opt} onSelect={() => setFiltro(f.key, opt)}>
+                    {opt}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        })}
+        <button
+          onClick={() => setFiltros(filtrosIniciales)}
+          disabled={!hayFiltrosActivos}
+          className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40 disabled:hover:text-muted-foreground"
+        >
           <Filter className="h-3.5 w-3.5" />
           Limpiar filtros
         </button>
@@ -315,6 +361,9 @@ export function DashboardView({ onBack }: DashboardViewProps) {
             <table className="w-full text-left text-[11px]">
               <thead>
                 <tr className="border-b border-border text-muted-foreground">
+                  <th className="w-7 py-1.5 font-medium">
+                    <span className="sr-only">Favorito</span>
+                  </th>
                   <th className="py-1.5 pr-2 font-medium">Proyecto de ley</th>
                   <th className="py-1.5 pr-2 font-medium">Tema</th>
                   <th className="py-1.5 pr-2 font-medium">Impacto</th>
@@ -324,26 +373,56 @@ export function DashboardView({ onBack }: DashboardViewProps) {
                 </tr>
               </thead>
               <tbody>
-                {proyectosTransversales.map((p) => (
-                  <tr key={p.pl} className="border-b border-border last:border-0 align-top">
-                    <td className="py-2 pr-2 font-medium text-foreground whitespace-nowrap">{p.pl}</td>
-                    <td className="py-2 pr-2">
-                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${p.temaTone}`}>{p.tema}</span>
+                {proyectosVisibles.map((p) => {
+                  const isFav = favoritos.includes(p.pl)
+                  return (
+                    <tr key={p.pl} className="border-b border-border last:border-0 align-top">
+                      <td className="py-2 align-middle">
+                        <button
+                          onClick={() => toggleFavorito(p.pl)}
+                          aria-pressed={isFav}
+                          aria-label={
+                            isFav
+                              ? `Quitar ${p.pl} de favoritos`
+                              : `Marcar ${p.pl} como favorito`
+                          }
+                          className="flex h-6 w-6 items-center justify-center rounded transition-colors hover:bg-muted"
+                        >
+                          <Star
+                            className={`h-3.5 w-3.5 ${
+                              isFav ? 'fill-chart-3 text-chart-3' : 'text-muted-foreground'
+                            }`}
+                          />
+                        </button>
+                      </td>
+                      <td className="py-2 pr-2 font-medium text-foreground whitespace-nowrap">{p.pl}</td>
+                      <td className="py-2 pr-2">
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${p.temaTone}`}>{p.tema}</span>
+                      </td>
+                      <td className="py-2 pr-2">
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${impactoTone[p.impacto]}`}>
+                          {p.impacto}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-2">
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${estadoTone[p.estado]}`}>
+                          {p.estado}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-2 text-muted-foreground whitespace-nowrap">{p.cambio}</td>
+                      <td className="py-2 text-muted-foreground">{p.motivo}</td>
+                    </tr>
+                  )
+                })}
+                {proyectosVisibles.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="py-6 text-center text-muted-foreground">
+                      {tab === 'favoritos'
+                        ? 'Aún no has marcado proyectos como favoritos.'
+                        : 'Ningún proyecto coincide con los filtros seleccionados.'}
                     </td>
-                    <td className="py-2 pr-2">
-                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${impactoTone[p.impacto]}`}>
-                        {p.impacto}
-                      </span>
-                    </td>
-                    <td className="py-2 pr-2">
-                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${estadoTone[p.estado]}`}>
-                        {p.estado}
-                      </span>
-                    </td>
-                    <td className="py-2 pr-2 text-muted-foreground whitespace-nowrap">{p.cambio}</td>
-                    <td className="py-2 text-muted-foreground">{p.motivo}</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </CardContent>

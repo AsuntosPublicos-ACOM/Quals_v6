@@ -17,7 +17,8 @@ import {
   PERIODO,
   alertasSemana,
   evolucion,
-  filtros,
+  filtrosDef,
+  filtrosIniciales,
   kpis,
   proyectosTransversales,
   series,
@@ -74,7 +75,7 @@ export async function exportDashboardToPptx(sections: DashboardSection[]) {
     x: 0.6, y: 1.5, w: 9, h: 0.4, fontSize: 16, color: INK, fontFace: 'Arial',
   })
   cover.addText(
-    filtros.map((f) => `${f.label}: ${f.value}`).join('   |   '),
+    filtrosDef.map((f) => `${f.label}: ${filtrosIniciales[f.key]}`).join('   |   '),
     { x: 0.6, y: 2.0, w: 9, h: 0.4, fontSize: 11, color: MUTED, fontFace: 'Arial' },
   )
   cover.addText(`Actualizado: ${ACTUALIZADO}`, {
