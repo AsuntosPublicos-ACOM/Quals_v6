@@ -85,9 +85,11 @@ const medalTone = ['bg-chart-3 text-primary-foreground', 'bg-muted text-foregrou
 
 interface IncidenciaViewProps {
   onBack?: () => void
+  /** Oculta el título y las acciones cuando se muestra dentro de otro tablero. */
+  embedded?: boolean
 }
 
-export function IncidenciaView({ onBack }: IncidenciaViewProps) {
+export function IncidenciaView({ onBack, embedded = false }: IncidenciaViewProps) {
   const [filtros, setFiltros] = useState<Record<FiltroIncidenciaKey, string>>(
     filtrosIncidenciaIniciales,
   )
@@ -116,6 +118,7 @@ export function IncidenciaView({ onBack }: IncidenciaViewProps) {
   return (
     <div className="flex w-full flex-col gap-4">
       {/* Title + actions */}
+      {!embedded && (
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-2">
           {onBack && (
@@ -147,6 +150,7 @@ export function IncidenciaView({ onBack }: IncidenciaViewProps) {
           </Button>
         </div>
       </div>
+      )}
 
       {/* Quick views */}
       <div className="flex flex-wrap items-center gap-2">

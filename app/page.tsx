@@ -12,7 +12,6 @@ import { SearchResults } from '@/components/search-results'
 import { ProfileView } from '@/components/profile-view'
 import { AlertsView } from '@/components/alerts-view'
 import { DashboardView } from '@/components/dashboard-view'
-import { IncidenciaView } from '@/components/incidencia-view'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { proyectos, sectores, availableMonths, congresistas } from '@/lib/data'
@@ -181,7 +180,7 @@ export default function Home() {
         )}
 
         {!searchQuery.trim() && mainView === 'incidencia' && (
-          <IncidenciaView onBack={() => setMainView('home')} />
+          <DashboardView initialTab="incidencia" onBack={() => setMainView('home')} />
         )}
 
         {!searchQuery.trim() && mainView === 'alertas' && (

@@ -66,6 +66,7 @@ import {
   ExportDashboardModal,
   type DashboardExportMode,
 } from '@/components/export-dashboard-modal'
+import { IncidenciaView } from '@/components/incidencia-view'
 
 /* ------------------------------ icon mapping ----------------------------- */
 
@@ -106,10 +107,12 @@ function Dot({ className }: { className: string }) {
 
 interface DashboardViewProps {
   onBack?: () => void
+  /** Pestaña activa al abrir: vista general o incidencia parlamentaria. */
+  initialTab?: 'general' | 'incidencia'
 }
 
-export function DashboardView({ onBack }: DashboardViewProps) {
-  const [tab, setTab] = useState('general')
+export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewProps) {
+  const [tab, setTab] = useState(initialTab)
   const [exportMode, setExportMode] = useState<DashboardExportMode | null>(null)
   const [filtros, setFiltros] = useState<Record<FiltroKey, string>>(filtrosIniciales)
   const [favoritos, setFavoritos] = useState<string[]>(['PL 6789/2024-CR'])
@@ -122,10 +125,10 @@ export function DashboardView({ onBack }: DashboardViewProps) {
 
   const hayFiltrosActivos = filtrosDef.some((f) => filtros[f.key] !== f.all)
 
-  const proyectosVisibles = useMemo(() => {
-    const filtrados = filtrarProyectos(proyectosTransversales, filtros)
-    return tab === 'favoritos' ? filtrados.filter((p) => favoritos.includes(p.pl)) : filtrados
-  }, [filtros, tab, favoritos])
+  const proyectosVisibles = useMemo(
+    () => filtrarProyectos(proyectosTransversales, filtros),
+    [filtros],
+  )
 
   return (
     <div className="w-full">
@@ -153,13 +156,17 @@ export function DashboardView({ onBack }: DashboardViewProps) {
       </div>
 
       {/* Tabs */}
-      <Tabs value={tab} onValueChange={setTab}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as 'general' | 'incidencia')}>
         <TabsList className="bg-transparent p-0 gap-2">
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="favoritos">Favoritos</TabsTrigger>
+          <TabsTrigger value="incidencia">Incidencia parlamentaria</TabsTrigger>
         </TabsList>
       </Tabs>
 
+      {tab === 'incidencia' ? (
+        <IncidenciaView embedded />
+      ) : (
+        <>
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         {filtrosDef.map((f) => {
@@ -417,9 +424,7 @@ export function DashboardView({ onBack }: DashboardViewProps) {
                 {proyectosVisibles.length === 0 && (
                   <tr>
                     <td colSpan={7} className="py-6 text-center text-muted-foreground">
-                      {tab === 'favoritos'
-                        ? 'Aún no has marcado proyectos como favoritos.'
-                        : 'Ningún proyecto coincide con los filtros seleccionados.'}
+                      Ningún proyecto coincide con los filtros seleccionados.
                     </td>
                   </tr>
                 )}
@@ -483,6 +488,8 @@ export function DashboardView({ onBack }: DashboardViewProps) {
           Los niveles de impacto y probabilidad se calculan en base a votaciones, participación y señales públicas.
         </span>
       </div>
+        </>
+      )}
       </div>
 
       {exportMode && (
