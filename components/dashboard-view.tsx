@@ -34,166 +34,45 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  ACTUALIZADO,
+  evolucion,
+  filtros,
+  kpis,
+  nivelesTema,
+  proyectosTransversales,
+  series,
+  temas,
+  topCongresistas,
+  type Estado,
+  type IconKey,
+  type Impacto,
+} from '@/lib/dashboard-data'
+import {
+  ExportDashboardModal,
+  type DashboardExportMode,
+} from '@/components/export-dashboard-modal'
 
-/* ---------------------------------- data --------------------------------- */
+/* ------------------------------ icon mapping ----------------------------- */
 
-const kpis = [
-  {
-    label: 'PL activos',
-    value: '142',
-    icon: FileText,
-    tone: 'text-destructive bg-destructive/10',
-    delta: '12',
-    trend: 'up' as const,
-  },
-  {
-    label: 'Alto impacto o alto prob.',
-    value: '24',
-    icon: Target,
-    tone: 'text-chart-3 bg-chart-3/10',
-    delta: '5',
-    trend: 'up' as const,
-  },
-  {
-    label: 'Comisiones críticas',
-    value: '6',
-    icon: Landmark,
-    tone: 'text-chart-5 bg-chart-5/10',
-    delta: 'sin cambio',
-    trend: 'flat' as const,
-  },
-  {
-    label: 'Con movimiento esta semana',
-    value: '38',
-    icon: Activity,
-    tone: 'text-info bg-info/10',
-    delta: '9',
-    trend: 'up' as const,
-  },
-  {
-    label: 'Alertas',
-    value: '12',
-    icon: BellRing,
-    tone: 'text-chart-3 bg-chart-3/10',
-    delta: '2',
-    trend: 'up' as const,
-  },
-]
+const ICONS: Record<IconKey, LucideIcon> = {
+  file: FileText,
+  target: Target,
+  landmark: Landmark,
+  activity: Activity,
+  bell: BellRing,
+  users: Users,
+  scale: Scale,
+  trending: TrendingUp,
+  building: Building2,
+  leaf: Leaf,
+  bus: Bus,
+}
 
-const temas = [
-  { name: 'Laboral', total: 24, icon: Users, tone: 'bg-destructive/10 text-destructive', criticos: 4, altos: 10, medios: 10, bajos: 0 },
-  { name: 'Tributario', total: 19, icon: Scale, tone: 'bg-destructive/10 text-destructive', criticos: 4, altos: 4, medios: 9, bajos: 2 },
-  { name: 'Competitividad', total: 16, icon: TrendingUp, tone: 'bg-info/10 text-info', criticos: 2, altos: 7, medios: 5, bajos: 2 },
-  { name: 'Infraestructura', total: 14, icon: Building2, tone: 'bg-success/10 text-success', criticos: 1, altos: 4, medios: 5, bajos: 2 },
-  { name: 'Ambiente de negocios', total: 12, icon: Leaf, tone: 'bg-success/10 text-success', criticos: 1, altos: 4, medios: 5, bajos: 2 },
-  { name: 'Transporte / Energía', total: 10, icon: Bus, tone: 'bg-info/10 text-info', criticos: 1, altos: 3, medios: 5, bajos: 2 },
-]
-
-const nivelesTema = [
-  { key: 'criticos', singular: 'Crítico', plural: 'Críticos', dot: 'bg-destructive' },
-  { key: 'altos', singular: 'Alto', plural: 'Altos', dot: 'bg-chart-2' },
-  { key: 'medios', singular: 'Medio', plural: 'Medios', dot: 'bg-chart-3' },
-  { key: 'bajos', singular: 'Bajo', plural: 'Bajos', dot: 'bg-success' },
-] as const
-
-const evolucion = [
-  { semana: '20 abr', presentados: 94, dictamen: 29, agenda: 13, leyes: 3 },
-  { semana: '27 abr', presentados: 107, dictamen: 31, agenda: 15, leyes: 4 },
-  { semana: '04 may', presentados: 116, dictamen: 33, agenda: 16, leyes: 5 },
-  { semana: '11 may', presentados: 131, dictamen: 36, agenda: 18, leyes: 7 },
-  { semana: '18 may', presentados: 142, dictamen: 38, agenda: 19, leyes: 8 },
-]
-
-const series = [
-  { key: 'presentados', label: 'Presentados', color: '#2563eb' },
-  { key: 'dictamen', label: 'En dictamen', color: '#0f9d58' },
-  { key: 'agenda', label: 'En agenda / debate', color: '#d97706' },
-  { key: 'leyes', label: 'Leyes aprobadas', color: '#7c3aed' },
-]
-
-type Impacto = 'Alto' | 'Medio' | 'Bajo'
-type Estado = 'En dictamen' | 'En agenda / debate' | 'Presentado'
-
-const proyectosTransversales: {
-  pl: string
-  tema: string
-  temaTone: string
-  impacto: Impacto
-  alcance: string
-  estado: Estado
-  cambio: string
-  motivo: string
-}[] = [
-  {
-    pl: 'PL 6789/2024-CR',
-    tema: 'Laboral',
-    temaTone: 'bg-destructive/10 text-destructive',
-    impacto: 'Alto',
-    alcance: 'Nacional',
-    estado: 'En dictamen',
-    cambio: '15 may 2025',
-    motivo: 'Afecta costos laborales y formalización de MIPYME.',
-  },
-  {
-    pl: 'PL 6543/2024-CR',
-    tema: 'Tributario',
-    temaTone: 'bg-chart-3/15 text-chart-3',
-    impacto: 'Alto',
-    alcance: 'Nacional',
-    estado: 'En agenda / debate',
-    cambio: '14 may 2025',
-    motivo: 'Modifica deducciones y beneficios tributarios.',
-  },
-  {
-    pl: 'PL 6123/2024-CR',
-    tema: 'Infraestructura',
-    temaTone: 'bg-chart-5/15 text-chart-5',
-    impacto: 'Medio',
-    alcance: 'Nacional',
-    estado: 'En dictamen',
-    cambio: '12 may 2025',
-    motivo: 'Impulsa APP para obras regionales.',
-  },
-  {
-    pl: 'PL 5900/2024-CR',
-    tema: 'Transporte / Energía',
-    temaTone: 'bg-success/10 text-success',
-    impacto: 'Medio',
-    alcance: 'Nacional',
-    estado: 'Presentado',
-    cambio: '09 may 2025',
-    motivo: 'Incentiva la movilidad eléctrica.',
-  },
-  {
-    pl: 'PL 5432/2024-CR',
-    tema: 'Ambiente de negocios',
-    temaTone: 'bg-success/10 text-success',
-    impacto: 'Bajo',
-    alcance: 'Nacional',
-    estado: 'En dictamen',
-    cambio: '08 may 2025',
-    motivo: 'Simplifica licencias y permisos.',
-  },
-]
-
-const topCongresistas = [
-  { nombre: 'Eduvin Espinoza', bancada: 'Fuerza Popular', pl: 8, tema: 'Laboral', temaColor: 'text-destructive' },
-  { nombre: 'Gloria Hinoche', bancada: 'Alianza para el Progreso', pl: 7, tema: 'Competitividad', temaColor: 'text-info' },
-  { nombre: 'Juan Villanueva', bancada: 'Somos Perú', pl: 6, tema: 'Infraestructura', temaColor: 'text-chart-5' },
-  { nombre: 'Rosana Rocha', bancada: 'Renovación Popular', pl: 5, tema: 'Tributario', temaColor: 'text-chart-3' },
-  { nombre: 'Luis Martínez', bancada: 'Avanza País', pl: 4, tema: 'Transporte / Energía', temaColor: 'text-success' },
-]
-
-const filtros = [
-  { label: 'Fecha', value: '12 – 18 may 2025' },
-  { label: 'Sector', value: 'Todas' },
-  { label: 'Estado', value: 'Todos' },
-  { label: 'Probabilidad', value: 'Todos' },
-  { label: 'Impacto', value: 'Todos' },
-]
 
 /* -------------------------------- helpers -------------------------------- */
 
@@ -221,6 +100,7 @@ interface DashboardViewProps {
 
 export function DashboardView({ onBack }: DashboardViewProps) {
   const [tab, setTab] = useState('general')
+  const [exportMode, setExportMode] = useState<DashboardExportMode | null>(null)
 
   return (
     <div className="w-full">
@@ -236,11 +116,11 @@ export function DashboardView({ onBack }: DashboardViewProps) {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Vista general</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setExportMode('ppt')}>
             <FileDown className="h-4 w-4" />
             Exportar PPT
           </Button>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setExportMode('reporte')}>
             <CalendarDays className="h-4 w-4" />
             Reporte semanal
           </Button>
@@ -278,11 +158,13 @@ export function DashboardView({ onBack }: DashboardViewProps) {
 
       {/* KPIs */}
       <div className="grid grid-cols-5 gap-4">
-        {kpis.map((kpi) => (
+        {kpis.map((kpi) => {
+          const KpiIcon = ICONS[kpi.iconKey]
+          return (
           <Card key={kpi.label}>
             <CardContent className="flex items-center gap-2.5 p-3">
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${kpi.tone}`}>
-                <kpi.icon className="h-4 w-4" />
+                <KpiIcon className="h-4 w-4" />
               </div>
               <div className="min-w-0">
                 <p className="text-[11px] leading-tight text-muted-foreground text-pretty">{kpi.label}</p>
@@ -304,7 +186,8 @@ export function DashboardView({ onBack }: DashboardViewProps) {
               </div>
             </CardContent>
           </Card>
-        ))}
+          )
+        })}
       </div>
 
       {/* Temas + chart */}
@@ -316,11 +199,13 @@ export function DashboardView({ onBack }: DashboardViewProps) {
               <Info className="h-4 w-4 text-muted-foreground" />
             </h2>
             <div className="grid grid-cols-3 gap-2.5">
-              {temas.map((tema) => (
+              {temas.map((tema) => {
+                const TemaIcon = ICONS[tema.iconKey]
+                return (
                 <div key={tema.name} className="flex flex-col rounded-lg border border-border p-2.5">
                   <div className="flex items-center gap-2">
                     <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${tema.tone}`}>
-                      <tema.icon className="h-3.5 w-3.5" />
+                      <TemaIcon className="h-3.5 w-3.5" />
                     </div>
                     <p className="text-xs font-semibold leading-tight text-foreground text-pretty">{tema.name}</p>
                   </div>
@@ -343,7 +228,8 @@ export function DashboardView({ onBack }: DashboardViewProps) {
                     })}
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
             <div className="mt-2.5 flex justify-end">
               <button className="flex items-center gap-1 text-xs font-semibold text-destructive hover:underline">
@@ -511,7 +397,7 @@ export function DashboardView({ onBack }: DashboardViewProps) {
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5" />
-          Actualizado: 18/05/2025 11:30 am
+          Actualizado: {ACTUALIZADO}
         </span>
         <span className="flex items-center gap-1.5">
           <Info className="h-3.5 w-3.5" />
@@ -519,6 +405,16 @@ export function DashboardView({ onBack }: DashboardViewProps) {
         </span>
       </div>
       </div>
+
+      {exportMode && (
+        <ExportDashboardModal
+          open
+          mode={exportMode}
+          onOpenChange={(open) => {
+            if (!open) setExportMode(null)
+          }}
+        />
+      )}
     </div>
   )
 }
