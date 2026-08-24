@@ -12,6 +12,7 @@ import { SearchResults } from '@/components/search-results'
 import { ProfileView } from '@/components/profile-view'
 import { AlertsView } from '@/components/alerts-view'
 import { DashboardView } from '@/components/dashboard-view'
+import { IncidenciaView } from '@/components/incidencia-view'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { proyectos, sectores, availableMonths, congresistas } from '@/lib/data'
@@ -35,7 +36,7 @@ export default function Home() {
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
     )
   }
-  const [mainView, setMainView] = useState<'home' | 'sectores' | 'congresistas' | 'proyectos' | 'elperuano' | 'favoritos' | 'perfil' | 'alertas' | 'dashboard'>('home')
+  const [mainView, setMainView] = useState<'home' | 'sectores' | 'congresistas' | 'proyectos' | 'elperuano' | 'favoritos' | 'perfil' | 'alertas' | 'dashboard' | 'incidencia'>('home')
   const [initialSectorId, setInitialSectorId] = useState<string | undefined>(undefined)
   const [sectorViewState, setSectorViewState] = useState<'grid' | 'sector' | 'detail'>('grid')
   const [selectedProyecto, setSelectedProyecto] = useState<ProyectoLey | null>(null)
@@ -101,7 +102,7 @@ export default function Home() {
       
       <main
         className={
-          mainView === 'dashboard' && !searchQuery.trim()
+          (mainView === 'dashboard' || mainView === 'incidencia') && !searchQuery.trim()
             ? 'w-full px-5 py-5'
             : 'container mx-auto px-4 py-6 max-w-7xl'
         }
@@ -177,6 +178,10 @@ export default function Home() {
 
         {!searchQuery.trim() && mainView === 'dashboard' && (
           <DashboardView onBack={() => setMainView('home')} />
+        )}
+
+        {!searchQuery.trim() && mainView === 'incidencia' && (
+          <IncidenciaView onBack={() => setMainView('home')} />
         )}
 
         {!searchQuery.trim() && mainView === 'alertas' && (

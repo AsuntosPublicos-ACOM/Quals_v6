@@ -22,7 +22,7 @@ const IS_ADMIN = true
 interface HeaderProps {
   searchQuery: string
   onSearchChange: (query: string) => void
-  onNavigate?: (view: 'home' | 'sectores' | 'congresistas' | 'proyectos' | 'elperuano' | 'favoritos' | 'perfil' | 'alertas' | 'dashboard') => void
+  onNavigate?: (view: 'home' | 'sectores' | 'congresistas' | 'proyectos' | 'elperuano' | 'favoritos' | 'perfil' | 'alertas' | 'dashboard' | 'incidencia') => void
   onNavigateSector?: (sectorId: string) => void
 }
 
@@ -138,10 +138,11 @@ export function Header({ searchQuery, onSearchChange, onNavigate, onNavigateSect
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onNavigate?.('favoritos')}
-            title="Mis Favoritos"
+            onClick={() => onNavigate?.('incidencia')}
+            title="Incidencia parlamentaria"
           >
             <Star className="h-5 w-5" />
+            <span className="sr-only">Incidencia parlamentaria</span>
           </Button>
 
           <Button 
