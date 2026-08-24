@@ -11,8 +11,8 @@ import {
   Minus,
   Info,
   ArrowRight,
-  Briefcase,
-  Calculator,
+  Users,
+  Scale,
   TrendingUp,
   Building2,
   Bus,
@@ -84,13 +84,20 @@ const kpis = [
 ]
 
 const temas = [
-  { name: 'Laboral', total: 28, icon: Briefcase, alta: 8, media: 12, baja: 8 },
-  { name: 'Tributario', total: 24, icon: Calculator, alta: 7, media: 10, baja: 7 },
-  { name: 'Competitividad', total: 22, icon: TrendingUp, alta: 6, media: 9, baja: 7 },
-  { name: 'Infraestructura', total: 16, icon: Building2, alta: 5, media: 6, baja: 5 },
-  { name: 'Transporte / Energía', total: 15, icon: Bus, alta: 5, media: 7, baja: 6 },
-  { name: 'Ambiente de negocios', total: 10, icon: Leaf, alta: 3, media: 5, baja: 4 },
+  { name: 'Laboral', total: 24, icon: Users, tone: 'bg-destructive/10 text-destructive', criticos: 4, altos: 10, medios: 10, bajos: 0 },
+  { name: 'Tributario', total: 19, icon: Scale, tone: 'bg-destructive/10 text-destructive', criticos: 4, altos: 4, medios: 9, bajos: 2 },
+  { name: 'Competitividad', total: 16, icon: TrendingUp, tone: 'bg-info/10 text-info', criticos: 2, altos: 7, medios: 5, bajos: 2 },
+  { name: 'Infraestructura', total: 14, icon: Building2, tone: 'bg-success/10 text-success', criticos: 1, altos: 4, medios: 5, bajos: 2 },
+  { name: 'Ambiente de negocios', total: 12, icon: Leaf, tone: 'bg-success/10 text-success', criticos: 1, altos: 4, medios: 5, bajos: 2 },
+  { name: 'Transporte / Energía', total: 10, icon: Bus, tone: 'bg-info/10 text-info', criticos: 1, altos: 3, medios: 5, bajos: 2 },
 ]
+
+const nivelesTema = [
+  { key: 'criticos', singular: 'Crítico', plural: 'Críticos', dot: 'bg-destructive' },
+  { key: 'altos', singular: 'Alto', plural: 'Altos', dot: 'bg-chart-2' },
+  { key: 'medios', singular: 'Medio', plural: 'Medios', dot: 'bg-chart-3' },
+  { key: 'bajos', singular: 'Bajo', plural: 'Bajos', dot: 'bg-success' },
+] as const
 
 const evolucion = [
   { semana: '20 abr', presentados: 94, dictamen: 29, agenda: 13, leyes: 3 },
@@ -212,16 +219,19 @@ interface DashboardViewProps {
   onBack?: () => void
 }
 
-/** Ancho de diseño del tablero: el contenido se escala para caber en pantalla. */
-const BASE_WIDTH = 1560
-
 export function DashboardView({ onBack }: DashboardViewProps) {
   const [tab, setTab] = useState('general')
   const frameRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
+  const [baseWidth, setBaseWidth] = useState(1560)
   const [frameHeight, setFrameHeight] = useState<number | undefined>(undefined)
 
+  /**
+   * El tablero se dibuja en un lienzo de ancho variable y se escala para caber
+   * en el alto disponible. El ancho del lienzo se ajusta a `ancho / escala` para
+   * que, una vez escalado, ocupe el 100% del contenedor.
+   */
   useEffect(() => {
     const compute = () => {
       const frame = frameRef.current
@@ -229,19 +239,22 @@ export function DashboardView({ onBack }: DashboardViewProps) {
       if (!frame || !content) return
 
       const availableWidth = frame.clientWidth
-      const availableHeight = window.innerHeight - frame.getBoundingClientRect().top - 28
+      const availableHeight = window.innerHeight - frame.getBoundingClientRect().top - 24
       const contentHeight = content.scrollHeight
+      if (availableWidth <= 0 || contentHeight <= 0 || availableHeight <= 0) return
 
-      if (availableWidth <= 0 || contentHeight <= 0) return
+      const nextScale = Math.min(availableHeight / contentHeight, 1)
+      const targetWidth = Math.min(Math.max(availableWidth / nextScale, availableWidth), 2600)
 
-      const next = Math.min(availableWidth / BASE_WIDTH, availableHeight / contentHeight, 1)
-      setScale(next)
-      setFrameHeight(contentHeight * next)
+      setScale(nextScale)
+      setFrameHeight(Math.min(contentHeight * nextScale, availableHeight))
+      setBaseWidth((prev) => (Math.abs(targetWidth - prev) > 8 ? prev + (targetWidth - prev) * 0.6 : prev))
     }
 
     compute()
     const observer = new ResizeObserver(compute)
     if (contentRef.current) observer.observe(contentRef.current)
+    if (frameRef.current) observer.observe(frameRef.current)
     window.addEventListener('resize', compute)
     return () => {
       observer.disconnect()
@@ -255,7 +268,7 @@ export function DashboardView({ onBack }: DashboardViewProps) {
         ref={contentRef}
         className="flex flex-col gap-4"
         style={{
-          width: BASE_WIDTH,
+          width: baseWidth,
           transform: `scale(${scale})`,
           transformOrigin: 'top left',
         }}
@@ -346,52 +359,42 @@ export function DashboardView({ onBack }: DashboardViewProps) {
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
-                Temas transversales prioritarios
-                <Info className="h-4 w-4 text-muted-foreground" />
-              </h2>
-              <button className="flex items-center gap-1 text-xs font-medium text-info hover:underline">
-                Ver todos <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-foreground">
+              Temas transversales prioritarios
+              <Info className="h-4 w-4 text-muted-foreground" />
+            </h2>
             <div className="grid grid-cols-3 gap-3">
               {temas.map((tema) => (
-                <div key={tema.name} className="rounded-lg border border-border p-3">
+                <div key={tema.name} className="flex flex-col rounded-xl border border-border p-3">
                   <div className="flex items-start gap-2">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted">
-                      <tema.icon className="h-4 w-4 text-foreground" />
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tema.tone}`}>
+                      <tema.icon className="h-4 w-4" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold leading-snug text-foreground">{tema.name}</p>
-                      <p className="text-[11px] text-muted-foreground">{tema.total} PL en total</p>
-                    </div>
+                    <p className="text-sm font-semibold leading-snug text-foreground text-pretty">{tema.name}</p>
                   </div>
-                  <div className="mt-3 flex items-center justify-between border-t border-border pt-2">
-                    <div className="text-center">
-                      <p className="flex items-center gap-1 text-xs font-semibold text-foreground">
-                        <Dot className="bg-destructive" />
-                        {tema.alta}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">Alta</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="flex items-center gap-1 text-xs font-semibold text-foreground">
-                        <Dot className="bg-chart-3" />
-                        {tema.media}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">Media</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="flex items-center gap-1 text-xs font-semibold text-foreground">
-                        <Dot className="bg-success" />
-                        {tema.baja}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">Baja</p>
-                    </div>
+                  <p className="mt-2 text-3xl font-bold leading-none tracking-tight text-foreground">{tema.total}</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">PL en total</p>
+                  <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-border pt-2.5">
+                    {nivelesTema.map((nivel) => {
+                      const count = tema[nivel.key]
+                      return (
+                        <p key={nivel.key} className="flex items-center gap-1.5 text-[11px] text-foreground">
+                          <Dot className={nivel.dot} />
+                          <span className="font-semibold">{count}</span>
+                          <span className="text-muted-foreground">
+                            {count === 1 ? nivel.singular : nivel.plural}
+                          </span>
+                        </p>
+                      )
+                    })}
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="mt-3 flex justify-end">
+              <button className="flex items-center gap-1 text-xs font-semibold text-destructive hover:underline">
+                Ver todas las temáticas <ArrowRight className="h-3.5 w-3.5" />
+              </button>
             </div>
           </CardContent>
         </Card>
