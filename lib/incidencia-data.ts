@@ -9,31 +9,6 @@ export const ACTUALIZADO_INCIDENCIA = '25/05/2025 11:30 am'
 export type Prioridad = 'Alta' | 'Media' | 'Baja'
 export type Riesgo = 'Crítico' | 'Alto' | 'Medio'
 
-/* ------------------------------ accesos rápidos --------------------------- */
-
-export type VistaKey =
-  | 'gremio'
-  | 'vigilados'
-  | 'comisiones'
-  | 'temas'
-  | 'alertas'
-  | 'personalizada'
-
-export interface VistaRapida {
-  key: VistaKey
-  label: string
-  iconKey: 'user' | 'file' | 'users' | 'layers' | 'bell' | 'sliders'
-}
-
-export const vistasRapidas: VistaRapida[] = [
-  { key: 'gremio', label: 'Mi gremio: Laboral', iconKey: 'user' },
-  { key: 'vigilados', label: 'Proyectos vigilados', iconKey: 'file' },
-  { key: 'comisiones', label: 'Comisiones críticas', iconKey: 'users' },
-  { key: 'temas', label: 'Temas transversales', iconKey: 'layers' },
-  { key: 'alertas', label: 'Mis alertas', iconKey: 'bell' },
-  { key: 'personalizada', label: 'Vista personalizada', iconKey: 'sliders' },
-]
-
 /* --------------------------------- filtros -------------------------------- */
 
 export type FiltroIncidenciaKey = 'fecha' | 'sector' | 'alcance' | 'impacto' | 'probabilidad'
@@ -86,7 +61,7 @@ export const kpisIncidencia: KpiIncidencia[] = [
   {
     label: 'Top congresistas',
     value: '124',
-    delta: '+12 vs semana anterior',
+    delta: '+12',
     trend: 'up',
     iconKey: 'user',
     tone: 'bg-destructive/10 text-destructive',
@@ -102,7 +77,7 @@ export const kpisIncidencia: KpiIncidencia[] = [
   {
     label: 'PL de alto impacto',
     value: '7',
-    delta: '+2 vs semana anterior',
+    delta: '+2',
     trend: 'up',
     iconKey: 'file',
     tone: 'bg-chart-3/15 text-chart-3',
@@ -110,7 +85,7 @@ export const kpisIncidencia: KpiIncidencia[] = [
   {
     label: 'Bancadas relevantes',
     value: '8',
-    delta: '+1 vs semana anterior',
+    delta: '+1',
     trend: 'up',
     iconKey: 'group',
     tone: 'bg-chart-2/15 text-chart-2',

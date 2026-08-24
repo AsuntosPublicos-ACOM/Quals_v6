@@ -2,22 +2,16 @@
 
 import { useMemo, useState } from 'react'
 import {
-  ArrowLeft,
   ArrowRight,
   ArrowUp,
-  Bell,
   ChevronDown,
   Clock,
-  FileDown,
   FileText,
   Info,
-  Layers,
   Minus,
-  SlidersHorizontal,
   User,
   Users,
   BarChart3,
-  CalendarDays,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
@@ -39,12 +33,10 @@ import {
   filtrosIncidenciaIniciales,
   kpisIncidencia,
   TOTAL_PL_VINCULADOS,
-  vistasRapidas,
   type FiltroIncidenciaKey,
   type Prioridad,
   type ProyectoVinculado,
   type Riesgo,
-  type VistaKey,
 } from '@/lib/incidencia-data'
 
 /* ------------------------------ icon mapping ----------------------------- */
@@ -53,9 +45,6 @@ const ICONS: Record<string, LucideIcon> = {
   user: User,
   users: Users,
   file: FileText,
-  layers: Layers,
-  bell: Bell,
-  sliders: SlidersHorizontal,
   group: Users,
 }
 
@@ -83,17 +72,10 @@ const medalTone = ['bg-chart-3 text-primary-foreground', 'bg-muted text-foregrou
 
 /* -------------------------------- component ------------------------------ */
 
-interface IncidenciaViewProps {
-  onBack?: () => void
-  /** Oculta el título y las acciones cuando se muestra dentro de otro tablero. */
-  embedded?: boolean
-}
-
-export function IncidenciaView({ onBack, embedded = false }: IncidenciaViewProps) {
+export function IncidenciaView() {
   const [filtros, setFiltros] = useState<Record<FiltroIncidenciaKey, string>>(
     filtrosIncidenciaIniciales,
   )
-  const [vista, setVista] = useState<VistaKey>('personalizada')
   const [selectedId, setSelectedId] = useState(congresistasIncidencia[0].id)
 
   const setFiltro = (key: FiltroIncidenciaKey, value: string) =>
@@ -117,131 +99,74 @@ export function IncidenciaView({ onBack, embedded = false }: IncidenciaViewProps
 
   return (
     <div className="flex w-full flex-col gap-4">
-      {/* Title + actions */}
-      {!embedded && (
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-start gap-2">
-          {onBack && (
-            <Button variant="ghost" size="icon" onClick={onBack} aria-label="Volver">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          )}
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Incidencia parlamentaria
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Congresistas, comisiones y rutas de relacionamiento
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
-            <FileDown className="h-4 w-4" />
-            Exportar PPT
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive"
-          >
-            <CalendarDays className="h-4 w-4" />
-            Reporte semanal
-          </Button>
-        </div>
-      </div>
-      )}
-
-      {/* Quick views */}
-      <div className="flex flex-wrap items-center gap-2">
-        {vistasRapidas.map((v) => {
-          const Icon = ICONS[v.iconKey]
-          const active = vista === v.key
-          return (
-            <button
-              key={v.key}
-              onClick={() => setVista(v.key)}
-              aria-pressed={active}
-              className={`flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
-                active
-                  ? 'border-destructive bg-destructive/5 text-destructive'
-                  : 'border-border bg-card text-foreground hover:bg-muted'
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {v.label}
-            </button>
-          )
-        })}
-      </div>
-
       {/* Filters */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+      <div className="flex flex-wrap items-center gap-2">
         {filtrosIncidenciaDef.map((f) => {
           const active = filtros[f.key] !== f.all
           return (
-            <div key={f.key} className="flex flex-col gap-1">
-              <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-                {f.key === 'fecha' && <CalendarDays className="h-3.5 w-3.5" />}
-                {f.label}
-              </span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className={`flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs transition-colors ${
-                      active
-                        ? 'border-info bg-info/5 text-foreground'
-                        : 'border-border bg-card text-foreground hover:bg-muted'
-                    }`}
-                  >
-                    <span className="truncate">{filtros[f.key]}</span>
-                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="min-w-48">
-                  {f.key !== 'fecha' && (
-                    <DropdownMenuItem onSelect={() => setFiltro(f.key, f.all)}>
-                      {f.all}
-                    </DropdownMenuItem>
-                  )}
-                  {f.options.map((opt) => (
-                    <DropdownMenuItem key={opt} onSelect={() => setFiltro(f.key, opt)}>
-                      {opt}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <DropdownMenu key={f.key}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                    active
+                      ? 'border-info bg-info/5 text-foreground'
+                      : 'border-border bg-card hover:bg-muted'
+                  }`}
+                >
+                  <span className="text-muted-foreground">{f.label}</span>
+                  <span className="font-medium text-foreground">{filtros[f.key]}</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-44">
+                {f.key !== 'fecha' && (
+                  <DropdownMenuItem onSelect={() => setFiltro(f.key, f.all)}>
+                    {f.all}
+                  </DropdownMenuItem>
+                )}
+                {f.options.map((opt) => (
+                  <DropdownMenuItem key={opt} onSelect={() => setFiltro(f.key, opt)}>
+                    {opt}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )
         })}
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-5 gap-4">
         {kpisIncidencia.map((kpi) => {
           const Icon = ICONS[kpi.iconKey]
           return (
             <Card key={kpi.label}>
-              <CardContent className="flex items-center gap-3 p-4">
+              <CardContent className="flex items-center gap-2.5 p-3">
                 <div
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${kpi.tone}`}
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${kpi.tone}`}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-xs text-muted-foreground">{kpi.label}</p>
-                  <p className="text-2xl font-bold leading-tight tracking-tight text-foreground">
+                  <p className="text-[11px] leading-tight text-muted-foreground text-pretty">
+                    {kpi.label}
+                  </p>
+                  <p className="text-xl font-bold leading-tight tracking-tight text-foreground">
                     {kpi.value}
                   </p>
-                  <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <p className="flex flex-wrap items-center gap-x-1 text-[10px] leading-tight text-muted-foreground">
                     {kpi.trend === 'up' ? (
-                      <ArrowUp className="h-3 w-3 text-success" />
+                      <>
+                        <ArrowUp className="h-3 w-3 text-success" />
+                        <span className="font-semibold text-success">{kpi.delta}</span>
+                        vs. semana anterior
+                      </>
                     ) : (
-                      <Minus className="h-3 w-3" />
+                      <>
+                        <Minus className="h-3 w-3" />
+                        {kpi.delta}
+                      </>
                     )}
-                    <span className={kpi.trend === 'up' ? 'font-semibold text-success' : ''}>
-                      {kpi.delta}
-                    </span>
                   </p>
                 </div>
               </CardContent>
@@ -249,13 +174,15 @@ export function IncidenciaView({ onBack, embedded = false }: IncidenciaViewProps
           )
         })}
         <Card className="border-dashed bg-muted/30">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-dashed border-border">
-              <BarChart3 className="h-5 w-5 text-muted-foreground" />
+          <CardContent className="flex items-center gap-2.5 p-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border">
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground">Indicador adicional</p>
-              <p className="text-[11px] text-muted-foreground">Próximamente</p>
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium leading-tight text-muted-foreground">
+                Indicador adicional
+              </p>
+              <p className="text-[10px] leading-tight text-muted-foreground">Próximamente</p>
             </div>
           </CardContent>
         </Card>
@@ -306,8 +233,22 @@ export function IncidenciaView({ onBack, embedded = false }: IncidenciaViewProps
                       <td className="py-2 pr-2 text-muted-foreground">{c.bancada}</td>
                       <td className="py-2 pr-2 text-muted-foreground">{c.temaPrincipal}</td>
                       <td className="py-2 pr-2 text-right text-foreground">{c.plCriticos}</td>
-                      <td className="py-2 pr-2 text-right font-medium text-foreground">
-                        {c.probabilidad}%
+                      <td className="py-2 pr-2">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="font-medium text-foreground">{c.probabilidad}%</span>
+                          <div
+                            className="h-1.5 w-14 shrink-0 overflow-hidden rounded-full bg-muted"
+                            role="img"
+                            aria-label={`Probabilidad de incidencia ${c.probabilidad}%`}
+                          >
+                            <div
+                              className={`h-full rounded-full ${
+                                c.probabilidad >= 70 ? 'bg-success' : 'bg-chart-3'
+                              }`}
+                              style={{ width: `${c.probabilidad}%` }}
+                            />
+                          </div>
+                        </div>
                       </td>
                       <td className="py-2 text-center">
                         <span

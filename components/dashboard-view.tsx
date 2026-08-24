@@ -105,10 +105,12 @@ function Dot({ className }: { className: string }) {
 
 /* -------------------------------- component ------------------------------ */
 
+type DashboardTab = 'general' | 'favoritos' | 'incidencia'
+
 interface DashboardViewProps {
   onBack?: () => void
-  /** Pestaña activa al abrir: vista general o incidencia parlamentaria. */
-  initialTab?: 'general' | 'incidencia'
+  /** Pestaña activa al abrir el tablero. */
+  initialTab?: DashboardTab
 }
 
 export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewProps) {
@@ -125,10 +127,10 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
 
   const hayFiltrosActivos = filtrosDef.some((f) => filtros[f.key] !== f.all)
 
-  const proyectosVisibles = useMemo(
-    () => filtrarProyectos(proyectosTransversales, filtros),
-    [filtros],
-  )
+  const proyectosVisibles = useMemo(() => {
+    const filtrados = filtrarProyectos(proyectosTransversales, filtros)
+    return tab === 'favoritos' ? filtrados.filter((p) => favoritos.includes(p.pl)) : filtrados
+  }, [filtros, tab, favoritos])
 
   return (
     <div className="w-full">
@@ -156,15 +158,16 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
       </div>
 
       {/* Tabs */}
-      <Tabs value={tab} onValueChange={(v) => setTab(v as 'general' | 'incidencia')}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as DashboardTab)}>
         <TabsList className="bg-transparent p-0 gap-2">
           <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="favoritos">Favoritos</TabsTrigger>
           <TabsTrigger value="incidencia">Incidencia parlamentaria</TabsTrigger>
         </TabsList>
       </Tabs>
 
       {tab === 'incidencia' ? (
-        <IncidenciaView embedded />
+        <IncidenciaView />
       ) : (
         <>
       {/* Filters */}
@@ -424,7 +427,9 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                 {proyectosVisibles.length === 0 && (
                   <tr>
                     <td colSpan={7} className="py-6 text-center text-muted-foreground">
-                      Ningún proyecto coincide con los filtros seleccionados.
+                      {tab === 'favoritos'
+                        ? 'Aún no has marcado proyectos como favoritos.'
+                        : 'Ningún proyecto coincide con los filtros seleccionados.'}
                     </td>
                   </tr>
                 )}
