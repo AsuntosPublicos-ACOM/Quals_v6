@@ -99,7 +99,13 @@ export default function Home() {
         onNavigateSector={(sectorId) => { setInitialSectorId(sectorId); setMainView('sectores') }}
       />
       
-      <main className="container mx-auto px-4 py-6 max-w-7xl">
+      <main
+        className={
+          mainView === 'dashboard' && !searchQuery.trim()
+            ? 'w-full px-5 py-5'
+            : 'container mx-auto px-4 py-6 max-w-7xl'
+        }
+      >
         {searchQuery.trim().length > 1 && (
           <SearchResults
             query={searchQuery}
