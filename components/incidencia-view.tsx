@@ -8,9 +8,11 @@ import {
   Clock,
   FileText,
   Info,
+  Landmark,
   Minus,
   User,
   Users,
+  X,
   BarChart3,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -19,8 +21,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
@@ -34,6 +38,8 @@ import {
   kpisIncidencia,
   TOTAL_PL_VINCULADOS,
   type FiltroIncidenciaKey,
+  type Nivel,
+  type NivelF,
   type Prioridad,
   type ProyectoVinculado,
   type Riesgo,
@@ -56,6 +62,18 @@ const prioridadTone: Record<Prioridad, string> = {
   Baja: 'bg-success text-success-foreground',
 }
 
+const nivelTone: Record<Nivel, string> = {
+  Alto: 'border-destructive/40 bg-destructive/10 text-destructive',
+  Medio: 'border-chart-3/40 bg-chart-3/10 text-chart-3',
+  Bajo: 'border-border bg-muted text-muted-foreground',
+}
+
+const nivelFTone: Record<NivelF, string> = {
+  Alta: 'border-destructive/40 bg-destructive/10 text-destructive',
+  Media: 'border-chart-3/40 bg-chart-3/10 text-chart-3',
+  Baja: 'border-border bg-muted text-muted-foreground',
+}
+
 const riesgoTone: Record<Riesgo, string> = {
   Crítico: 'border-destructive/40 bg-destructive/10 text-destructive',
   Alto: 'border-chart-3/40 bg-chart-3/10 text-chart-3',
@@ -73,21 +91,38 @@ const medalTone = ['bg-chart-3 text-primary-foreground', 'bg-muted text-foregrou
 /* -------------------------------- component ------------------------------ */
 
 export function IncidenciaView() {
-  const [filtros, setFiltros] = useState<Record<FiltroIncidenciaKey, string>>(
+  const [filtros, setFiltros] = useState<Record<FiltroIncidenciaKey, string[]>>(
     filtrosIncidenciaIniciales,
   )
   const [selectedId, setSelectedId] = useState(congresistasIncidencia[0].id)
 
-  const setFiltro = (key: FiltroIncidenciaKey, value: string) =>
-    setFiltros((prev) => ({ ...prev, [key]: value }))
+  const alternarFiltro = (key: FiltroIncidenciaKey, value: string) =>
+    setFiltros((prev) => {
+      const actual = prev[key]
+      return {
+        ...prev,
+        [key]: actual.includes(value)
+          ? actual.filter((v) => v !== value)
+          : [...actual, value],
+      }
+    })
+
+  const limpiarFiltro = (key: FiltroIncidenciaKey) =>
+    setFiltros((prev) => ({ ...prev, [key]: [] }))
+
+  const hayFiltros = (Object.keys(filtros) as FiltroIncidenciaKey[]).some(
+    (k) => filtros[k].length > 0,
+  )
 
   const congresistasVisibles = useMemo(() => {
     return congresistasIncidencia.filter((c) => {
-      if (filtros.sector !== 'Todos' && !c.temas.includes(filtros.sector)) return false
-      if (filtros.probabilidad !== 'Todos') {
-        const nivel = c.probabilidad >= 80 ? 'Alta' : c.probabilidad >= 60 ? 'Media' : 'Baja'
-        if (nivel !== filtros.probabilidad) return false
-      }
+      if (filtros.nombre.length > 0 && !filtros.nombre.includes(c.nombre)) return false
+      if (filtros.sector.length > 0 && !c.sectores.some((s) => filtros.sector.includes(s)))
+        return false
+      if (filtros.alcance.length > 0 && !filtros.alcance.includes(c.alcance)) return false
+      if (filtros.impacto.length > 0 && !filtros.impacto.includes(c.impacto)) return false
+      if (filtros.probabilidad.length > 0 && !filtros.probabilidad.includes(c.probabilidad))
+        return false
       return true
     })
   }, [filtros])
@@ -102,37 +137,63 @@ export function IncidenciaView() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         {filtrosIncidenciaDef.map((f) => {
-          const active = filtros[f.key] !== f.all
+          const seleccion = filtros[f.key]
+          const active = seleccion.length > 0
+          const resumen =
+            seleccion.length === 0
+              ? f.all
+              : seleccion.length === 1
+                ? seleccion[0]
+                : `${seleccion.length} seleccionados`
           return (
             <DropdownMenu key={f.key}>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                  className={`flex max-w-64 items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition-colors ${
                     active
                       ? 'border-info bg-info/5 text-foreground'
                       : 'border-border bg-card hover:bg-muted'
                   }`}
                 >
-                  <span className="text-muted-foreground">{f.label}</span>
-                  <span className="font-medium text-foreground">{filtros[f.key]}</span>
-                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="shrink-0 text-muted-foreground">{f.label}</span>
+                  <span className="truncate font-medium text-foreground">{resumen}</span>
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-44">
-                {f.key !== 'fecha' && (
-                  <DropdownMenuItem onSelect={() => setFiltro(f.key, f.all)}>
-                    {f.all}
-                  </DropdownMenuItem>
-                )}
+              <DropdownMenuContent align="start" className="min-w-52">
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    limpiarFiltro(f.key)
+                  }}
+                  className="text-muted-foreground"
+                >
+                  {f.all}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 {f.options.map((opt) => (
-                  <DropdownMenuItem key={opt} onSelect={() => setFiltro(f.key, opt)}>
+                  <DropdownMenuCheckboxItem
+                    key={opt}
+                    checked={seleccion.includes(opt)}
+                    onSelect={(e) => e.preventDefault()}
+                    onCheckedChange={() => alternarFiltro(f.key, opt)}
+                  >
                     {opt}
-                  </DropdownMenuItem>
+                  </DropdownMenuCheckboxItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
           )
         })}
+        {hayFiltros && (
+          <button
+            onClick={() => setFiltros(filtrosIncidenciaIniciales)}
+            className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-info hover:bg-muted"
+          >
+            <X className="h-3.5 w-3.5" />
+            Limpiar
+          </button>
+        )}
       </div>
 
       {/* KPIs */}
@@ -201,9 +262,11 @@ export function IncidenciaView() {
                     <th className="w-8 py-1.5 font-medium">#</th>
                     <th className="py-1.5 pr-2 font-medium">Nombre</th>
                     <th className="py-1.5 pr-2 font-medium">Bancada</th>
-                    <th className="py-1.5 pr-2 font-medium">Tema principal</th>
+                    <th className="py-1.5 pr-2 font-medium">Sector</th>
                     <th className="py-1.5 pr-2 text-right font-medium">PL críticos</th>
-                    <th className="py-1.5 pr-2 text-right font-medium">Prob. de incidencia</th>
+                    <th className="py-1.5 pr-2 text-center font-medium">Impacto</th>
+                    <th className="py-1.5 pr-2 text-center font-medium">Probabilidad</th>
+                    <th className="py-1.5 pr-2 text-center font-medium">Alcance</th>
                     <th className="py-1.5 text-center font-medium">Prioridad</th>
                   </tr>
                 </thead>
@@ -231,25 +294,27 @@ export function IncidenciaView() {
                       </td>
                       <td className="py-2 pr-2 font-medium text-foreground">{c.nombre}</td>
                       <td className="py-2 pr-2 text-muted-foreground">{c.bancada}</td>
-                      <td className="py-2 pr-2 text-muted-foreground">{c.temaPrincipal}</td>
+                      <td className="py-2 pr-2 text-muted-foreground">{c.sectorPrincipal}</td>
                       <td className="py-2 pr-2 text-right text-foreground">{c.plCriticos}</td>
-                      <td className="py-2 pr-2">
-                        <div className="flex items-center justify-end gap-2">
-                          <span className="font-medium text-foreground">{c.probabilidad}%</span>
-                          <div
-                            className="h-1.5 w-14 shrink-0 overflow-hidden rounded-full bg-muted"
-                            role="img"
-                            aria-label={`Probabilidad de incidencia ${c.probabilidad}%`}
-                          >
-                            <div
-                              className={`h-full rounded-full ${
-                                c.probabilidad >= 70 ? 'bg-success' : 'bg-chart-3'
-                              }`}
-                              style={{ width: `${c.probabilidad}%` }}
-                            />
-                          </div>
-                        </div>
+                      <td className="py-2 pr-2 text-center">
+                        <span
+                          className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                            nivelTone[c.impacto]
+                          }`}
+                        >
+                          {c.impacto}
+                        </span>
                       </td>
+                      <td className="py-2 pr-2 text-center">
+                        <span
+                          className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                            nivelFTone[c.probabilidad]
+                          }`}
+                        >
+                          {c.probabilidad}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-2 text-center text-muted-foreground">{c.alcance}</td>
                       <td className="py-2 text-center">
                         <span
                           className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
@@ -263,7 +328,7 @@ export function IncidenciaView() {
                   ))}
                   {congresistasVisibles.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-6 text-center text-muted-foreground">
+                      <td colSpan={9} className="py-6 text-center text-muted-foreground">
                         Ningún congresista coincide con los filtros seleccionados.
                       </td>
                     </tr>
@@ -282,13 +347,18 @@ export function IncidenciaView() {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardContent className="p-4">
-                <h2 className="mb-3 text-sm font-semibold text-foreground">
-                  Bancadas con mayor act. legislativa
-                </h2>
+                <div className="mb-3 flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-chart-1/10">
+                    <Landmark className="h-4 w-4 text-chart-1" />
+                  </div>
+                  <h2 className="text-sm font-semibold text-foreground">
+                    Bancadas con mayor act. legislativa
+                  </h2>
+                </div>
                 <table className="w-full text-left text-[11px]">
                   <thead>
                     <tr className="border-b border-border text-muted-foreground">
-                      <th className="w-6 py-1.5 font-medium">#</th>
+                      <th className="w-8 py-1.5 font-medium">#</th>
                       <th className="py-1.5 pr-2 font-medium">Bancada</th>
                       <th className="py-1.5 text-right font-medium">PL presentados</th>
                     </tr>
@@ -296,17 +366,28 @@ export function IncidenciaView() {
                   <tbody>
                     {bancadasIncidencia.map((b, i) => (
                       <tr key={b.nombre} className="border-b border-border last:border-0">
-                        <td className="py-2 text-muted-foreground">{i + 1}</td>
-                        <td className="py-2 pr-3">
-                          <p className="mb-1 text-foreground">{b.nombre}</p>
-                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                            <div
-                              className={`h-full rounded-full ${b.color}`}
-                              style={{ width: `${(b.plPresentados / maxPl) * 100}%` }}
-                            />
+                        <td className="py-2.5 align-middle">
+                          <span
+                            className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-primary-foreground ${b.color}`}
+                          >
+                            {i + 1}
+                          </span>
+                        </td>
+                        <td className="py-2.5 pr-3">
+                          <p className="mb-1.5 text-xs font-semibold text-foreground">{b.nombre}</p>
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className={`h-full rounded-full ${b.color}`}
+                                style={{ width: `${(b.plPresentados / maxPl) * 100}%` }}
+                              />
+                            </div>
+                            <span className="shrink-0 text-[10px] font-semibold text-chart-1">
+                              {b.porcentaje}%
+                            </span>
                           </div>
                         </td>
-                        <td className="py-2 text-right font-semibold text-foreground">
+                        <td className="py-2.5 text-right align-middle text-lg font-bold tracking-tight text-foreground">
                           {b.plPresentados}
                         </td>
                       </tr>
@@ -458,9 +539,9 @@ export function IncidenciaView() {
             </div>
 
             <div className="mt-4">
-              <p className="mb-2 text-xs font-semibold text-foreground">Top temas</p>
+              <p className="mb-2 text-xs font-semibold text-foreground">Top sectores</p>
               <div className="flex flex-wrap gap-1.5">
-                {ficha.temas.map((t) => (
+                {ficha.sectores.map((t) => (
                   <span
                     key={t}
                     className="rounded-full border border-info/40 bg-info/5 px-2.5 py-0.5 text-[11px] text-info"

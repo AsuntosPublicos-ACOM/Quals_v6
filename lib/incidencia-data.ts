@@ -11,11 +11,18 @@ export type Riesgo = 'Crítico' | 'Alto' | 'Medio'
 
 /* --------------------------------- filtros -------------------------------- */
 
-export type FiltroIncidenciaKey = 'fecha' | 'sector' | 'alcance' | 'impacto' | 'probabilidad'
+export type FiltroIncidenciaKey =
+  | 'fecha'
+  | 'nombre'
+  | 'sector'
+  | 'alcance'
+  | 'impacto'
+  | 'probabilidad'
 
 export interface FiltroIncidenciaDef {
   key: FiltroIncidenciaKey
   label: string
+  /** Etiqueta que se muestra cuando no hay ninguna opción seleccionada. */
   all: string
   options: string[]
 }
@@ -28,22 +35,47 @@ export const filtrosIncidenciaDef: FiltroIncidenciaDef[] = [
     options: [PERIODO_INCIDENCIA, '12/05/2025 - 18/05/2025', 'Mayo 2025', 'Últimos 90 días'],
   },
   {
+    key: 'nombre',
+    label: 'Nombre',
+    all: 'Todos',
+    options: [
+      'Villanueva Juan',
+      'Rocha Roxana',
+      'López García Luis',
+      'Martínez Bravo María',
+      'Alva Prieto Ana',
+    ],
+  },
+  {
     key: 'sector',
     label: 'Sector',
     all: 'Todos',
-    options: ['Laboral', 'Tributario', 'Competitividad', 'MYPE', 'Infraestructura', 'Energía', 'Educación', 'Transporte'],
+    options: [
+      'Laboral',
+      'Tributario',
+      'Competitividad',
+      'MYPE',
+      'Infraestructura',
+      'Energía',
+      'Educación',
+      'Transporte',
+      'Salud',
+      'Formalización',
+    ],
   },
   { key: 'alcance', label: 'Alcance', all: 'Todos', options: ['Nacional', 'Regional', 'Sectorial'] },
   { key: 'impacto', label: 'Impacto', all: 'Todos', options: ['Alto', 'Medio', 'Bajo'] },
   { key: 'probabilidad', label: 'Probabilidad', all: 'Todos', options: ['Alta', 'Media', 'Baja'] },
 ]
 
-export const filtrosIncidenciaIniciales: Record<FiltroIncidenciaKey, string> = {
-  fecha: PERIODO_INCIDENCIA,
-  sector: 'Todos',
-  alcance: 'Todos',
-  impacto: 'Todos',
-  probabilidad: 'Todos',
+/** Cada filtro admite varias opciones a la vez; un arreglo vacío equivale a "todos". */
+export const filtrosIncidenciaIniciales: Record<FiltroIncidenciaKey, string[]> = {
+  fecha: [PERIODO_INCIDENCIA],
+  nombre: [],
+  sector: [],
+  alcance: [],
+  impacto: [],
+  probabilidad: [],
 }
 
 /* ---------------------------------- KPIs ---------------------------------- */
@@ -105,6 +137,10 @@ export interface ProyectoVinculado {
   estado: 'En comisión' | 'Aprobado' | 'Dictamen'
 }
 
+export type Nivel = 'Alto' | 'Medio' | 'Bajo'
+export type NivelF = 'Alta' | 'Media' | 'Baja'
+export type Alcance = 'Nacional' | 'Regional' | 'Sectorial'
+
 export interface CongresistaIncidencia {
   id: string
   rank: number
@@ -112,10 +148,13 @@ export interface CongresistaIncidencia {
   iniciales: string
   region: string
   bancada: string
-  temaPrincipal: string
-  temas: string[]
+  /** Sector principal del congresista (antes "tema principal"). */
+  sectorPrincipal: string
+  sectores: string[]
   plCriticos: number
-  probabilidad: number
+  impacto: Nivel
+  probabilidad: NivelF
+  alcance: Alcance
   prioridad: Prioridad
   historial: HistorialItem[]
   proyectos: ProyectoVinculado[]
@@ -129,10 +168,12 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     iniciales: 'VJ',
     region: 'Cajamarca',
     bancada: 'Juntos por el Perú',
-    temaPrincipal: 'Laboral, MYPE',
-    temas: ['Laboral', 'MYPE', 'Formalización'],
+    sectorPrincipal: 'Laboral, MYPE',
+    sectores: ['Laboral', 'MYPE', 'Formalización'],
     plCriticos: 6,
-    probabilidad: 92,
+    impacto: 'Alto',
+    probabilidad: 'Alta',
+    alcance: 'Nacional',
     prioridad: 'Alta',
     historial: [
       { fecha: '23/05/2025', detalle: 'Votó a favor del PL sobre formalización laboral en MYPE.' },
@@ -152,10 +193,12 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     iniciales: 'RR',
     region: 'Lima',
     bancada: 'Renovación Popular',
-    temaPrincipal: 'Educación, Tributario',
-    temas: ['Educación', 'Tributario'],
+    sectorPrincipal: 'Educación, Tributario',
+    sectores: ['Educación', 'Tributario'],
     plCriticos: 4,
-    probabilidad: 85,
+    impacto: 'Alto',
+    probabilidad: 'Alta',
+    alcance: 'Nacional',
     prioridad: 'Media',
     historial: [
       { fecha: '22/05/2025', detalle: 'Presentó dictamen sobre deducciones tributarias educativas.' },
@@ -174,10 +217,12 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     iniciales: 'LG',
     region: 'Piura',
     bancada: 'Fuerza Popular',
-    temaPrincipal: 'Energía',
-    temas: ['Energía', 'Infraestructura'],
+    sectorPrincipal: 'Energía',
+    sectores: ['Energía', 'Infraestructura'],
     plCriticos: 5,
-    probabilidad: 76,
+    impacto: 'Medio',
+    probabilidad: 'Alta',
+    alcance: 'Regional',
     prioridad: 'Alta',
     historial: [
       { fecha: '21/05/2025', detalle: 'Presidió sesión sobre tarifas eléctricas regionales.' },
@@ -195,10 +240,12 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     iniciales: 'MB',
     region: 'La Libertad',
     bancada: 'Alianza para el Progreso',
-    temaPrincipal: 'Laboral',
-    temas: ['Laboral', 'Salud'],
+    sectorPrincipal: 'Laboral',
+    sectores: ['Laboral', 'Salud'],
     plCriticos: 3,
-    probabilidad: 63,
+    impacto: 'Medio',
+    probabilidad: 'Media',
+    alcance: 'Sectorial',
     prioridad: 'Media',
     historial: [
       { fecha: '20/05/2025', detalle: 'Votó en contra del PL de negociación colectiva.' },
@@ -216,10 +263,12 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     iniciales: 'AP',
     region: 'Áncash',
     bancada: 'Acción Popular',
-    temaPrincipal: 'Transporte',
-    temas: ['Transporte', 'Competitividad'],
+    sectorPrincipal: 'Transporte',
+    sectores: ['Transporte', 'Competitividad'],
     plCriticos: 2,
-    probabilidad: 58,
+    impacto: 'Bajo',
+    probabilidad: 'Baja',
+    alcance: 'Regional',
     prioridad: 'Baja',
     historial: [
       { fecha: '18/05/2025', detalle: 'Sustentó proyecto de renovación del parque automotor.' },
@@ -236,14 +285,16 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
 export interface BancadaIncidencia {
   nombre: string
   plPresentados: number
+  /** Participación sobre el total de PL presentados en el periodo. */
+  porcentaje: number
   color: string
 }
 
 export const bancadasIncidencia: BancadaIncidencia[] = [
-  { nombre: 'Fuerza Popular', plPresentados: 124, color: 'bg-chart-1' },
-  { nombre: 'Renovación Popular', plPresentados: 98, color: 'bg-chart-1/80' },
-  { nombre: 'Alianza para el Progreso', plPresentados: 62, color: 'bg-chart-1/60' },
-  { nombre: 'Podemos Perú', plPresentados: 32, color: 'bg-chart-1/40' },
+  { nombre: 'Fuerza Popular', plPresentados: 124, porcentaje: 32, color: 'bg-chart-1' },
+  { nombre: 'Renovación Popular', plPresentados: 98, porcentaje: 25, color: 'bg-chart-1/80' },
+  { nombre: 'Alianza para el Progreso', plPresentados: 62, porcentaje: 16, color: 'bg-chart-1/60' },
+  { nombre: 'Podemos Perú', plPresentados: 32, porcentaje: 8, color: 'bg-chart-1/45' },
 ]
 
 /* ----------------------------- concentración ------------------------------ */
