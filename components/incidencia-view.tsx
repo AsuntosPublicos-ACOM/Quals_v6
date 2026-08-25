@@ -8,7 +8,6 @@ import {
   Clock,
   FileText,
   Info,
-  Landmark,
   Minus,
   User,
   Users,
@@ -270,8 +269,8 @@ export function IncidenciaView() {
                     <th className="py-1.5 pr-2 font-medium">Sector</th>
                     <th className="py-1.5 pr-2 text-right font-medium">PL críticos</th>
                     <th className="py-1.5 pr-2 text-center font-medium">Impacto</th>
-                    <th className="py-1.5 pr-2 text-center font-medium">Probabilidad</th>
                     <th className="py-1.5 pr-2 text-center font-medium">Alcance</th>
+                    <th className="py-1.5 pr-2 text-center font-medium">Probabilidad</th>
                     <th className="py-1.5 text-center font-medium">Prioridad</th>
                   </tr>
                 </thead>
@@ -310,6 +309,7 @@ export function IncidenciaView() {
                           {c.impacto}
                         </span>
                       </td>
+                      <td className="py-2 pr-2 text-center text-muted-foreground">{c.alcance}</td>
                       <td className="py-2 pr-2 text-center">
                         <span
                           className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium ${
@@ -319,7 +319,6 @@ export function IncidenciaView() {
                           {c.probabilidad}
                         </span>
                       </td>
-                      <td className="py-2 pr-2 text-center text-muted-foreground">{c.alcance}</td>
                       <td className="py-2 text-center">
                         <span
                           className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
@@ -352,49 +351,33 @@ export function IncidenciaView() {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardContent className="p-4">
-                <div className="mb-3 flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-chart-1/10">
-                    <Landmark className="h-4 w-4 text-chart-1" />
-                  </div>
-                  <h2 className="text-sm font-semibold text-foreground">
-                    Bancadas con mayor act. legislativa
-                  </h2>
-                </div>
+                <h2 className="mb-3 text-sm font-semibold text-foreground">
+                  Bancadas con mayor act. legislativa
+                </h2>
                 <table className="w-full text-left text-[11px]">
                   <thead>
                     <tr className="border-b border-border text-muted-foreground">
-                      <th className="w-8 py-1.5 font-medium">#</th>
-                      <th className="py-1.5 pr-2 font-medium">Bancada</th>
-                      <th className="py-1.5 text-right font-medium">PL presentados</th>
+                      <th className="w-7 py-1.5 font-normal">#</th>
+                      <th className="py-1.5 pr-2 font-normal">Bancada</th>
+                      <th className="py-1.5 text-right font-normal">PL presentados</th>
                     </tr>
                   </thead>
                   <tbody>
                     {bancadasIncidencia.map((b, i) => (
                       <tr key={b.nombre} className="border-b border-border last:border-0">
-                        <td className="py-2.5 align-middle">
-                          <span
-                            className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${b.color} ${
-                              i > 2 ? 'text-chart-1' : 'text-primary-foreground'
-                            }`}
-                          >
-                            {i + 1}
-                          </span>
+                        <td className="py-2.5 align-top text-[11px] text-muted-foreground">
+                          {i + 1}
                         </td>
                         <td className="py-2.5 pr-3">
-                          <p className="mb-1.5 text-xs font-semibold text-foreground">{b.nombre}</p>
-                          <div className="flex items-center gap-2">
-                            <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
-                              <div
-                                className={`h-full rounded-full ${b.color}`}
-                                style={{ width: `${(b.plPresentados / maxPl) * 100}%` }}
-                              />
-                            </div>
-                            <span className="shrink-0 text-[10px] font-semibold text-chart-1">
-                              {b.porcentaje}%
-                            </span>
+                          <p className="mb-1.5 text-xs text-foreground">{b.nombre}</p>
+                          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                            <div
+                              className={`h-full rounded-full ${b.color}`}
+                              style={{ width: `${(b.plPresentados / maxPl) * 100}%` }}
+                            />
                           </div>
                         </td>
-                        <td className="py-2.5 text-right align-middle text-lg font-bold tracking-tight text-foreground">
+                        <td className="py-2.5 text-right align-top text-sm font-bold text-foreground">
                           {b.plPresentados}
                         </td>
                       </tr>
