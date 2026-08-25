@@ -11,8 +11,9 @@ interface TweetWordCloudProps {
   selectedWord?: string
 }
 
-export function TweetWordCloud({ words, onWordClick, selectedWord }: TweetWordCloudProps) {
+export function TweetWordCloud({ words: wordsProp, onWordClick, selectedWord }: TweetWordCloudProps) {
   const [hoveredWord, setHoveredWord] = useState<string>()
+  const words = Array.isArray(wordsProp) ? wordsProp : []
 
   const cloudData = useMemo(() => {
     if (words.length === 0) return []

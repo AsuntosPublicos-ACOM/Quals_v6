@@ -18,12 +18,13 @@ interface WordCloudProps {
 }
 
 export function WordCloud({ 
-  words, 
+  words: wordsProp, 
   width = 400, 
   height = 250, 
   onWordClick,
   selectedWord 
 }: WordCloudProps) {
+  const words = Array.isArray(wordsProp) ? wordsProp : []
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width, height })

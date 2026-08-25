@@ -663,7 +663,7 @@ export function SectorDetailView({
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
-                              {item.congresista.topSectores?.slice(0, 2).map((comision) => {
+                              {item.congresista.topComisiones?.slice(0, 2).map((comision) => {
                                 const sectorName = sectores.find(s => s.id === comision.sectorId)?.name || 'Sector'
                                 return (
                                   <Badge

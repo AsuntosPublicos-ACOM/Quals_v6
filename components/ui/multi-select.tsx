@@ -67,9 +67,18 @@ export function MultiSelect({
               return (
                 <Badge key={val} variant="secondary" className="text-[10px] h-5 gap-0.5 pr-1">
                   <span className="truncate max-w-[80px]">{label}</span>
-                  <button onClick={(e) => removeOne(e, val)} className="ml-0.5 hover:text-destructive">
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Quitar ${label}`}
+                    onClick={(e) => removeOne(e, val)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') removeOne(e as never, val)
+                    }}
+                    className="ml-0.5 cursor-pointer hover:text-destructive"
+                  >
                     <X className="h-2.5 w-2.5" />
-                  </button>
+                  </span>
                 </Badge>
               )
             })
