@@ -374,7 +374,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                     <span className="sr-only">Favorito</span>
                   </th>
                   <th className="py-1.5 pr-2 font-medium">Proyecto de ley</th>
-                  <th className="py-1.5 pr-2 font-medium">Tema</th>
+                    <th className="py-1.5 pr-2 font-medium">Sector</th>
                   <th className="py-1.5 pr-2 font-medium">Impacto</th>
                   <th className="py-1.5 pr-2 font-medium">Estado actual</th>
                   <th className="py-1.5 pr-2 font-medium">Último cambio</th>
@@ -469,7 +469,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                     <span className="text-[10px] text-muted-foreground">PL relevantes</span>
                   </div>
                   <div className="w-32 shrink-0 text-right">
-                    <p className="text-[10px] text-muted-foreground">Tema principal</p>
+                    <p className="text-[10px] text-muted-foreground">Sector principal</p>
                     <p className={`truncate text-xs font-semibold ${c.temaColor}`}>{c.tema}</p>
                   </div>
                 </li>

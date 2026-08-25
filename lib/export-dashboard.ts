@@ -161,7 +161,7 @@ export async function exportDashboardToPptx(sections: DashboardSection[]) {
     const slide = pptx.addSlide()
     addTitle(slide, 'Proyectos de ley con afectación transversal', 'Priorizados por impacto y movimiento reciente')
     const rows: any[] = [
-      ['Proyecto de ley', 'Tema', 'Impacto', 'Estado actual', 'Último cambio', 'Por qué importa'].map((h) => ({
+      ['Proyecto de ley', 'Sector', 'Impacto', 'Estado actual', 'Último cambio', 'Por qué importa'].map((h) => ({
         text: h,
         options: { bold: true, color: 'FFFFFF', fill: { color: BRAND }, fontSize: 10 },
       })),
@@ -188,7 +188,7 @@ export async function exportDashboardToPptx(sections: DashboardSection[]) {
     const slide = pptx.addSlide()
     addTitle(slide, 'Top congresistas', 'Mayor incidencia en proyectos relevantes')
     const rows: any[] = [
-      ['#', 'Congresista', 'Bancada', 'PL relevantes', 'Tema principal'].map((h) => ({
+      ['#', 'Congresista', 'Bancada', 'PL relevantes', 'Sector principal'].map((h) => ({
         text: h,
         options: { bold: true, color: 'FFFFFF', fill: { color: BRAND }, fontSize: 10 },
       })),
@@ -363,7 +363,7 @@ export async function exportWeeklyReportToWord(sections: DashboardSection[]) {
     children.push(heading('Proyectos de ley con afectación transversal'))
     children.push(
       buildTable(
-        ['Proyecto', 'Tema', 'Impacto', 'Estado', 'Último cambio', 'Por qué importa'],
+        ['Proyecto', 'Sector', 'Impacto', 'Estado', 'Último cambio', 'Por qué importa'],
         proyectosTransversales.map((p) => [p.pl, p.tema, p.impacto, p.estado, p.cambio, p.motivo]),
       ),
     )
@@ -373,7 +373,7 @@ export async function exportWeeklyReportToWord(sections: DashboardSection[]) {
     children.push(heading('Top congresistas'))
     children.push(
       buildTable(
-        ['#', 'Congresista', 'Bancada', 'PL relevantes', 'Tema principal'],
+        ['#', 'Congresista', 'Bancada', 'PL relevantes', 'Sector principal'],
         topCongresistas.map((c, i) => [String(i + 1), c.nombre, c.bancada, String(c.pl), c.tema]),
       ),
     )
