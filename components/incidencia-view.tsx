@@ -96,35 +96,40 @@ export function IncidenciaView() {
   )
   const [selectedId, setSelectedId] = useState(congresistasIncidencia[0].id)
 
+  /** Lectura tolerante: garantiza un arreglo aunque el filtro no esté definido. */
+  const seleccionDe = (key: FiltroIncidenciaKey) => {
+    const valor = filtros[key]
+    return Array.isArray(valor) ? valor : []
+  }
+
   const alternarFiltro = (key: FiltroIncidenciaKey, value: string) =>
     setFiltros((prev) => {
-      const actual = prev[key]
+      const actual = Array.isArray(prev[key]) ? prev[key] : []
       return {
         ...prev,
-        [key]: actual.includes(value)
-          ? actual.filter((v) => v !== value)
-          : [...actual, value],
+        [key]: actual.includes(value) ? actual.filter((v) => v !== value) : [...actual, value],
       }
     })
 
   const limpiarFiltro = (key: FiltroIncidenciaKey) =>
     setFiltros((prev) => ({ ...prev, [key]: [] }))
 
-  const hayFiltros = (Object.keys(filtros) as FiltroIncidenciaKey[]).some(
-    (k) => filtros[k].length > 0,
-  )
+  const hayFiltros = filtrosIncidenciaDef.some((f) => seleccionDe(f.key).length > 0)
 
   const congresistasVisibles = useMemo(() => {
-    return congresistasIncidencia.filter((c) => {
-      if (filtros.nombre.length > 0 && !filtros.nombre.includes(c.nombre)) return false
-      if (filtros.sector.length > 0 && !c.sectores.some((s) => filtros.sector.includes(s)))
-        return false
-      if (filtros.alcance.length > 0 && !filtros.alcance.includes(c.alcance)) return false
-      if (filtros.impacto.length > 0 && !filtros.impacto.includes(c.impacto)) return false
-      if (filtros.probabilidad.length > 0 && !filtros.probabilidad.includes(c.probabilidad))
-        return false
-      return true
-    })
+    const coincide = (key: FiltroIncidenciaKey, valores: string[]) => {
+      const sel = Array.isArray(filtros[key]) ? filtros[key] : []
+      return sel.length === 0 || valores.some((v) => sel.includes(v))
+    }
+
+    return congresistasIncidencia.filter(
+      (c) =>
+        coincide('nombre', [c.nombre]) &&
+        coincide('sector', c.sectores) &&
+        coincide('alcance', [c.alcance]) &&
+        coincide('impacto', [c.impacto]) &&
+        coincide('probabilidad', [c.probabilidad]),
+    )
   }, [filtros])
 
   const ficha =
@@ -137,7 +142,7 @@ export function IncidenciaView() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         {filtrosIncidenciaDef.map((f) => {
-          const seleccion = filtros[f.key]
+          const seleccion = seleccionDe(f.key)
           const active = seleccion.length > 0
           const resumen =
             seleccion.length === 0
