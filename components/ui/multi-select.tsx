@@ -18,7 +18,19 @@ interface MultiSelectProps {
   className?: string
 }
 
-export function MultiSelect({ options, selected, onChange, placeholder = 'Seleccionar...', className }: MultiSelectProps) {
+export function MultiSelect({
+  options: optionsProp,
+  selected: selectedProp,
+  onChange,
+  placeholder = 'Seleccionar...',
+  className,
+}: MultiSelectProps) {
+  /**
+   * Lectura tolerante: si un consumidor omite `options` o `selected`, se usa un
+   * arreglo vacío en lugar de romper el render con `undefined.map(...)`.
+   */
+  const options = Array.isArray(optionsProp) ? optionsProp : []
+  const selected = Array.isArray(selectedProp) ? selectedProp : []
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -31,12 +43,12 @@ export function MultiSelect({ options, selected, onChange, placeholder = 'Selecc
   }, [])
 
   const toggle = (value: string) => {
-    onChange(selected.includes(value) ? selected.filter(v => v !== value) : [...selected, value])
+    onChange?.(selected.includes(value) ? selected.filter(v => v !== value) : [...selected, value])
   }
 
   const removeOne = (e: React.MouseEvent, value: string) => {
     e.stopPropagation()
-    onChange(selected.filter(v => v !== value))
+    onChange?.(selected.filter(v => v !== value))
   }
 
   return (
