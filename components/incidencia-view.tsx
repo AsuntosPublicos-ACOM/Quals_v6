@@ -373,7 +373,9 @@ export function IncidenciaView() {
                       <tr key={b.nombre} className="border-b border-border last:border-0">
                         <td className="py-2.5 align-middle">
                           <span
-                            className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-primary-foreground ${b.color}`}
+                            className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${b.color} ${
+                              i > 2 ? 'text-chart-1' : 'text-primary-foreground'
+                            }`}
                           >
                             {i + 1}
                           </span>
@@ -410,7 +412,7 @@ export function IncidenciaView() {
             <Card>
               <CardContent className="p-4">
                 <h2 className="mb-1 text-sm font-semibold text-foreground">
-                  Concentración por tema
+                  Concentración por sector
                 </h2>
                 <div className="flex items-center gap-3">
                   <div className="relative h-[150px] w-[150px] shrink-0">
@@ -466,7 +468,7 @@ export function IncidenciaView() {
                 </div>
                 <div className="mt-2 flex justify-center">
                   <button className="flex items-center gap-1 text-xs font-semibold text-info hover:underline">
-                    Ver detalle por tema <ArrowRight className="h-3.5 w-3.5" />
+                    Ver detalle por sector <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </CardContent>
