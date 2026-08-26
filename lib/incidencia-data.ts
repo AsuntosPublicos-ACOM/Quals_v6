@@ -74,7 +74,7 @@ export const filtrosIncidenciaDef: FiltroIncidenciaDef[] = [
     ],
   },
   { key: 'alcance', label: 'Alcance', all: 'Todos', options: ['Nacional', 'Regional', 'Sectorial'] },
-  { key: 'impacto', label: 'Impacto', all: 'Todos', options: ['Alto', 'Medio', 'Bajo'] },
+  { key: 'impacto', label: 'Impacto', all: 'Todos', options: ['Sí', 'No'] },
   { key: 'probabilidad', label: 'Probabilidad', all: 'Todos', options: ['Alta', 'Media', 'Baja'] },
 ]
 
@@ -141,7 +141,8 @@ export interface CargaComision {
   pl: number
 }
 
-export type Nivel = 'Alto' | 'Medio' | 'Bajo'
+/** El impacto se declara como directo o no, igual que en la pestaña General. */
+export type ImpactoDirecto = 'Sí' | 'No'
 export type NivelF = 'Alta' | 'Media' | 'Baja'
 export type Alcance = 'Nacional' | 'Regional' | 'Sectorial'
 
@@ -156,7 +157,8 @@ export interface CongresistaIncidencia {
   sectores: string[]
   plCriticos: number
   comisiones: CargaComision[]
-  impacto: Nivel
+  /** ¿Su agenda tiene impacto directo para el negocio? */
+  impacto: ImpactoDirecto
   probabilidad: NivelF
   alcance: Alcance
   prioridad: Prioridad
@@ -178,7 +180,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
       { comision: 'Trabajo y Seguridad Social', pl: 4 },
       { comision: 'Producción', pl: 2 },
     ],
-    impacto: 'Alto',
+    impacto: 'Sí',
     probabilidad: 'Alta',
     alcance: 'Nacional',
     prioridad: 'Alta',
@@ -206,7 +208,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
       { comision: 'Economía, Banca y Finanzas', pl: 4 },
       { comision: 'Trabajo y Seguridad Social', pl: 3 },
     ],
-    impacto: 'Alto',
+    impacto: 'Sí',
     probabilidad: 'Alta',
     alcance: 'Nacional',
     prioridad: 'Alta',
@@ -232,7 +234,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
       { comision: 'Energía y Minas', pl: 3 },
       { comision: 'Transportes y Comunicaciones', pl: 2 },
     ],
-    impacto: 'Medio',
+    impacto: 'No',
     probabilidad: 'Alta',
     alcance: 'Regional',
     prioridad: 'Alta',
@@ -258,7 +260,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
       { comision: 'Economía, Banca y Finanzas', pl: 3 },
       { comision: 'Producción', pl: 2 },
     ],
-    impacto: 'Alto',
+    impacto: 'Sí',
     probabilidad: 'Alta',
     alcance: 'Nacional',
     prioridad: 'Alta',
@@ -284,7 +286,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
       { comision: 'Economía, Banca y Finanzas', pl: 2 },
       { comision: 'Educación', pl: 2 },
     ],
-    impacto: 'Alto',
+    impacto: 'Sí',
     probabilidad: 'Alta',
     alcance: 'Nacional',
     prioridad: 'Media',
@@ -311,7 +313,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
       { comision: 'Trabajo y Seguridad Social', pl: 2 },
       { comision: 'Economía, Banca y Finanzas', pl: 2 },
     ],
-    impacto: 'Alto',
+    impacto: 'Sí',
     probabilidad: 'Alta',
     alcance: 'Nacional',
     prioridad: 'Alta',
@@ -337,7 +339,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
       { comision: 'Producción', pl: 2 },
       { comision: 'Educación', pl: 2 },
     ],
-    impacto: 'Alto',
+    impacto: 'Sí',
     probabilidad: 'Media',
     alcance: 'Regional',
     prioridad: 'Media',
@@ -360,7 +362,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     sectores: ['Laboral', 'Salud'],
     plCriticos: 3,
     comisiones: [{ comision: 'Trabajo y Seguridad Social', pl: 3 }],
-    impacto: 'Medio',
+    impacto: 'No',
     probabilidad: 'Media',
     alcance: 'Sectorial',
     prioridad: 'Media',
@@ -386,7 +388,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
       { comision: 'Trabajo y Seguridad Social', pl: 2 },
       { comision: 'Educación', pl: 1 },
     ],
-    impacto: 'Medio',
+    impacto: 'No',
     probabilidad: 'Alta',
     alcance: 'Sectorial',
     prioridad: 'Media',
@@ -412,7 +414,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
       { comision: 'Energía y Minas', pl: 2 },
       { comision: 'Transportes y Comunicaciones', pl: 1 },
     ],
-    impacto: 'Medio',
+    impacto: 'No',
     probabilidad: 'Baja',
     alcance: 'Regional',
     prioridad: 'Baja',
@@ -435,7 +437,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     sectores: ['Transporte', 'Competitividad'],
     plCriticos: 2,
     comisiones: [{ comision: 'Transportes y Comunicaciones', pl: 2 }],
-    impacto: 'Bajo',
+    impacto: 'No',
     probabilidad: 'Baja',
     alcance: 'Regional',
     prioridad: 'Baja',
@@ -503,7 +505,7 @@ export const focosIncidenciaDef: FocoIncidenciaDef[] = [
   {
     id: 'impacto',
     label: 'Alta probabilidad e impacto',
-    hint: 'Impacto alto y probabilidad alta',
+    hint: 'Impacto directo y probabilidad alta',
     iconKey: 'file',
     tone: 'bg-chart-3/15 text-chart-3',
   },
@@ -534,6 +536,13 @@ export function bancadasRelevantes(congresistas: CongresistaIncidencia[]): strin
     .map(([nombre]) => nombre)
 }
 
+/**
+ * Combinación que define un PL crítico: impacto directo y probabilidad alta.
+ * Se usa para el KPI y para resaltar esos PL en la concentración por comisión.
+ */
+export const esCriticoIncidencia = (c: CongresistaIncidencia) =>
+  c.impacto === 'Sí' && c.probabilidad === 'Alta'
+
 /** ¿Tiene carga en alguna comisión de riesgo crítico? */
 const enComisionCritica = (c: CongresistaIncidencia) =>
   c.comisiones.some((cc) => metaDe(cc.comision)?.riesgo === 'Crítico')
@@ -547,7 +556,7 @@ export function aplicarFocoIncidencia(
     case 'comisiones':
       return congresistas.filter(enComisionCritica)
     case 'impacto':
-      return congresistas.filter((c) => c.impacto === 'Alto' && c.probabilidad === 'Alta')
+      return congresistas.filter(esCriticoIncidencia)
     case 'bancadas': {
       const relevantes = new Set(bancadasRelevantes(congresistas))
       return congresistas.filter((c) => relevantes.has(c.bancada))
@@ -654,25 +663,35 @@ export function totalPl(congresistas: CongresistaIncidencia[]): number {
 export interface ConcentracionComision {
   comision: string
   pl: number
+  /** PL de congresistas con impacto directo y probabilidad alta. */
+  plCriticos: number
+  /** Resto de PL de la comisión. */
+  plResto: number
   riesgo: Riesgo
   prioridad: Prioridad
 }
 
-/** PL por comisión, de mayor a menor: alimenta las barras y la tabla. */
+/** PL por comisión, de mayor a menor, separando los PL críticos del resto. */
 export function resumenComisiones(
   congresistas: CongresistaIncidencia[],
 ): ConcentracionComision[] {
-  const porComision = new Map<string, number>()
+  const porComision = new Map<string, { criticos: number; resto: number }>()
   for (const c of congresistas) {
+    const critico = esCriticoIncidencia(c)
     for (const cc of c.comisiones) {
-      porComision.set(cc.comision, (porComision.get(cc.comision) ?? 0) + cc.pl)
+      const acc = porComision.get(cc.comision) ?? { criticos: 0, resto: 0 }
+      if (critico) acc.criticos += cc.pl
+      else acc.resto += cc.pl
+      porComision.set(cc.comision, acc)
     }
   }
 
   return [...porComision.entries()]
-    .map(([comision, pl]) => ({
+    .map(([comision, { criticos, resto }]) => ({
       comision,
-      pl,
+      pl: criticos + resto,
+      plCriticos: criticos,
+      plResto: resto,
       riesgo: metaDe(comision)?.riesgo ?? 'Medio',
       prioridad: metaDe(comision)?.prioridad ?? 'Baja',
     }))

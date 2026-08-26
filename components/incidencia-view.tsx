@@ -50,11 +50,9 @@ import {
   type DetalleIncidencia,
   type FiltroIncidenciaKey,
   type FocoIncidencia,
-  type Nivel,
+  type ImpactoDirecto,
   type NivelF,
-  type Prioridad,
   type ProyectoVinculado,
-  type Riesgo,
 } from '@/lib/incidencia-data'
 
 /* ------------------------------ icon mapping ----------------------------- */
@@ -68,28 +66,15 @@ const ICONS: Record<string, LucideIcon> = {
 
 /* -------------------------------- helpers -------------------------------- */
 
-const prioridadTone: Record<Prioridad, string> = {
-  Alta: 'bg-destructive text-destructive-foreground',
-  Media: 'bg-chart-3 text-primary-foreground',
-  Baja: 'bg-success text-success-foreground',
-}
-
-const nivelTone: Record<Nivel, string> = {
-  Alto: 'border-destructive/40 bg-destructive/10 text-destructive',
-  Medio: 'border-chart-3/40 bg-chart-3/10 text-chart-3',
-  Bajo: 'border-border bg-muted text-muted-foreground',
+const impactoTone: Record<ImpactoDirecto, string> = {
+  Sí: 'border-destructive/40 bg-destructive/10 text-destructive',
+  No: 'border-border bg-muted text-muted-foreground',
 }
 
 const nivelFTone: Record<NivelF, string> = {
   Alta: 'border-destructive/40 bg-destructive/10 text-destructive',
   Media: 'border-chart-3/40 bg-chart-3/10 text-chart-3',
   Baja: 'border-border bg-muted text-muted-foreground',
-}
-
-const riesgoTone: Record<Riesgo, string> = {
-  Crítico: 'border-destructive/40 bg-destructive/10 text-destructive',
-  Alto: 'border-chart-3/40 bg-chart-3/10 text-chart-3',
-  Medio: 'border-chart-3/30 bg-chart-3/5 text-chart-3',
 }
 
 const estadoProyectoTone: Record<ProyectoVinculado['estado'], string> = {
@@ -104,10 +89,20 @@ const medalTone = [
   'bg-destructive text-destructive-foreground',
 ]
 
-const chartConfig = { pl: { label: 'PL vinculados', color: 'var(--chart-1)' } } satisfies ChartConfig
+const chartConfig = {
+  pl: { label: 'PL vinculados', color: 'var(--chart-1)' },
+  plCriticos: { label: 'Impacto directo + prob. alta', color: 'var(--destructive)' },
+  plResto: { label: 'Resto de PL', color: 'var(--chart-1)' },
+} satisfies ChartConfig
 
 /** Porcentaje mínimo para escribir la cifra dentro del segmento del donut. */
 const MIN_PCT_ETIQUETA = 6
+
+/** Congresistas mostrados antes de abrir el ranking completo. */
+const TOP_VISIBLE = 5
+
+/** Opacidad de un elemento del gráfico que queda fuera de lo resaltado. */
+const ATENUADO = 0.3
 
 /* -------------------------------- component ------------------------------ */
 
@@ -117,7 +112,9 @@ export function IncidenciaView() {
   )
   const [foco, setFoco] = useState<FocoIncidencia>('todos')
   const [detalle, setDetalle] = useState<DetalleIncidencia>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(congresistasIncidencia[0].id)
+  /** Congresista marcado en el ranking: pinta su bancada y sus comisiones. */
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [rankingCompleto, setRankingCompleto] = useState(false)
 
   /** Lectura tolerante: garantiza un arreglo aunque el filtro no esté definido. */
   const seleccionDe = (key: FiltroIncidenciaKey) => {
@@ -140,12 +137,23 @@ export function IncidenciaView() {
   const hayFiltros =
     filtrosIncidenciaDef.some((f) => seleccionDe(f.key).length > 0) ||
     foco !== 'todos' ||
-    detalle !== null
+    detalle !== null ||
+    selectedId !== null
 
   const limpiarTodo = () => {
     setFiltros(filtrosIncidenciaIniciales)
     setFoco('todos')
     setDetalle(null)
+    setSelectedId(null)
+  }
+
+  /** Click en una fila del ranking: marca o desmarca al congresista. */
+  const marcarCongresista = (id: string) => {
+    console.log('[v0] marcarCongresista', id)
+    setSelectedId((prev) => {
+      console.log('[v0] prev', prev, '->', prev === id ? null : id)
+      return prev === id ? null : id
+    })
   }
 
   /** Cambiar de KPI reinicia el detalle: el arrastre siempre parte del KPI. */
@@ -190,14 +198,20 @@ export function IncidenciaView() {
   const comisiones = useMemo(() => resumenComisiones(conjunto), [conjunto])
   const totalConjunto = useMemo(() => totalPl(conjunto), [conjunto])
 
-  /** Solo las comisiones de riesgo alto o crítico del conjunto. */
-  const comisionesCriticas = useMemo(
-    () => comisiones.filter((c) => c.riesgo === 'Crítico' || c.riesgo === 'Alto'),
-    [comisiones],
-  )
+  /** Congresista marcado, solo si sigue dentro de la selección vigente. */
+  const marcado = selectedId ? (visibles.find((c) => c.id === selectedId) ?? null) : null
 
-  /** La ficha sigue a la selección: si el elegido queda fuera, toma el primero. */
-  const ficha = visibles.find((c) => c.id === selectedId) ?? visibles[0] ?? null
+  /** Sin marca explícita la ficha muestra al primero del ranking. */
+  const ficha = marcado ?? visibles[0] ?? null
+
+  /** Filas del ranking: top 5 salvo que se abra el ranking completo. */
+  const listado = rankingCompleto ? visibles : visibles.slice(0, TOP_VISIBLE)
+
+  /** Comisiones donde incide el congresista marcado, para pintar las barras. */
+  const comisionesMarcadas = useMemo(
+    () => new Set(marcado?.comisiones.map((c) => c.comision) ?? []),
+    [marcado],
+  )
 
   /** Eje de las barras redondeado al múltiplo de 5 siguiente, como en el diseño. */
   const topeEje = Math.max(5, Math.ceil((comisiones[0]?.pl ?? 0) / 5) * 5)
@@ -209,10 +223,27 @@ export function IncidenciaView() {
   const chips = [
     focoActivo?.label ?? null,
     detalle ? `${detalle.tipo === 'bancada' ? 'Bancada' : 'Comisión'}: ${detalle.valor}` : null,
+    marcado ? `Congresista: ${marcado.nombre}` : null,
   ].filter((c): c is string => Boolean(c))
 
   const bancadaActiva = detalle?.tipo === 'bancada' ? detalle.valor : null
   const comisionActiva = detalle?.tipo === 'comision' ? detalle.valor : null
+
+  /**
+   * El recorte por bancada manda sobre el resaltado; si no hay recorte, se
+   * atenúan las bancadas ajenas al congresista marcado.
+   */
+  const opacidadBancada = (incluye: string[]) => {
+    if (bancadaActiva) return incluye.includes(bancadaActiva) ? 1 : ATENUADO
+    if (marcado) return incluye.includes(marcado.bancada) ? 1 : ATENUADO
+    return 1
+  }
+
+  const opacidadComision = (comision: string) => {
+    if (comisionActiva) return comisionActiva === comision ? 1 : ATENUADO
+    if (marcado) return comisionesMarcadas.has(comision) ? 1 : ATENUADO
+    return 1
+  }
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -344,19 +375,31 @@ export function IncidenciaView() {
                     <th className="py-1.5 pr-2 font-medium">Bancada</th>
                     <th className="py-1.5 pr-2 font-medium">Sector</th>
                     <th className="py-1.5 pr-2 text-right font-medium">PL críticos</th>
-                    <th className="py-1.5 pr-2 text-center font-medium">Impacto</th>
                     <th className="py-1.5 pr-2 text-center font-medium">Alcance</th>
-                    <th className="py-1.5 pr-2 text-center font-medium">Probabilidad</th>
-                    <th className="py-1.5 text-center font-medium">Prioridad</th>
+                    <th className="py-1.5 pr-2 text-center font-medium">Impacto</th>
+                    <th className="py-1.5 text-center font-medium">Probabilidad</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {visibles.map((c, i) => (
+                  {listado.map((c, i) => (
                     <tr
                       key={c.id}
-                      onClick={() => setSelectedId(c.id)}
-                      className={`cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/60 ${
-                        c.id === ficha?.id ? 'bg-muted/50' : ''
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={c.id === selectedId}
+                      onClick={() => marcarCongresista(c.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          marcarCongresista(c.id)
+                        }
+                      }}
+                      className={`cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring ${
+                        c.id === selectedId
+                          ? 'bg-info/10'
+                          : c.id === ficha?.id
+                            ? 'bg-muted/50'
+                            : ''
                       }`}
                     >
                       <td className="py-2">
@@ -376,17 +419,17 @@ export function IncidenciaView() {
                       <td className="py-2 pr-2 text-muted-foreground">{c.bancada}</td>
                       <td className="py-2 pr-2 text-muted-foreground">{c.sectorPrincipal}</td>
                       <td className="py-2 pr-2 text-right text-foreground">{c.plCriticos}</td>
+                      <td className="py-2 pr-2 text-center text-muted-foreground">{c.alcance}</td>
                       <td className="py-2 pr-2 text-center">
                         <span
                           className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-                            nivelTone[c.impacto]
+                            impactoTone[c.impacto]
                           }`}
                         >
                           {c.impacto}
                         </span>
                       </td>
-                      <td className="py-2 pr-2 text-center text-muted-foreground">{c.alcance}</td>
-                      <td className="py-2 pr-2 text-center">
+                      <td className="py-2 text-center">
                         <span
                           className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium ${
                             nivelFTone[c.probabilidad]
@@ -395,31 +438,32 @@ export function IncidenciaView() {
                           {c.probabilidad}
                         </span>
                       </td>
-                      <td className="py-2 text-center">
-                        <span
-                          className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
-                            prioridadTone[c.prioridad]
-                          }`}
-                        >
-                          {c.prioridad}
-                        </span>
-                      </td>
                     </tr>
                   ))}
-                  {visibles.length === 0 && (
+                  {listado.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="py-6 text-center text-muted-foreground">
+                      <td colSpan={8} className="py-6 text-center text-muted-foreground">
                         Ningún congresista coincide con la selección actual.
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
-              <div className="mt-2.5 flex justify-end">
-                <button className="flex items-center gap-1 text-xs font-semibold text-info hover:underline">
-                  Ver ranking completo <ArrowRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              {visibles.length > TOP_VISIBLE && (
+                <div className="mt-2.5 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setRankingCompleto((prev) => !prev)}
+                    aria-expanded={rankingCompleto}
+                    className="flex items-center gap-1 text-xs font-semibold text-info hover:underline"
+                  >
+                    {rankingCompleto
+                      ? `Ver solo el top ${TOP_VISIBLE}`
+                      : `Ver ranking completo (${visibles.length})`}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -427,9 +471,12 @@ export function IncidenciaView() {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardContent className="p-4">
-                <h2 className="mb-2 text-sm font-semibold text-foreground">
+                <h2 className="text-sm font-semibold text-foreground">
                   Bancadas con mayor act. legislativa
                 </h2>
+                <p className="mb-2 h-4 text-[10px] leading-4 text-muted-foreground">
+                  {marcado ? `${marcado.nombre} · ${marcado.bancada}` : ''}
+                </p>
                 {bancadas.length === 0 ? (
                   <p className="py-10 text-center text-[11px] text-muted-foreground">
                     Sin actividad para la selección actual.
@@ -472,7 +519,15 @@ export function IncidenciaView() {
                                 key={b.nombre}
                                 fill={b.color}
                                 className={b.esOtros ? '' : 'cursor-pointer'}
-                                opacity={bancadaActiva && bancadaActiva !== b.nombre ? 0.35 : 1}
+                                opacity={opacidadBancada(b.incluye)}
+                                stroke={
+                                  marcado && b.incluye.includes(marcado.bancada)
+                                    ? 'var(--color-foreground)'
+                                    : undefined
+                                }
+                                strokeWidth={
+                                  marcado && b.incluye.includes(marcado.bancada) ? 1.5 : 0
+                                }
                                 onClick={() => !b.esOtros && elegirBancada(b.nombre)}
                               />
                             ))}
@@ -490,6 +545,7 @@ export function IncidenciaView() {
                     <ul className="flex w-full min-w-0 flex-col gap-1 @[400px]:flex-1">
                       {bancadas.map((b) => {
                         const activa = bancadaActiva === b.nombre
+                        const resaltada = Boolean(marcado && b.incluye.includes(marcado.bancada))
                         return (
                           <li key={b.nombre}>
                             <button
@@ -499,14 +555,22 @@ export function IncidenciaView() {
                               title={b.esOtros ? b.incluye.join(', ') : b.nombre}
                               className={`flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left text-[10px] transition-colors ${
                                 b.esOtros ? 'cursor-default' : 'hover:bg-muted'
-                              } ${activa ? 'bg-info/10' : ''}`}
+                              } ${activa ? 'bg-info/10' : ''} ${
+                                resaltada ? 'ring-1 ring-foreground/30' : ''
+                              } ${marcado && !resaltada ? 'opacity-45' : ''}`}
                             >
                               <span
                                 className="h-2 w-2 shrink-0 rounded-full"
                                 style={{ backgroundColor: b.color }}
                                 aria-hidden="true"
                               />
-                              <span className="truncate text-foreground">{b.nombre}</span>
+                              <span
+                                className={`truncate ${
+                                  resaltada ? 'font-semibold text-foreground' : 'text-foreground'
+                                }`}
+                              >
+                                {b.nombre}
+                              </span>
                               <span className="ml-auto shrink-0 font-semibold text-foreground">
                                 {b.porcentaje}%
                               </span>
@@ -526,9 +590,16 @@ export function IncidenciaView() {
 
             <Card>
               <CardContent className="p-4">
-                <h2 className="mb-2 text-sm font-semibold text-foreground">
+                <h2 className="text-sm font-semibold text-foreground">
                   Concentración por comisión
                 </h2>
+                <p className="mb-2 h-4 truncate text-[10px] leading-4 text-muted-foreground">
+                  {marcado
+                    ? `Incide en: ${marcado.comisiones
+                        .map((c) => `${c.comision} (${c.pl})`)
+                        .join(' · ')}`
+                    : ''}
+                </p>
                 {comisiones.length === 0 ? (
                   <p className="py-10 text-center text-[11px] text-muted-foreground">
                     Sin comisiones para la selección actual.
@@ -562,13 +633,31 @@ export function IncidenciaView() {
                         axisLine={false}
                         tick={{ fontSize: 10 }}
                       />
-                      <Bar dataKey="pl" radius={2} isAnimationActive={false}>
+                      {/* Tramo de PL con impacto directo y probabilidad alta */}
+                      <Bar dataKey="plCriticos" stackId="pl" isAnimationActive={false}>
+                        {comisiones.map((c) => (
+                          <Cell
+                            key={c.comision}
+                            fill="var(--color-destructive)"
+                            className="cursor-pointer"
+                            opacity={opacidadComision(c.comision)}
+                            onClick={() => elegirComision(c.comision)}
+                          />
+                        ))}
+                      </Bar>
+                      {/* Resto de PL vinculados a la comisión */}
+                      <Bar
+                        dataKey="plResto"
+                        stackId="pl"
+                        radius={[0, 2, 2, 0]}
+                        isAnimationActive={false}
+                      >
                         {comisiones.map((c) => (
                           <Cell
                             key={c.comision}
                             fill="var(--color-chart-1)"
                             className="cursor-pointer"
-                            opacity={comisionActiva && comisionActiva !== c.comision ? 0.35 : 1}
+                            opacity={opacidadComision(c.comision)}
                             onClick={() => elegirComision(c.comision)}
                           />
                         ))}
@@ -583,81 +672,22 @@ export function IncidenciaView() {
                     </BarChart>
                   </ChartContainer>
                 )}
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className="h-2 w-2 rounded-full bg-destructive"
+                      aria-hidden="true"
+                    />
+                    Impacto directo + probabilidad alta
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-chart-1" aria-hidden="true" />
+                    Resto de PL
+                  </span>
+                </div>
               </CardContent>
             </Card>
           </div>
-
-          {/* Comisiones críticas */}
-          <Card>
-            <CardContent className="p-4">
-              <h2 className="mb-3 text-sm font-semibold text-foreground">
-                Comisiones críticas (top)
-              </h2>
-              <table className="w-full text-left text-[11px]">
-                <thead>
-                  <tr className="border-b border-border text-muted-foreground">
-                    <th className="py-1.5 pr-2 font-medium">Comisión</th>
-                    <th className="py-1.5 pr-2 text-right font-medium">PL vinculados</th>
-                    <th className="py-1.5 text-center font-medium">Riesgo</th>
-                    <th className="py-1.5 text-center font-medium">Prioridad</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comisionesCriticas.map((c) => (
-                    <tr
-                      key={c.comision}
-                      role="button"
-                      tabIndex={0}
-                      aria-pressed={comisionActiva === c.comision}
-                      onClick={() => elegirComision(c.comision)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          elegirComision(c.comision)
-                        }
-                      }}
-                      className={`cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring ${
-                        comisionActiva === c.comision ? 'bg-muted/50' : ''
-                      }`}
-                    >
-                      <td className="py-2 pr-2 text-foreground">{c.comision}</td>
-                      <td className="py-2 pr-2 text-right text-foreground">{c.pl}</td>
-                      <td className="py-2 text-center">
-                        <span
-                          className={`inline-block rounded border px-2 py-0.5 text-[10px] font-medium ${
-                            riesgoTone[c.riesgo]
-                          }`}
-                        >
-                          {c.riesgo}
-                        </span>
-                      </td>
-                      <td className="py-2 text-center">
-                        <span
-                          className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
-                            prioridadTone[c.prioridad]
-                          }`}
-                        >
-                          {c.prioridad}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {comisionesCriticas.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="py-6 text-center text-muted-foreground">
-                        Ninguna comisión crítica en la selección actual.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-              <div className="mt-2.5 flex justify-center">
-                <button className="flex items-center gap-1 text-xs font-semibold text-info hover:underline">
-                  Ver todas las comisiones <ArrowRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Ficha técnica: columna derecha, fija al hacer scroll */}
@@ -756,7 +786,7 @@ export function IncidenciaView() {
         </span>
         <span className="flex items-center gap-1.5">
           <Info className="h-3.5 w-3.5" />
-          Los niveles de probabilidad y riesgo son calculados con IA en base a votaciones,
+          La probabilidad y el impacto directo son calculados con IA en base a votaciones,
           participación y señales públicas.
         </span>
       </div>
