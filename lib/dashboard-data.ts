@@ -5,8 +5,12 @@
  */
 
 export type Impacto = 'Alto' | 'Medio' | 'Bajo'
-export type Estado = 'En dictamen' | 'En agenda / debate' | 'Presentado'
+export type Estado = 'En dictamen' | 'En agenda / debate' | 'Presentado' | 'Ley aprobada'
 export type Probabilidad = 'Alta' | 'Media' | 'Baja'
+export type ImpactoDirecto = 'Sí' | 'No'
+
+/** Etapas del avance legislativo (coinciden con las series del gráfico). */
+export type Etapa = 'presentados' | 'dictamen' | 'agenda' | 'leyes'
 
 export type IconKey =
   | 'file'
@@ -43,20 +47,48 @@ export interface Tema {
 
 export interface ProyectoTransversal {
   pl: string
+  /** Título corto del proyecto, se muestra junto al número de PL. */
+  titulo: string
   tema: string
   temaTone: string
-  impacto: Impacto
+  comision: string
   probabilidad: Probabilidad
+  /** ¿Afecta directamente al negocio? Es la columna "Impacto" de la tabla. */
+  impactoDirecto: ImpactoDirecto
+  /** Nivel agregado de impacto, usado por los exportables. */
+  impacto: Impacto
   alcance: string
   estado: Estado
   cambio: string
   /** Fecha ISO del último cambio, usada por el filtro de periodo. */
   fecha: string
   motivo: string
+  /** Etapa del PL en cada semana de `semanas` (null = aún no presentado). */
+  historial: (Etapa | null)[]
 }
 
 export const PERIODO = '12 – 18 may 2025'
 export const ACTUALIZADO = '18/05/2025 11:30 am'
+
+/** Semanas del eje X del gráfico de evolución. */
+export const semanas = ['20 abr', '27 abr', '04 may', '11 may', '18 may'] as const
+
+export const ETAPA_ESTADO: Record<Etapa, Estado> = {
+  presentados: 'Presentado',
+  dictamen: 'En dictamen',
+  agenda: 'En agenda / debate',
+  leyes: 'Ley aprobada',
+}
+
+/** Paleta por sector, compartida por tabla, mapa y gráficos. */
+export const SECTOR_META: Record<string, { tone: string; dot: string; bar: string }> = {
+  Laboral: { tone: 'bg-destructive/10 text-destructive', dot: 'bg-info', bar: 'bg-info' },
+  Tributario: { tone: 'bg-chart-3/15 text-chart-3', dot: 'bg-success', bar: 'bg-info/80' },
+  Competitividad: { tone: 'bg-info/10 text-info', dot: 'bg-chart-3', bar: 'bg-info/65' },
+  Infraestructura: { tone: 'bg-chart-5/15 text-chart-5', dot: 'bg-chart-5', bar: 'bg-info/50' },
+  'Transporte / Energía': { tone: 'bg-success/10 text-success', dot: 'bg-success', bar: 'bg-info/40' },
+  'Ambiente de negocios': { tone: 'bg-success/10 text-success', dot: 'bg-muted-foreground', bar: 'bg-info/30' },
+}
 
 export const kpis: Kpi[] = [
   { label: 'PL activos', value: '142', iconKey: 'file', tone: 'text-destructive bg-destructive/10', delta: '12', trend: 'up' },
@@ -100,99 +132,323 @@ export const series = [
 export const proyectosTransversales: ProyectoTransversal[] = [
   {
     pl: 'PL 6789/2024-CR',
+    titulo: 'Reforma laboral',
     tema: 'Laboral',
     temaTone: 'bg-destructive/10 text-destructive',
-    impacto: 'Alto',
+    comision: 'Trabajo y Seguridad Social',
     probabilidad: 'Alta',
+    impactoDirecto: 'Sí',
+    impacto: 'Alto',
+    alcance: 'Nacional',
+    estado: 'En agenda / debate',
+    cambio: '18 may 2025',
+    fecha: '2025-05-18',
+    motivo: 'Afecta costos laborales y formalización de MIPYME.',
+    historial: ['presentados', 'presentados', 'dictamen', 'dictamen', 'agenda'],
+  },
+  {
+    pl: 'PL 6543/2024-CR',
+    titulo: 'Deducciones tributarias',
+    tema: 'Tributario',
+    temaTone: 'bg-chart-3/15 text-chart-3',
+    comision: 'Economía, Banca y Finanzas',
+    probabilidad: 'Alta',
+    impactoDirecto: 'Sí',
+    impacto: 'Alto',
+    alcance: 'Nacional',
+    estado: 'En agenda / debate',
+    cambio: '16 may 2025',
+    fecha: '2025-05-16',
+    motivo: 'Modifica deducciones y beneficios tributarios.',
+    historial: ['presentados', 'dictamen', 'dictamen', 'dictamen', 'agenda'],
+  },
+  {
+    pl: 'PL 6910/2024-CR',
+    titulo: 'Jornada laboral de 40 horas',
+    tema: 'Laboral',
+    temaTone: 'bg-destructive/10 text-destructive',
+    comision: 'Trabajo y Seguridad Social',
+    probabilidad: 'Alta',
+    impactoDirecto: 'Sí',
+    impacto: 'Alto',
+    alcance: 'Nacional',
+    estado: 'En dictamen',
+    cambio: '17 may 2025',
+    fecha: '2025-05-17',
+    motivo: 'Reduce la jornada máxima y eleva el costo de planilla.',
+    historial: [null, 'presentados', 'presentados', 'presentados', 'dictamen'],
+  },
+  {
+    pl: 'PL 6820/2024-CR',
+    titulo: 'Tarifa eléctrica industrial',
+    tema: 'Transporte / Energía',
+    temaTone: 'bg-success/10 text-success',
+    comision: 'Energía y Minas',
+    probabilidad: 'Alta',
+    impactoDirecto: 'Sí',
+    impacto: 'Alto',
+    alcance: 'Nacional',
+    estado: 'En agenda / debate',
+    cambio: '18 may 2025',
+    fecha: '2025-05-18',
+    motivo: 'Modifica el pliego tarifario para grandes usuarios.',
+    historial: [null, 'presentados', 'presentados', 'dictamen', 'agenda'],
+  },
+  {
+    pl: 'PL 6650/2024-CR',
+    titulo: 'Compras públicas MYPE',
+    tema: 'Competitividad',
+    temaTone: 'bg-info/10 text-info',
+    comision: 'Producción, MYPE e Industria',
+    probabilidad: 'Alta',
+    impactoDirecto: 'Sí',
+    impacto: 'Alto',
+    alcance: 'Nacional',
+    estado: 'En agenda / debate',
+    cambio: '17 may 2025',
+    fecha: '2025-05-17',
+    motivo: 'Reserva cuotas de compras estatales para MYPE.',
+    historial: ['presentados', 'presentados', 'presentados', 'dictamen', 'agenda'],
+  },
+  {
+    pl: 'PL 7005/2024-CR',
+    titulo: 'Amnistía tributaria MYPE',
+    tema: 'Tributario',
+    temaTone: 'bg-chart-3/15 text-chart-3',
+    comision: 'Economía, Banca y Finanzas',
+    probabilidad: 'Alta',
+    impactoDirecto: 'No',
+    impacto: 'Medio',
     alcance: 'Nacional',
     estado: 'En dictamen',
     cambio: '15 may 2025',
     fecha: '2025-05-15',
-    motivo: 'Afecta costos laborales y formalización de MIPYME.',
+    motivo: 'Condona multas e intereses a pequeños contribuyentes.',
+    historial: [null, null, 'presentados', 'presentados', 'dictamen'],
   },
   {
-    pl: 'PL 6543/2024-CR',
-    tema: 'Tributario',
-    temaTone: 'bg-chart-3/15 text-chart-3',
+    pl: 'PL 6301/2024-CR',
+    titulo: 'Competitividad y estabilidad jurídica',
+    tema: 'Competitividad',
+    temaTone: 'bg-info/10 text-info',
+    comision: 'Producción, MYPE e Industria',
+    probabilidad: 'Media',
+    impactoDirecto: 'Sí',
     impacto: 'Alto',
-    probabilidad: 'Alta',
     alcance: 'Nacional',
     estado: 'En agenda / debate',
     cambio: '14 may 2025',
     fecha: '2025-05-14',
-    motivo: 'Modifica deducciones y beneficios tributarios.',
+    motivo: 'Fija reglas de promoción y estabilidad jurídica.',
+    historial: ['presentados', 'presentados', 'dictamen', 'dictamen', 'agenda'],
   },
   {
-    pl: 'PL 6301/2024-CR',
-    tema: 'Competitividad',
-    temaTone: 'bg-info/10 text-info',
-    impacto: 'Alto',
-    probabilidad: 'Media',
+    pl: 'PL 5900/2024-CR',
+    titulo: 'Movilidad eléctrica',
+    tema: 'Transporte / Energía',
+    temaTone: 'bg-success/10 text-success',
+    comision: 'Transporte y Comunicaciones',
+    probabilidad: 'Baja',
+    impactoDirecto: 'No',
+    impacto: 'Bajo',
     alcance: 'Nacional',
-    estado: 'En agenda / debate',
-    cambio: '13 may 2025',
-    fecha: '2025-05-13',
-    motivo: 'Fija reglas de promoción y estabilidad jurídica.',
+    estado: 'En dictamen',
+    cambio: '16 may 2025',
+    fecha: '2025-05-16',
+    motivo: 'Incentiva la movilidad eléctrica y las energías limpias.',
+    historial: ['presentados', 'presentados', 'presentados', 'presentados', 'dictamen'],
   },
   {
     pl: 'PL 6123/2024-CR',
+    titulo: 'APP para obras regionales',
     tema: 'Infraestructura',
     temaTone: 'bg-chart-5/15 text-chart-5',
-    impacto: 'Medio',
+    comision: 'Producción, MYPE e Industria',
     probabilidad: 'Media',
+    impactoDirecto: 'No',
+    impacto: 'Medio',
+    alcance: 'Regional',
+    estado: 'En dictamen',
+    cambio: '13 may 2025',
+    fecha: '2025-05-13',
+    motivo: 'Impulsa APP para obras regionales.',
+    historial: ['presentados', 'presentados', 'presentados', 'dictamen', 'dictamen'],
+  },
+  {
+    pl: 'PL 5210/2024-CR',
+    titulo: 'Negociación colectiva',
+    tema: 'Laboral',
+    temaTone: 'bg-destructive/10 text-destructive',
+    comision: 'Trabajo y Seguridad Social',
+    probabilidad: 'Media',
+    impactoDirecto: 'Sí',
+    impacto: 'Medio',
+    alcance: 'Nacional',
+    estado: 'En dictamen',
+    cambio: '13 may 2025',
+    fecha: '2025-05-13',
+    motivo: 'Moderniza la negociación colectiva por rama.',
+    historial: ['presentados', 'presentados', 'presentados', 'dictamen', 'dictamen'],
+  },
+  {
+    pl: 'PL 7120/2024-CR',
+    titulo: 'Tercerización laboral',
+    tema: 'Laboral',
+    temaTone: 'bg-destructive/10 text-destructive',
+    comision: 'Trabajo y Seguridad Social',
+    probabilidad: 'Media',
+    impactoDirecto: 'No',
+    impacto: 'Medio',
+    alcance: 'Nacional',
+    estado: 'Presentado',
+    cambio: '14 may 2025',
+    fecha: '2025-05-14',
+    motivo: 'Restringe la tercerización de actividades núcleo.',
+    historial: [null, null, 'presentados', 'presentados', 'presentados'],
+  },
+  {
+    pl: 'PL 6402/2024-CR',
+    titulo: 'IGV a servicios digitales',
+    tema: 'Tributario',
+    temaTone: 'bg-chart-3/15 text-chart-3',
+    comision: 'Economía, Banca y Finanzas',
+    probabilidad: 'Media',
+    impactoDirecto: 'Sí',
+    impacto: 'Medio',
     alcance: 'Nacional',
     estado: 'En dictamen',
     cambio: '12 may 2025',
     fecha: '2025-05-12',
-    motivo: 'Impulsa APP para obras regionales.',
+    motivo: 'Grava plataformas digitales no domiciliadas.',
+    historial: ['presentados', 'presentados', 'dictamen', 'dictamen', 'dictamen'],
   },
   {
-    pl: 'PL 5900/2024-CR',
-    tema: 'Transporte / Energía',
-    temaTone: 'bg-success/10 text-success',
+    pl: 'PL 6480/2024-CR',
+    titulo: 'Concesiones viales',
+    tema: 'Infraestructura',
+    temaTone: 'bg-chart-5/15 text-chart-5',
+    comision: 'Transporte y Comunicaciones',
+    probabilidad: 'Media',
+    impactoDirecto: 'No',
     impacto: 'Medio',
+    alcance: 'Regional',
+    estado: 'En dictamen',
+    cambio: '12 may 2025',
+    fecha: '2025-05-12',
+    motivo: 'Revisa reglas de concesiones y peajes.',
+    historial: ['presentados', 'presentados', 'presentados', 'dictamen', 'dictamen'],
+  },
+  {
+    pl: 'PL 7001/2024-CR',
+    titulo: 'Economía circular',
+    tema: 'Ambiente de negocios',
+    temaTone: 'bg-success/10 text-success',
+    comision: 'Producción, MYPE e Industria',
     probabilidad: 'Baja',
-    alcance: 'Nacional',
+    impactoDirecto: 'Sí',
+    impacto: 'Bajo',
+    alcance: 'Sectorial',
     estado: 'Presentado',
-    cambio: '09 may 2025',
-    fecha: '2025-05-09',
-    motivo: 'Incentiva la movilidad eléctrica.',
+    cambio: '12 may 2025',
+    fecha: '2025-05-12',
+    motivo: 'Obliga metas de reciclaje a productores.',
+    historial: [null, null, 'presentados', 'presentados', 'presentados'],
+  },
+  {
+    pl: 'PL 6205/2024-CR',
+    titulo: 'Zonas económicas especiales',
+    tema: 'Competitividad',
+    temaTone: 'bg-info/10 text-info',
+    comision: 'Producción, MYPE e Industria',
+    probabilidad: 'Media',
+    impactoDirecto: 'Sí',
+    impacto: 'Medio',
+    alcance: 'Regional',
+    estado: 'En agenda / debate',
+    cambio: '06 may 2025',
+    fecha: '2025-05-06',
+    motivo: 'Crea beneficios tributarios en ZEE.',
+    historial: ['presentados', 'presentados', 'dictamen', 'agenda', 'agenda'],
   },
   {
     pl: 'PL 5432/2024-CR',
+    titulo: 'Licencias y permisos',
     tema: 'Ambiente de negocios',
     temaTone: 'bg-success/10 text-success',
-    impacto: 'Bajo',
+    comision: 'Descentralización',
     probabilidad: 'Baja',
+    impactoDirecto: 'No',
+    impacto: 'Bajo',
     alcance: 'Nacional',
-    estado: 'En dictamen',
+    estado: 'Ley aprobada',
     cambio: '08 may 2025',
     fecha: '2025-05-08',
-    motivo: 'Simplifica licencias y permisos.',
-  },
-  {
-    pl: 'PL 5210/2024-CR',
-    tema: 'Laboral',
-    temaTone: 'bg-destructive/10 text-destructive',
-    impacto: 'Medio',
-    probabilidad: 'Media',
-    alcance: 'Nacional',
-    estado: 'Presentado',
-    cambio: '05 may 2025',
-    fecha: '2025-05-05',
-    motivo: 'Moderniza la negociación colectiva.',
+    motivo: 'Simplifica licencias y permisos municipales.',
+    historial: ['presentados', 'dictamen', 'agenda', 'leyes', 'leyes'],
   },
   {
     pl: 'PL 4987/2024-CR',
+    titulo: 'Detracciones y retenciones',
     tema: 'Tributario',
     temaTone: 'bg-chart-3/15 text-chart-3',
-    impacto: 'Bajo',
+    comision: 'Economía, Banca y Finanzas',
     probabilidad: 'Baja',
-    alcance: 'Nacional',
+    impactoDirecto: 'No',
+    impacto: 'Bajo',
+    alcance: 'Sectorial',
+    estado: 'Ley aprobada',
+    cambio: '28 abr 2025',
+    fecha: '2025-04-28',
+    motivo: 'Ajusta detracciones y retenciones de IGV.',
+    historial: ['presentados', 'dictamen', 'leyes', 'leyes', 'leyes'],
+  },
+  {
+    pl: 'PL 4870/2024-CR',
+    titulo: 'Teletrabajo y desconexión digital',
+    tema: 'Laboral',
+    temaTone: 'bg-destructive/10 text-destructive',
+    comision: 'Trabajo y Seguridad Social',
+    probabilidad: 'Baja',
+    impactoDirecto: 'No',
+    impacto: 'Bajo',
+    alcance: 'Sectorial',
     estado: 'Presentado',
     cambio: '28 abr 2025',
     fecha: '2025-04-28',
-    motivo: 'Ajusta detracciones y retenciones.',
+    motivo: 'Ajusta reglas de teletrabajo y desconexión.',
+    historial: ['presentados', 'presentados', 'presentados', 'presentados', 'presentados'],
+  },
+  {
+    pl: 'PL 6055/2024-CR',
+    titulo: 'Saneamiento rural',
+    tema: 'Infraestructura',
+    temaTone: 'bg-chart-5/15 text-chart-5',
+    comision: 'Descentralización',
+    probabilidad: 'Baja',
+    impactoDirecto: 'No',
+    impacto: 'Bajo',
+    alcance: 'Regional',
+    estado: 'Presentado',
+    cambio: '30 abr 2025',
+    fecha: '2025-04-30',
+    motivo: 'Transfiere obras de saneamiento a municipios.',
+    historial: ['presentados', 'presentados', 'presentados', 'presentados', 'presentados'],
+  },
+  {
+    pl: 'PL 5780/2024-CR',
+    titulo: 'Interoperabilidad digital del Estado',
+    tema: 'Competitividad',
+    temaTone: 'bg-info/10 text-info',
+    comision: 'Descentralización',
+    probabilidad: 'Baja',
+    impactoDirecto: 'No',
+    impacto: 'Bajo',
+    alcance: 'Nacional',
+    estado: 'Presentado',
+    cambio: '22 abr 2025',
+    fecha: '2025-04-22',
+    motivo: 'Estandariza trámites digitales entre entidades.',
+    historial: ['presentados', 'presentados', 'presentados', 'presentados', 'presentados'],
   },
 ]
 
@@ -226,15 +482,15 @@ export const periodos: { label: string; desde: string; hasta: string }[] = [
 
 export const filtrosDef: FiltroDef[] = [
   { key: 'fecha', label: 'Fecha', all: PERIODO, options: periodos.map((p) => p.label) },
-  { key: 'sector', label: 'Sector', all: 'Todas', options: temas.map((t) => t.name) },
+  { key: 'sector', label: 'Sector', all: 'Todos', options: temas.map((t) => t.name) },
   {
     key: 'estado',
     label: 'Estado',
     all: 'Todos',
-    options: ['En dictamen', 'En agenda / debate', 'Presentado'],
+    options: ['Presentado', 'En dictamen', 'En agenda / debate', 'Ley aprobada'],
   },
-  { key: 'probabilidad', label: 'Probabilidad', all: 'Todos', options: ['Alta', 'Media', 'Baja'] },
-  { key: 'impacto', label: 'Impacto', all: 'Todos', options: ['Alto', 'Medio', 'Bajo'] },
+  { key: 'probabilidad', label: 'Probabilidad', all: 'Todas', options: ['Alta', 'Media', 'Baja'] },
+  { key: 'impacto', label: 'Impacto', all: 'Todos', options: ['Sí', 'No'] },
 ]
 
 /** Aplica los filtros activos sobre los proyectos transversales. */
@@ -246,20 +502,197 @@ export function filtrarProyectos(
 
   return proyectos.filter((p) => {
     if (periodo && (p.fecha < periodo.desde || p.fecha > periodo.hasta)) return false
-    if (filtros.sector !== 'Todas' && p.tema !== filtros.sector) return false
+    if (filtros.sector !== 'Todos' && p.tema !== filtros.sector) return false
     if (filtros.estado !== 'Todos' && p.estado !== filtros.estado) return false
-    if (filtros.probabilidad !== 'Todos' && p.probabilidad !== filtros.probabilidad) return false
-    if (filtros.impacto !== 'Todos' && p.impacto !== filtros.impacto) return false
+    if (filtros.probabilidad !== 'Todas' && p.probabilidad !== filtros.probabilidad) return false
+    if (filtros.impacto !== 'Todos' && p.impactoDirecto !== filtros.impacto) return false
     return true
   })
 }
 
 export const filtrosIniciales: Record<FiltroKey, string> = {
   fecha: PERIODO,
-  sector: 'Todas',
+  sector: 'Todos',
   estado: 'Todos',
-  probabilidad: 'Todos',
+  probabilidad: 'Todas',
   impacto: 'Todos',
+}
+
+/* ------------------------- foco por indicador (KPI) ----------------------- */
+
+/** Indicador seleccionado; recorta todos los paneles de la vista general. */
+export type KpiFoco = 'totales' | 'altaPrioridad' | 'conMovimiento'
+
+export const focosDef: {
+  id: KpiFoco
+  label: string
+  iconKey: IconKey
+  tone: string
+  hint: string
+}[] = [
+  {
+    id: 'totales',
+    label: 'PL totales',
+    iconKey: 'file',
+    tone: 'text-info bg-info/10',
+    hint: 'Todos los PL del periodo',
+  },
+  {
+    id: 'altaPrioridad',
+    label: 'PL de alta probabilidad e impacto directo para el negocio',
+    iconKey: 'target',
+    tone: 'text-chart-5 bg-chart-5/10',
+    hint: 'Probabilidad alta e impacto directo',
+  },
+  {
+    id: 'conMovimiento',
+    label: 'Con movimiento esta semana',
+    iconKey: 'trending',
+    tone: 'text-success bg-success/10',
+    hint: 'Cambiaron de etapa en la última semana',
+  },
+]
+
+/** ¿El PL cambió de etapa en la última semana registrada? */
+export function tuvoMovimiento(p: ProyectoTransversal): boolean {
+  const n = p.historial.length
+  return n > 1 && p.historial[n - 1] !== p.historial[n - 2]
+}
+
+/** Etapa previa y actual del PL, o null si no hubo movimiento. */
+export function movimientoDe(
+  p: ProyectoTransversal,
+): { de: Estado; a: Estado } | null {
+  if (!tuvoMovimiento(p)) return null
+  const n = p.historial.length
+  const previa = p.historial[n - 2]
+  const actual = p.historial[n - 1]
+  if (!actual) return null
+  return {
+    de: previa ? ETAPA_ESTADO[previa] : 'Presentado',
+    a: ETAPA_ESTADO[actual],
+  }
+}
+
+/** ¿Es un PL de alta probabilidad con impacto directo? */
+export function esAltaPrioridad(p: ProyectoTransversal): boolean {
+  return p.probabilidad === 'Alta' && p.impactoDirecto === 'Sí'
+}
+
+/** Recorta la lista según el indicador seleccionado. */
+export function aplicarFoco(
+  proyectos: ProyectoTransversal[],
+  foco: KpiFoco,
+): ProyectoTransversal[] {
+  if (foco === 'altaPrioridad') return proyectos.filter(esAltaPrioridad)
+  if (foco === 'conMovimiento') return proyectos.filter(tuvoMovimiento)
+  return proyectos
+}
+
+/** Valor de cada indicador para el conjunto de PL recibido. */
+export function valorFoco(proyectos: ProyectoTransversal[], foco: KpiFoco): number {
+  return aplicarFoco(proyectos, foco).length
+}
+
+/* ---------------------------- paneles derivados --------------------------- */
+
+export interface ResumenSector {
+  sector: string
+  dot: string
+  bar: string
+  total: number
+  si: number
+  no: number
+}
+
+/** Concentración por sector: total de PL y cuántos tienen impacto directo. */
+export function resumenSectores(proyectos: ProyectoTransversal[]): ResumenSector[] {
+  const mapa = new Map<string, ResumenSector>()
+
+  for (const p of proyectos) {
+    const meta = SECTOR_META[p.tema]
+    const actual =
+      mapa.get(p.tema) ??
+      {
+        sector: p.tema,
+        dot: meta?.dot ?? 'bg-muted-foreground',
+        bar: meta?.bar ?? 'bg-info',
+        total: 0,
+        si: 0,
+        no: 0,
+      }
+    actual.total += 1
+    if (p.impactoDirecto === 'Sí') actual.si += 1
+    else actual.no += 1
+    mapa.set(p.tema, actual)
+  }
+
+  return [...mapa.values()].sort((a, b) => b.total - a.total || a.sector.localeCompare(b.sector))
+}
+
+export interface PuntoEvolucion {
+  semana: string
+  presentados: number
+  dictamen: number
+  agenda: number
+  leyes: number
+}
+
+/** Evolución semanal por etapa, contada sobre los PL recibidos. */
+export function evolucionDesde(proyectos: ProyectoTransversal[]): PuntoEvolucion[] {
+  return semanas.map((semana, i) => {
+    const punto: PuntoEvolucion = { semana, presentados: 0, dictamen: 0, agenda: 0, leyes: 0 }
+    for (const p of proyectos) {
+      const etapa = p.historial[i]
+      if (etapa) punto[etapa] += 1
+    }
+    return punto
+  })
+}
+
+export const PROBABILIDADES: Probabilidad[] = ['Alta', 'Media', 'Baja']
+export const IMPACTOS_DIRECTOS: ImpactoDirecto[] = ['No', 'Sí']
+
+/** Nivel de atención de un PL dentro del mapa de priorización. */
+export type Atencion = 'alta' | 'cercano' | 'regular'
+
+export function atencionDe(p: ProyectoTransversal): Atencion {
+  if (esAltaPrioridad(p)) return 'alta'
+  if (p.probabilidad === 'Alta' || p.impactoDirecto === 'Sí') return 'cercano'
+  return 'regular'
+}
+
+export const ATENCION_META: Record<Atencion, { label: string; dot: string }> = {
+  alta: { label: 'Alta atención', dot: 'bg-destructive' },
+  cercano: { label: 'Monitoreo cercano', dot: 'bg-chart-3' },
+  regular: { label: 'Seguimiento regular', dot: 'bg-success' },
+}
+
+/** Matriz probabilidad × impacto directo con los PL de cada celda. */
+export function matrizPriorizacion(proyectos: ProyectoTransversal[]) {
+  return PROBABILIDADES.map((probabilidad) => ({
+    probabilidad,
+    celdas: IMPACTOS_DIRECTOS.map((impactoDirecto) => ({
+      impactoDirecto,
+      proyectos: proyectos.filter(
+        (p) => p.probabilidad === probabilidad && p.impactoDirecto === impactoDirecto,
+      ),
+    })),
+  }))
+}
+
+/** Comisión con más PL en el conjunto recibido. */
+export function comisionTop(
+  proyectos: ProyectoTransversal[],
+): { nombre: string; total: number } | null {
+  const conteo = new Map<string, number>()
+  for (const p of proyectos) conteo.set(p.comision, (conteo.get(p.comision) ?? 0) + 1)
+
+  let top: { nombre: string; total: number } | null = null
+  for (const [nombre, total] of conteo) {
+    if (!top || total > top.total) top = { nombre, total }
+  }
+  return top
 }
 
 /** Alertas destacadas usadas por el reporte semanal. */

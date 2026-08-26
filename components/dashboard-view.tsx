@@ -7,8 +7,6 @@ import {
   Landmark,
   Activity,
   BellRing,
-  ArrowUp,
-  Minus,
   Info,
   ArrowRight,
   Users,
@@ -47,20 +45,27 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
   ACTUALIZADO,
-  evolucion,
+  ATENCION_META,
+  IMPACTOS_DIRECTOS,
+  aplicarFoco,
+  atencionDe,
+  comisionTop,
+  evolucionDesde,
   filtrarProyectos,
   filtrosDef,
   filtrosIniciales,
-  kpis,
-  nivelesTema,
+  focosDef,
+  matrizPriorizacion,
+  movimientoDe,
   proyectosTransversales,
+  resumenSectores,
   series,
-  temas,
-  topCongresistas,
+  valorFoco,
   type Estado,
   type FiltroKey,
   type IconKey,
-  type Impacto,
+  type KpiFoco,
+  type Probabilidad,
 } from '@/lib/dashboard-data'
 import {
   ExportDashboardModal,
@@ -87,16 +92,27 @@ const ICONS: Record<IconKey, LucideIcon> = {
 
 /* -------------------------------- helpers -------------------------------- */
 
-const impactoTone: Record<Impacto, string> = {
-  Alto: 'bg-destructive/10 text-destructive',
-  Medio: 'bg-chart-3/15 text-chart-3',
-  Bajo: 'bg-success/10 text-success',
+const probabilidadTone: Record<Probabilidad, string> = {
+  Alta: 'bg-destructive/10 text-destructive',
+  Media: 'bg-chart-3/15 text-chart-3',
+  Baja: 'bg-info/10 text-info',
 }
 
 const estadoTone: Record<Estado, string> = {
   'En dictamen': 'bg-success/10 text-success',
   'En agenda / debate': 'bg-chart-3/15 text-chart-3',
   Presentado: 'bg-info/10 text-info',
+  'Ley aprobada': 'bg-chart-5/15 text-chart-5',
+}
+
+/** Tinte de cada celda de la matriz según su criticidad. */
+const celdaTone: Record<string, string> = {
+  'Alta-Sí': 'bg-destructive/5',
+  'Alta-No': 'bg-chart-3/5',
+  'Media-Sí': 'bg-chart-3/5',
+  'Media-No': 'bg-muted/40',
+  'Baja-Sí': 'bg-info/5',
+  'Baja-No': 'bg-info/5',
 }
 
 function Dot({ className }: { className: string }) {
@@ -118,6 +134,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
   const [exportMode, setExportMode] = useState<DashboardExportMode | null>(null)
   const [filtros, setFiltros] = useState<Record<FiltroKey, string>>(filtrosIniciales)
   const [favoritos, setFavoritos] = useState<string[]>(['PL 6789/2024-CR'])
+  const [foco, setFoco] = useState<KpiFoco>('totales')
 
   const setFiltro = (key: FiltroKey, value: string) =>
     setFiltros((prev) => ({ ...prev, [key]: value }))
@@ -125,12 +142,31 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
   const toggleFavorito = (pl: string) =>
     setFavoritos((prev) => (prev.includes(pl) ? prev.filter((p) => p !== pl) : [...prev, pl]))
 
-  const hayFiltrosActivos = filtrosDef.some((f) => filtros[f.key] !== f.all)
+  const hayFiltrosActivos = filtrosDef.some((f) => filtros[f.key] !== f.all) || foco !== 'totales'
 
-  const proyectosVisibles = useMemo(
+  const limpiarFiltros = () => {
+    setFiltros(filtrosIniciales)
+    setFoco('totales')
+  }
+
+  /** PL del periodo y filtros del encabezado: base de los contadores de KPI. */
+  const proyectosPeriodo = useMemo(
     () => filtrarProyectos(proyectosTransversales, filtros),
     [filtros],
   )
+
+  /** PL que alimentan tabla, mapa, sectores y gráfico según el KPI activo. */
+  const proyectosVisibles = useMemo(
+    () => aplicarFoco(proyectosPeriodo, foco),
+    [proyectosPeriodo, foco],
+  )
+
+  const sectores = useMemo(() => resumenSectores(proyectosVisibles), [proyectosVisibles])
+  const evolucionData = useMemo(() => evolucionDesde(proyectosVisibles), [proyectosVisibles])
+  const matriz = useMemo(() => matrizPriorizacion(proyectosVisibles), [proyectosVisibles])
+  const comision = useMemo(() => comisionTop(proyectosVisibles), [proyectosVisibles])
+  const maxSector = sectores[0]?.total ?? 1
+  const focoActivo = foco === 'totales' ? null : focosDef.find((f) => f.id === foco)
 
   return (
     <div className="w-full">
@@ -202,7 +238,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
           )
         })}
         <button
-          onClick={() => setFiltros(filtrosIniciales)}
+          onClick={limpiarFiltros}
           disabled={!hayFiltrosActivos}
           className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40 disabled:hover:text-muted-foreground"
         >
@@ -211,86 +247,228 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
         </button>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-5 gap-4">
-        {kpis.map((kpi) => {
-          const KpiIcon = ICONS[kpi.iconKey]
-          return (
-          <Card key={kpi.label}>
-            <CardContent className="flex items-center gap-2.5 p-3">
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${kpi.tone}`}>
-                <KpiIcon className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] leading-tight text-muted-foreground text-pretty">{kpi.label}</p>
-                <p className="text-xl font-bold leading-tight tracking-tight text-foreground">{kpi.value}</p>
-                <p className="flex flex-wrap items-center gap-x-1 text-[10px] leading-tight text-muted-foreground">
-                  {kpi.trend === 'up' ? (
-                    <>
-                      <ArrowUp className="h-3 w-3 text-success" />
-                      <span className="font-semibold text-success">{kpi.delta}</span>
-                      vs. semana anterior
-                    </>
-                  ) : (
-                    <>
-                      <Minus className="h-3 w-3" />
-                      {kpi.delta}
-                    </>
-                  )}
+      {/* KPIs + mapa de priorización */}
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)] items-start gap-4">
+        <div className="grid grid-cols-2 gap-4">
+          {focosDef.map((f) => {
+            const KpiIcon = ICONS[f.iconKey]
+            const activo = foco === f.id
+            const total = valorFoco(proyectosPeriodo, f.id)
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setFoco(activo && f.id !== 'totales' ? 'totales' : f.id)}
+                aria-pressed={activo}
+                className={`flex items-start gap-2.5 rounded-xl border bg-card p-3 text-left transition-colors ${
+                  activo
+                    ? 'border-info ring-1 ring-info'
+                    : 'border-border hover:border-info/50 hover:bg-muted/40'
+                }`}
+              >
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${f.tone}`}
+                >
+                  <KpiIcon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] leading-tight text-muted-foreground text-pretty">
+                    {f.label}
+                  </p>
+                  <p className="mt-1 text-2xl font-bold leading-none tracking-tight text-foreground">
+                    {total}
+                  </p>
+                </div>
+              </button>
+            )
+          })}
+
+          <div className="flex items-start gap-2.5 rounded-xl border border-border bg-card p-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-chart-3/10 text-chart-3">
+              <Users className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] leading-tight text-muted-foreground text-pretty">
+                Comisión con mayor incidencia
+              </p>
+              {comision ? (
+                <p className="mt-1 text-xs font-bold leading-tight text-foreground text-pretty">
+                  {comision.nombre}
+                  <span className="font-semibold text-muted-foreground">
+                    {' '}
+                    — {comision.total} PL
+                  </span>
                 </p>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">Sin datos</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <Card>
+          <CardContent className="p-4">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              Mapa de priorización de proyectos de ley
+              <Info className="h-4 w-4 text-muted-foreground" />
+            </h2>
+            <p className="mb-2 text-[11px] text-muted-foreground">
+              Ubica rápidamente los PL que requieren más atención.
+            </p>
+
+            <div className="flex gap-2">
+              <span
+                className="shrink-0 self-center text-[11px] font-semibold text-info"
+                style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+              >
+                Probabilidad
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 grid grid-cols-[3rem_1fr_1fr] gap-1">
+                  <span />
+                  {IMPACTOS_DIRECTOS.map((i) => (
+                    <span key={i} className="text-center text-[11px] font-medium text-foreground">
+                      {i}
+                    </span>
+                  ))}
+                </div>
+                {matriz.map((fila) => (
+                  <div
+                    key={fila.probabilidad}
+                    className="mb-1 grid grid-cols-[3rem_1fr_1fr] items-stretch gap-1"
+                  >
+                    <span className="flex items-center text-[11px] font-medium text-foreground">
+                      {fila.probabilidad}
+                    </span>
+                    {fila.celdas.map((celda) => (
+                      <div
+                        key={celda.impactoDirecto}
+                        className={`min-h-[2.5rem] rounded-md p-1 ${
+                          celdaTone[`${fila.probabilidad}-${celda.impactoDirecto}`] ?? 'bg-muted/40'
+                        }`}
+                      >
+                        {celda.proyectos.length === 0 ? (
+                          <span className="sr-only">Sin proyectos</span>
+                        ) : (
+                          <ul className="flex flex-col gap-1">
+                            {celda.proyectos.map((p) => (
+                              <li
+                                key={p.pl}
+                                className="flex items-center gap-1.5 rounded bg-card px-1.5 py-1 text-[10px] text-foreground shadow-sm"
+                              >
+                                <Dot className={ATENCION_META[atencionDe(p)].dot} />
+                                <span className="truncate">
+                                  {p.pl} — {p.titulo}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </div>
-            </CardContent>
-          </Card>
-          )
-        })}
+            </div>
+
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                {(['alta', 'cercano', 'regular'] as const).map((a) => (
+                  <span
+                    key={a}
+                    className="flex items-center gap-1.5 text-[10px] text-muted-foreground"
+                  >
+                    <Dot className={ATENCION_META[a].dot} />
+                    {ATENCION_META[a].label}
+                  </span>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setFoco('altaPrioridad')}
+                className="text-[11px] font-semibold text-info hover:underline"
+              >
+                Alto impacto para el negocio
+              </button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Temas + chart */}
-      <div className="grid grid-cols-[1.35fr_1fr] gap-4">
+      {/* Sectores + evolución */}
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] gap-4">
         <Card>
           <CardContent className="p-4">
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-              Temas transversales prioritarios
+              Sectores con mayor concentración
               <Info className="h-4 w-4 text-muted-foreground" />
             </h2>
-            <div className="grid grid-cols-3 gap-2.5">
-              {temas.map((tema) => {
-                const TemaIcon = ICONS[tema.iconKey]
-                return (
-                <div key={tema.name} className="flex flex-col rounded-lg border border-border p-2.5">
-                  <div className="flex items-center gap-2">
-                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${tema.tone}`}>
-                      <TemaIcon className="h-3.5 w-3.5" />
-                    </div>
-                    <p className="text-xs font-semibold leading-tight text-foreground text-pretty">{tema.name}</p>
-                  </div>
-                  <div className="mt-1.5 flex items-baseline gap-1.5">
-                    <p className="text-xl font-bold leading-none tracking-tight text-foreground">{tema.total}</p>
-                    <p className="text-[10px] text-muted-foreground">PL en total</p>
-                  </div>
-                  <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 border-t border-border pt-2">
-                    {nivelesTema.map((nivel) => {
-                      const count = tema[nivel.key]
-                      return (
-                        <p key={nivel.key} className="flex items-center gap-1 text-[10px] text-foreground">
-                          <Dot className={nivel.dot} />
-                          <span className="font-semibold">{count}</span>
-                          <span className="whitespace-nowrap text-muted-foreground">
-                            {count === 1 ? nivel.singular : nivel.plural}
-                          </span>
-                        </p>
-                      )
-                    })}
-                  </div>
-                </div>
-                )
-              })}
-            </div>
-            <div className="mt-2.5 flex justify-end">
-              <button className="flex items-center gap-1 text-xs font-semibold text-destructive hover:underline">
-                Ver todas las temáticas <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <table className="w-full text-left text-[11px]">
+              <thead>
+                <tr className="text-muted-foreground">
+                  <th className="w-6 pb-1 font-normal">#</th>
+                  <th className="pb-1 pr-2 font-normal">Sector</th>
+                  <th className="pb-1 pr-3 text-right font-normal">Total PL</th>
+                  <th className="pb-1 font-normal">
+                    <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
+                      <span className="font-medium text-info">Impacto directo</span>
+                      <span className="flex items-center gap-1">
+                        <Dot className="bg-info" /> Sí
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Dot className="bg-muted" /> No
+                      </span>
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sectores.map((s, i) => (
+                  <tr key={s.sector} className="border-t border-border">
+                    <td className="py-2 text-muted-foreground">{i + 1}</td>
+                    <td className="py-2 pr-2">
+                      <span className="flex items-center gap-1.5 text-foreground">
+                        <Dot className={s.dot} />
+                        {s.sector}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-3 text-right font-semibold text-foreground">{s.total}</td>
+                    <td className="py-2">
+                      <div className="flex h-4 w-full">
+                        <div
+                          className="flex overflow-hidden rounded"
+                          style={{ width: `${(s.total / maxSector) * 100}%` }}
+                        >
+                          {s.si > 0 && (
+                            <div
+                              className="flex items-center justify-center bg-info text-[9px] font-semibold text-primary-foreground"
+                              style={{ width: `${(s.si / s.total) * 100}%` }}
+                            >
+                              {s.si}
+                            </div>
+                          )}
+                          {s.no > 0 && (
+                            <div
+                              className="flex items-center justify-center bg-muted text-[9px] font-semibold text-muted-foreground"
+                              style={{ width: `${(s.no / s.total) * 100}%` }}
+                            >
+                              {s.no}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {sectores.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-6 text-center text-muted-foreground">
+                      Sin sectores para la selección actual.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </CardContent>
         </Card>
 
@@ -300,10 +478,13 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
               Evolución del avance de la agenda legislativa
               <Info className="h-4 w-4 text-muted-foreground" />
             </h2>
-            <p className="mb-2 text-[11px] text-muted-foreground">Comparación semanal de proyectos por etapa</p>
+            <p className="mb-2 text-[11px] text-muted-foreground">
+              Semana a semana, cuántos de los {proyectosVisibles.length} PL seleccionados estaban en
+              cada etapa.
+            </p>
             <div className="h-[196px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={evolucion} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
+                <LineChart data={evolucionData} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
                   <CartesianGrid stroke="var(--color-border)" vertical={false} />
                   <XAxis
                     dataKey="semana"
@@ -314,7 +495,8 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                   <YAxis
                     tickLine={false}
                     axisLine={false}
-                    width={36}
+                    width={30}
+                    allowDecimals={false}
                     tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
                   />
                   <Tooltip
@@ -347,137 +529,140 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <p className="mt-2 text-[11px] text-muted-foreground">
-              Cada línea muestra cómo evoluciona semanalmente la cantidad de PL en cada etapa.
-            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabla + top congresistas */}
-      <div className="grid grid-cols-[1.35fr_1fr] gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
+      {/* Tabla de proyectos */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold text-foreground">
                 Proyectos de ley con afectación transversal
                 <Info className="h-4 w-4 text-muted-foreground" />
               </h2>
-              <button className="flex items-center gap-1 whitespace-nowrap text-xs font-medium text-info hover:underline">
-                Ver todos <ArrowRight className="h-3.5 w-3.5" />
-              </button>
+              {focoActivo && (
+                <span className="rounded-full bg-info/10 px-2 py-0.5 text-[10px] font-medium text-info">
+                  Filtro activo: {focoActivo.label}
+                </span>
+              )}
             </div>
-            <table className="w-full text-left text-[11px]">
-              <thead>
-                <tr className="border-b border-border text-muted-foreground">
-                  <th className="w-7 py-1.5 font-medium">
-                    <span className="sr-only">Favorito</span>
-                  </th>
-                  <th className="py-1.5 pr-2 font-medium">Proyecto de ley</th>
-                    <th className="py-1.5 pr-2 font-medium">Sector</th>
-                  <th className="py-1.5 pr-2 font-medium">Impacto</th>
-                  <th className="py-1.5 pr-2 font-medium">Estado actual</th>
-                  <th className="py-1.5 pr-2 font-medium">Último cambio</th>
-                  <th className="py-1.5 font-medium">Por qué importa</th>
-                </tr>
-              </thead>
-              <tbody>
-                {proyectosVisibles.map((p) => {
-                  const isFav = favoritos.includes(p.pl)
-                  return (
-                    <tr key={p.pl} className="border-b border-border last:border-0 align-top">
-                      <td className="py-2 align-middle">
-                        <button
-                          onClick={() => toggleFavorito(p.pl)}
-                          aria-pressed={isFav}
-                          aria-label={
-                            isFav
-                              ? `Quitar ${p.pl} de favoritos`
-                              : `Marcar ${p.pl} como favorito`
-                          }
-                          className="flex h-6 w-6 items-center justify-center rounded transition-colors hover:bg-muted"
-                        >
-                          <Star
-                            className={`h-3.5 w-3.5 ${
-                              isFav ? 'fill-chart-3 text-chart-3' : 'text-muted-foreground'
-                            }`}
-                          />
-                        </button>
-                      </td>
-                      <td className="py-2 pr-2 font-medium text-foreground whitespace-nowrap">{p.pl}</td>
-                      <td className="py-2 pr-2">
-                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${p.temaTone}`}>{p.tema}</span>
-                      </td>
-                      <td className="py-2 pr-2">
-                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${impactoTone[p.impacto]}`}>
-                          {p.impacto}
-                        </span>
-                      </td>
-                      <td className="py-2 pr-2">
-                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${estadoTone[p.estado]}`}>
-                          {p.estado}
-                        </span>
-                      </td>
-                      <td className="py-2 pr-2 text-muted-foreground whitespace-nowrap">{p.cambio}</td>
-                      <td className="py-2 text-muted-foreground">{p.motivo}</td>
-                    </tr>
-                  )
-                })}
-                {proyectosVisibles.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="py-6 text-center text-muted-foreground">
-                      Ningún proyecto coincide con los filtros seleccionados.
+            <button
+              type="button"
+              onClick={() => setFoco('totales')}
+              className="flex items-center gap-1 whitespace-nowrap text-xs font-medium text-info hover:underline"
+            >
+              Ver todos <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <table className="w-full text-left text-[11px]">
+            <thead>
+              <tr className="border-b border-border text-muted-foreground">
+                <th className="w-7 py-1.5 font-medium">
+                  <span className="sr-only">Favorito</span>
+                </th>
+                <th className="py-1.5 pr-2 font-medium">Proyecto de ley</th>
+                <th className="py-1.5 pr-2 font-medium">Sector</th>
+                <th className="py-1.5 pr-2 font-medium">Comisión</th>
+                <th className="py-1.5 pr-2 font-medium">Probabilidad</th>
+                <th className="py-1.5 pr-2 font-medium">Impacto</th>
+                <th className="py-1.5 pr-2 font-medium">Movimiento</th>
+                <th className="py-1.5 pr-2 font-medium">Último cambio</th>
+                <th className="py-1.5 font-medium">Por qué importa</th>
+              </tr>
+            </thead>
+            <tbody>
+              {proyectosVisibles.map((p) => {
+                const isFav = favoritos.includes(p.pl)
+                const mov = movimientoDe(p)
+                return (
+                  <tr key={p.pl} className="border-b border-border align-top last:border-0">
+                    <td className="py-2 align-middle">
+                      <button
+                        onClick={() => toggleFavorito(p.pl)}
+                        aria-pressed={isFav}
+                        aria-label={
+                          isFav ? `Quitar ${p.pl} de favoritos` : `Marcar ${p.pl} como favorito`
+                        }
+                        className="flex h-6 w-6 items-center justify-center rounded transition-colors hover:bg-muted"
+                      >
+                        <Star
+                          className={`h-3.5 w-3.5 ${
+                            isFav ? 'fill-chart-3 text-chart-3' : 'text-muted-foreground'
+                          }`}
+                        />
+                      </button>
                     </td>
+                    <td className="py-2 pr-2 font-medium text-foreground">
+                      <span className="whitespace-nowrap">{p.pl}</span>
+                      <span className="text-muted-foreground"> — {p.titulo}</span>
+                    </td>
+                    <td className="py-2 pr-2">
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${p.temaTone}`}>
+                        {p.tema}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-2 text-muted-foreground">{p.comision}</td>
+                    <td className="py-2 pr-2">
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                          probabilidadTone[p.probabilidad]
+                        }`}
+                      >
+                        {p.probabilidad}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-2">
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                          p.impactoDirecto === 'Sí'
+                            ? 'bg-success/10 text-success'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {p.impactoDirecto}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-2">
+                      {mov ? (
+                        <span className="flex items-center gap-1">
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                              estadoTone[mov.de]
+                            }`}
+                          >
+                            {mov.de}
+                          </span>
+                          <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                              estadoTone[mov.a]
+                            }`}
+                          >
+                            {mov.a}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">Sin cambios</span>
+                      )}
+                    </td>
+                    <td className="py-2 pr-2 whitespace-nowrap text-muted-foreground">{p.cambio}</td>
+                    <td className="py-2 text-muted-foreground">{p.motivo}</td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold text-foreground">
-                Top congresistas (vista previa)
-                <Info className="h-4 w-4 text-muted-foreground" />
-              </h2>
-              <button className="flex items-center gap-1 whitespace-nowrap text-xs font-medium text-info hover:underline">
-                Ver incidencia <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-            <ul className="divide-y divide-border">
-              {topCongresistas.map((c, i) => (
-                <li key={c.nombre} className="flex items-center gap-2.5 py-2">
-                  <span
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                      i === 0
-                        ? 'bg-chart-3 text-primary-foreground'
-                        : i < 3
-                          ? 'bg-chart-3/25 text-foreground'
-                          : 'bg-muted text-muted-foreground'
-                    }`}
-                  >
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground">{c.nombre}</p>
-                    <p className="truncate text-[11px] text-muted-foreground">{c.bancada}</p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <span className="text-sm font-bold text-foreground">{c.pl}</span>{' '}
-                    <span className="text-[10px] text-muted-foreground">PL relevantes</span>
-                  </div>
-                  <div className="w-32 shrink-0 text-right">
-                    <p className="text-[10px] text-muted-foreground">Sector principal</p>
-                    <p className={`truncate text-xs font-semibold ${c.temaColor}`}>{c.tema}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
+                )
+              })}
+              {proyectosVisibles.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="py-6 text-center text-muted-foreground">
+                    Ningún proyecto coincide con los filtros seleccionados.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
 
       {/* Footer note */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-muted-foreground">
