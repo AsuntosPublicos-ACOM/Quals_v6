@@ -606,8 +606,17 @@ export function IncidenciaView() {
                   {comisionesCriticas.map((c) => (
                     <tr
                       key={c.comision}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={comisionActiva === c.comision}
                       onClick={() => elegirComision(c.comision)}
-                      className={`cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/60 ${
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          elegirComision(c.comision)
+                        }
+                      }}
+                      className={`cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring ${
                         comisionActiva === c.comision ? 'bg-muted/50' : ''
                       }`}
                     >
