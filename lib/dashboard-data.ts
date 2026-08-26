@@ -539,14 +539,14 @@ export const focosDef: {
   },
   {
     id: 'altaPrioridad',
-    label: 'PL de alta probabilidad e impacto directo para el negocio',
+    label: 'Alta probabilidad e impacto',
     iconKey: 'target',
     tone: 'text-chart-5 bg-chart-5/10',
     hint: 'Probabilidad alta e impacto directo',
   },
   {
     id: 'conMovimiento',
-    label: 'Con movimiento esta semana',
+    label: 'Con movimiento',
     iconKey: 'trending',
     tone: 'text-success bg-success/10',
     hint: 'Cambiaron de etapa en la última semana',

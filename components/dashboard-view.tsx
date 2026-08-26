@@ -299,9 +299,9 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
         </button>
       </div>
 
-      {/* KPIs + mapa de priorización */}
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)] items-stretch gap-4">
-        <div className="flex flex-col gap-3">
+      {/* KPIs: fila compacta sobre el mapa, que ocupa todo el ancho */}
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-4 gap-3">
           {focosDef.map((f) => {
             const KpiIcon = ICONS[f.iconKey]
             const activo = foco === f.id
@@ -312,21 +312,21 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                 type="button"
                 onClick={() => elegirFoco(f.id)}
                 aria-pressed={activo}
-                className={`flex flex-1 items-center gap-3 rounded-xl border bg-card p-3 text-left transition-colors ${
+                className={`flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5 text-left transition-colors ${
                   activo
                     ? 'border-info ring-1 ring-info'
                     : 'border-border hover:border-info/50 hover:bg-muted/40'
                 }`}
               >
                 <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${f.tone}`}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${f.tone}`}
                 >
                   <KpiIcon className="h-4 w-4" />
                 </div>
                 <p className="min-w-0 flex-1 text-[11px] leading-tight text-muted-foreground text-pretty">
                   {f.label}
                 </p>
-                <p className="shrink-0 text-3xl font-bold leading-none tracking-tight text-foreground">
+                <p className="shrink-0 text-2xl font-bold leading-none tracking-tight text-foreground">
                   {total}
                 </p>
               </button>
@@ -338,29 +338,23 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
             onClick={() => elegirFoco('comision')}
             aria-pressed={foco === 'comision'}
             disabled={!comision}
-            className={`flex flex-1 items-center gap-3 rounded-xl border bg-card p-3 text-left transition-colors disabled:cursor-default ${
+            className={`flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5 text-left transition-colors disabled:cursor-default ${
               foco === 'comision'
                 ? 'border-info ring-1 ring-info'
                 : 'border-border hover:border-info/50 hover:bg-muted/40'
             }`}
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-chart-3/10 text-chart-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-chart-3/10 text-chart-3">
               <Users className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] leading-tight text-muted-foreground text-pretty">
-                Comisión predominante
+              <p className="text-[11px] leading-tight text-muted-foreground">Comisión predominante</p>
+              <p className="truncate text-[11px] font-bold leading-tight text-foreground">
+                {comision?.nombre ?? 'Sin datos'}
               </p>
-              {comision ? (
-                <p className="mt-1 text-xs font-bold leading-tight text-foreground text-pretty">
-                  {comision.nombre}
-                </p>
-              ) : (
-                <p className="mt-1 text-xs text-muted-foreground">Sin datos</p>
-              )}
             </div>
             {comision && (
-              <p className="shrink-0 text-3xl font-bold leading-none tracking-tight text-foreground">
+              <p className="shrink-0 text-2xl font-bold leading-none tracking-tight text-foreground">
                 {comision.total}
               </p>
             )}
