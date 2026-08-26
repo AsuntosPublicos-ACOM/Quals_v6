@@ -12,7 +12,6 @@ import {
   User,
   Users,
   X,
-  BarChart3,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
@@ -200,9 +199,12 @@ export function IncidenciaView() {
         )}
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-5 gap-4">
-        {kpisIncidencia.map((kpi) => {
+      {/* Paneles a la izquierda; ficha técnica fija a la derecha, a toda la altura */}
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+        <div className="flex flex-col gap-4">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {kpisIncidencia.map((kpi) => {
           const Icon = ICONS[kpi.iconKey]
           return (
             <Card key={kpi.label}>
@@ -238,24 +240,8 @@ export function IncidenciaView() {
             </Card>
           )
         })}
-        <Card className="border-dashed bg-muted/30">
-          <CardContent className="flex items-center gap-2.5 p-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border">
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium leading-tight text-muted-foreground">
-                Indicador adicional
-              </p>
-              <p className="text-[10px] leading-tight text-muted-foreground">Próximamente</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
 
-      {/* Main grid */}
-      <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-        <div className="flex flex-col gap-4">
           {/* Top congresistas */}
           <Card>
             <CardContent className="p-4">
@@ -509,8 +495,8 @@ export function IncidenciaView() {
           </Card>
         </div>
 
-        {/* Ficha técnica */}
-        <Card className="h-fit">
+        {/* Ficha técnica: columna derecha, fija al hacer scroll */}
+        <Card className="h-fit md:sticky md:top-4">
           <CardContent className="p-4">
             <h2 className="border-b border-border pb-2.5 text-sm font-semibold text-foreground">
               Ficha técnica
