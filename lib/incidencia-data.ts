@@ -1,6 +1,10 @@
 /**
  * Datos del dashboard de Incidencia parlamentaria.
- * Fuente única compartida por la vista y (a futuro) las exportaciones.
+ *
+ * El congresista es la unidad base: todos los agregados (KPIs, bancadas,
+ * concentración por comisión y comisiones críticas) se derivan del conjunto
+ * de congresistas visible, de modo que cualquier selección arrastra al resto
+ * de los paneles igual que en la pestaña General.
  */
 
 export const PERIODO_INCIDENCIA = '19/05/2025 - 25/05/2025'
@@ -44,6 +48,12 @@ export const filtrosIncidenciaDef: FiltroIncidenciaDef[] = [
       'López García Luis',
       'Martínez Bravo María',
       'Alva Prieto Ana',
+      'Salazar Ríos Pedro',
+      'Quispe Mamani Rosa',
+      'Herrera Vásquez Carlos',
+      'Chávez Núñez Lucía',
+      'Paredes Loayza Miguel',
+      'Ramos Coronel Elena',
     ],
   },
   {
@@ -78,51 +88,39 @@ export const filtrosIncidenciaIniciales: Record<FiltroIncidenciaKey, string[]> =
   probabilidad: [],
 }
 
-/* ---------------------------------- KPIs ---------------------------------- */
+/* ------------------------------- comisiones ------------------------------- */
 
-export interface KpiIncidencia {
-  label: string
-  value: string
-  delta: string
-  trend: 'up' | 'flat'
-  iconKey: 'user' | 'users' | 'file' | 'group'
-  tone: string
+/** Metadatos estables de cada comisión; el conteo de PL siempre se deriva. */
+export interface ComisionMeta {
+  comision: string
+  riesgo: Riesgo
+  prioridad: Prioridad
 }
 
-export const kpisIncidencia: KpiIncidencia[] = [
-  {
-    label: 'Top congresistas',
-    value: '124',
-    delta: '+12',
-    trend: 'up',
-    iconKey: 'user',
-    tone: 'bg-destructive/10 text-destructive',
-  },
-  {
-    label: 'Comisiones críticas',
-    value: '3',
-    delta: 'sin cambios',
-    trend: 'flat',
-    iconKey: 'users',
-    tone: 'bg-chart-4/15 text-chart-4',
-  },
-  {
-    label: 'PL de alto impacto',
-    value: '7',
-    delta: '+2',
-    trend: 'up',
-    iconKey: 'file',
-    tone: 'bg-chart-3/15 text-chart-3',
-  },
-  {
-    label: 'Bancadas relevantes',
-    value: '8',
-    delta: '+1',
-    trend: 'up',
-    iconKey: 'group',
-    tone: 'bg-chart-2/15 text-chart-2',
-  },
+export const comisionesMeta: ComisionMeta[] = [
+  { comision: 'Trabajo y Seguridad Social', riesgo: 'Crítico', prioridad: 'Alta' },
+  { comision: 'Economía, Banca y Finanzas', riesgo: 'Crítico', prioridad: 'Alta' },
+  { comision: 'Producción', riesgo: 'Alto', prioridad: 'Media' },
+  { comision: 'Transportes y Comunicaciones', riesgo: 'Medio', prioridad: 'Baja' },
+  { comision: 'Educación', riesgo: 'Medio', prioridad: 'Media' },
+  { comision: 'Energía y Minas', riesgo: 'Alto', prioridad: 'Media' },
 ]
+
+const metaDe = (comision: string) => comisionesMeta.find((c) => c.comision === comision)
+
+/* -------------------------------- bancadas -------------------------------- */
+
+/** Color de cada bancada en el donut; se usa tal cual en Recharts. */
+export const coloresBancada: Record<string, string> = {
+  'Fuerza Popular': 'var(--color-chart-1)',
+  'Alianza para el Progreso': 'var(--color-chart-3)',
+  'Renovación Popular': 'var(--color-chart-2)',
+  'Juntos por el Perú': 'var(--color-chart-5)',
+  'Podemos Perú': 'var(--color-chart-4)',
+  'Acción Popular': 'var(--color-muted-foreground)',
+}
+
+const COLOR_OTROS = 'var(--color-muted-foreground)'
 
 /* ---------------------------- top congresistas ---------------------------- */
 
@@ -137,13 +135,18 @@ export interface ProyectoVinculado {
   estado: 'En comisión' | 'Aprobado' | 'Dictamen'
 }
 
+/** Reparto de los PL del congresista entre las comisiones donde tiene carga. */
+export interface CargaComision {
+  comision: string
+  pl: number
+}
+
 export type Nivel = 'Alto' | 'Medio' | 'Bajo'
 export type NivelF = 'Alta' | 'Media' | 'Baja'
 export type Alcance = 'Nacional' | 'Regional' | 'Sectorial'
 
 export interface CongresistaIncidencia {
   id: string
-  rank: number
   nombre: string
   iniciales: string
   region: string
@@ -152,6 +155,7 @@ export interface CongresistaIncidencia {
   sectorPrincipal: string
   sectores: string[]
   plCriticos: number
+  comisiones: CargaComision[]
   impacto: Nivel
   probabilidad: NivelF
   alcance: Alcance
@@ -163,7 +167,6 @@ export interface CongresistaIncidencia {
 export const congresistasIncidencia: CongresistaIncidencia[] = [
   {
     id: 'villanueva',
-    rank: 1,
     nombre: 'Villanueva Juan',
     iniciales: 'VJ',
     region: 'Cajamarca',
@@ -171,6 +174,10 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     sectorPrincipal: 'Laboral, MYPE',
     sectores: ['Laboral', 'MYPE', 'Formalización'],
     plCriticos: 6,
+    comisiones: [
+      { comision: 'Trabajo y Seguridad Social', pl: 4 },
+      { comision: 'Producción', pl: 2 },
+    ],
     impacto: 'Alto',
     probabilidad: 'Alta',
     alcance: 'Nacional',
@@ -187,8 +194,85 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     ],
   },
   {
+    id: 'salazar',
+    nombre: 'Salazar Ríos Pedro',
+    iniciales: 'SR',
+    region: 'Lima',
+    bancada: 'Fuerza Popular',
+    sectorPrincipal: 'Tributario, Laboral',
+    sectores: ['Tributario', 'Laboral', 'Competitividad'],
+    plCriticos: 7,
+    comisiones: [
+      { comision: 'Economía, Banca y Finanzas', pl: 4 },
+      { comision: 'Trabajo y Seguridad Social', pl: 3 },
+    ],
+    impacto: 'Alto',
+    probabilidad: 'Alta',
+    alcance: 'Nacional',
+    prioridad: 'Alta',
+    historial: [
+      { fecha: '24/05/2025', detalle: 'Presentó predictamen sobre régimen tributario MYPE.' },
+      { fecha: '21/05/2025', detalle: 'Presidió sesión de la Comisión de Economía.' },
+    ],
+    proyectos: [
+      { pl: 'PL 4455/2024-CR', titulo: 'Régimen tributario simplificado MYPE', estado: 'Dictamen' },
+      { pl: 'PL 3344/2024-CR', titulo: 'Deducciones por contratación formal', estado: 'En comisión' },
+    ],
+  },
+  {
+    id: 'lopez',
+    nombre: 'López García Luis',
+    iniciales: 'LG',
+    region: 'Piura',
+    bancada: 'Fuerza Popular',
+    sectorPrincipal: 'Energía',
+    sectores: ['Energía', 'Infraestructura'],
+    plCriticos: 5,
+    comisiones: [
+      { comision: 'Energía y Minas', pl: 3 },
+      { comision: 'Transportes y Comunicaciones', pl: 2 },
+    ],
+    impacto: 'Medio',
+    probabilidad: 'Alta',
+    alcance: 'Regional',
+    prioridad: 'Alta',
+    historial: [
+      { fecha: '21/05/2025', detalle: 'Presidió sesión sobre tarifas eléctricas regionales.' },
+      { fecha: '17/05/2025', detalle: 'Firmó predictamen sobre masificación del gas natural.' },
+    ],
+    proyectos: [
+      { pl: 'PL 7788/2024-CR', titulo: 'Masificación del gas natural', estado: 'En comisión' },
+      { pl: 'PL 6655/2023-CR', titulo: 'Tarifas eléctricas para zonas rurales', estado: 'Aprobado' },
+    ],
+  },
+  {
+    id: 'herrera',
+    nombre: 'Herrera Vásquez Carlos',
+    iniciales: 'HV',
+    region: 'Arequipa',
+    bancada: 'Alianza para el Progreso',
+    sectorPrincipal: 'Competitividad',
+    sectores: ['Competitividad', 'MYPE', 'Tributario'],
+    plCriticos: 5,
+    comisiones: [
+      { comision: 'Economía, Banca y Finanzas', pl: 3 },
+      { comision: 'Producción', pl: 2 },
+    ],
+    impacto: 'Alto',
+    probabilidad: 'Alta',
+    alcance: 'Nacional',
+    prioridad: 'Alta',
+    historial: [
+      { fecha: '23/05/2025', detalle: 'Sustentó PL de estabilidad jurídica para inversiones.' },
+      { fecha: '19/05/2025', detalle: 'Pidió priorizar el debate sobre compras públicas MYPE.' },
+    ],
+    proyectos: [
+      { pl: 'PL 6301/2024-CR', titulo: 'Competitividad y estabilidad jurídica', estado: 'Dictamen' },
+      { pl: 'PL 6650/2024-CR', titulo: 'Compras públicas MYPE', estado: 'En comisión' },
+    ],
+  },
+  {
     id: 'rocha',
-    rank: 2,
     nombre: 'Rocha Roxana',
     iniciales: 'RR',
     region: 'Lima',
@@ -196,6 +280,10 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     sectorPrincipal: 'Educación, Tributario',
     sectores: ['Educación', 'Tributario'],
     plCriticos: 4,
+    comisiones: [
+      { comision: 'Economía, Banca y Finanzas', pl: 2 },
+      { comision: 'Educación', pl: 2 },
+    ],
     impacto: 'Alto',
     probabilidad: 'Alta',
     alcance: 'Nacional',
@@ -211,31 +299,59 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     ],
   },
   {
-    id: 'lopez',
-    rank: 3,
-    nombre: 'López García Luis',
-    iniciales: 'LG',
-    region: 'Piura',
+    id: 'ramos',
+    nombre: 'Ramos Coronel Elena',
+    iniciales: 'RC',
+    region: 'Junín',
     bancada: 'Fuerza Popular',
-    sectorPrincipal: 'Energía',
-    sectores: ['Energía', 'Infraestructura'],
-    plCriticos: 5,
-    impacto: 'Medio',
+    sectorPrincipal: 'Laboral, Tributario',
+    sectores: ['Laboral', 'Tributario'],
+    plCriticos: 4,
+    comisiones: [
+      { comision: 'Trabajo y Seguridad Social', pl: 2 },
+      { comision: 'Economía, Banca y Finanzas', pl: 2 },
+    ],
+    impacto: 'Alto',
     probabilidad: 'Alta',
-    alcance: 'Regional',
+    alcance: 'Nacional',
     prioridad: 'Alta',
     historial: [
-      { fecha: '21/05/2025', detalle: 'Presidió sesión sobre tarifas eléctricas regionales.' },
-      { fecha: '17/05/2025', detalle: 'Firmó predictamen sobre masificación del gas natural.' },
+      { fecha: '22/05/2025', detalle: 'Votó a favor del predictamen de jornada laboral.' },
+      { fecha: '15/05/2025', detalle: 'Solicitó opinión técnica del MTPE sobre tercerización.' },
     ],
     proyectos: [
-      { pl: 'PL 7788/2024-CR', titulo: 'Masificación del gas natural', estado: 'En comisión' },
-      { pl: 'PL 6655/2023-CR', titulo: 'Tarifas eléctricas para zonas rurales', estado: 'Aprobado' },
+      { pl: 'PL 6910/2024-CR', titulo: 'Jornada laboral de 40 horas', estado: 'Dictamen' },
+      { pl: 'PL 7120/2024-CR', titulo: 'Tercerización laboral', estado: 'En comisión' },
+    ],
+  },
+  {
+    id: 'quispe',
+    nombre: 'Quispe Mamani Rosa',
+    iniciales: 'QM',
+    region: 'Puno',
+    bancada: 'Renovación Popular',
+    sectorPrincipal: 'MYPE, Educación',
+    sectores: ['MYPE', 'Educación', 'Formalización'],
+    plCriticos: 4,
+    comisiones: [
+      { comision: 'Producción', pl: 2 },
+      { comision: 'Educación', pl: 2 },
+    ],
+    impacto: 'Alto',
+    probabilidad: 'Media',
+    alcance: 'Regional',
+    prioridad: 'Media',
+    historial: [
+      { fecha: '20/05/2025', detalle: 'Sustentó PL de formalización de pequeños productores.' },
+      { fecha: '13/05/2025', detalle: 'Participó en sesión de la Comisión de Producción.' },
+    ],
+    proyectos: [
+      { pl: 'PL 5511/2024-CR', titulo: 'Formalización de pequeños productores', estado: 'En comisión' },
+      { pl: 'PL 5120/2024-CR', titulo: 'Becas para educación técnica', estado: 'Dictamen' },
     ],
   },
   {
     id: 'martinez',
-    rank: 4,
     nombre: 'Martínez Bravo María',
     iniciales: 'MB',
     region: 'La Libertad',
@@ -243,6 +359,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     sectorPrincipal: 'Laboral',
     sectores: ['Laboral', 'Salud'],
     plCriticos: 3,
+    comisiones: [{ comision: 'Trabajo y Seguridad Social', pl: 3 }],
     impacto: 'Medio',
     probabilidad: 'Media',
     alcance: 'Sectorial',
@@ -257,8 +374,59 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     ],
   },
   {
+    id: 'chavez',
+    nombre: 'Chávez Núñez Lucía',
+    iniciales: 'CN',
+    region: 'Cusco',
+    bancada: 'Juntos por el Perú',
+    sectorPrincipal: 'Laboral, Educación',
+    sectores: ['Laboral', 'Educación'],
+    plCriticos: 3,
+    comisiones: [
+      { comision: 'Trabajo y Seguridad Social', pl: 2 },
+      { comision: 'Educación', pl: 1 },
+    ],
+    impacto: 'Medio',
+    probabilidad: 'Alta',
+    alcance: 'Sectorial',
+    prioridad: 'Media',
+    historial: [
+      { fecha: '21/05/2025', detalle: 'Firmó predictamen sobre negociación colectiva.' },
+      { fecha: '14/05/2025', detalle: 'Participó en sesión conjunta de Trabajo y Educación.' },
+    ],
+    proyectos: [
+      { pl: 'PL 5210/2024-CR', titulo: 'Negociación colectiva', estado: 'En comisión' },
+      { pl: 'PL 4900/2024-CR', titulo: 'Carrera pública magisterial', estado: 'Dictamen' },
+    ],
+  },
+  {
+    id: 'paredes',
+    nombre: 'Paredes Loayza Miguel',
+    iniciales: 'PL',
+    region: 'Ica',
+    bancada: 'Podemos Perú',
+    sectorPrincipal: 'Infraestructura',
+    sectores: ['Infraestructura', 'Energía', 'Transporte'],
+    plCriticos: 3,
+    comisiones: [
+      { comision: 'Energía y Minas', pl: 2 },
+      { comision: 'Transportes y Comunicaciones', pl: 1 },
+    ],
+    impacto: 'Medio',
+    probabilidad: 'Baja',
+    alcance: 'Regional',
+    prioridad: 'Baja',
+    historial: [
+      { fecha: '19/05/2025', detalle: 'Sustentó PL de concesiones viales regionales.' },
+      { fecha: '12/05/2025', detalle: 'Solicitó información al MTC sobre obras paralizadas.' },
+    ],
+    proyectos: [
+      { pl: 'PL 6480/2024-CR', titulo: 'Concesiones viales', estado: 'En comisión' },
+      { pl: 'PL 6123/2024-CR', titulo: 'APP para obras regionales', estado: 'Dictamen' },
+    ],
+  },
+  {
     id: 'alva',
-    rank: 5,
     nombre: 'Alva Prieto Ana',
     iniciales: 'AP',
     region: 'Áncash',
@@ -266,6 +434,7 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
     sectorPrincipal: 'Transporte',
     sectores: ['Transporte', 'Competitividad'],
     plCriticos: 2,
+    comisiones: [{ comision: 'Transportes y Comunicaciones', pl: 2 }],
     impacto: 'Bajo',
     probabilidad: 'Baja',
     alcance: 'Regional',
@@ -280,52 +449,232 @@ export const congresistasIncidencia: CongresistaIncidencia[] = [
   },
 ]
 
-/* --------------------------------- bancadas ------------------------------- */
+/* ------------------------------- filtrado --------------------------------- */
 
-export interface BancadaIncidencia {
+/** Aplica los filtros del encabezado; un filtro vacío no descarta a nadie. */
+export function filtrarCongresistas(
+  congresistas: CongresistaIncidencia[],
+  filtros: Record<FiltroIncidenciaKey, string[]>,
+): CongresistaIncidencia[] {
+  const coincide = (key: FiltroIncidenciaKey, valores: string[]) => {
+    const sel = Array.isArray(filtros[key]) ? filtros[key] : []
+    return sel.length === 0 || valores.some((v) => sel.includes(v))
+  }
+
+  return congresistas.filter(
+    (c) =>
+      coincide('nombre', [c.nombre]) &&
+      coincide('sector', c.sectores) &&
+      coincide('alcance', [c.alcance]) &&
+      coincide('impacto', [c.impacto]) &&
+      coincide('probabilidad', [c.probabilidad]),
+  )
+}
+
+/* ---------------------------------- KPIs ---------------------------------- */
+
+/** KPI activo: define el conjunto que arrastra a todos los paneles. */
+export type FocoIncidencia = 'todos' | 'comisiones' | 'impacto' | 'bancadas'
+
+export interface FocoIncidenciaDef {
+  id: FocoIncidencia
+  label: string
+  /** Explica qué recorta el KPI; se muestra bajo la cifra. */
+  hint: string
+  iconKey: 'user' | 'users' | 'file' | 'group'
+  tone: string
+}
+
+export const focosIncidenciaDef: FocoIncidenciaDef[] = [
+  {
+    id: 'todos',
+    label: 'Congresistas en seguimiento',
+    hint: 'Todos los del periodo',
+    iconKey: 'user',
+    tone: 'bg-destructive/10 text-destructive',
+  },
+  {
+    id: 'comisiones',
+    label: 'En comisiones críticas',
+    hint: 'Con PL en comisiones de riesgo crítico',
+    iconKey: 'users',
+    tone: 'bg-chart-4/15 text-chart-4',
+  },
+  {
+    id: 'impacto',
+    label: 'Alta probabilidad e impacto',
+    hint: 'Impacto alto y probabilidad alta',
+    iconKey: 'file',
+    tone: 'bg-chart-3/15 text-chart-3',
+  },
+  {
+    id: 'bancadas',
+    label: 'En bancadas relevantes',
+    hint: 'Bancadas con mayor actividad legislativa',
+    iconKey: 'group',
+    tone: 'bg-chart-2/15 text-chart-2',
+  },
+]
+
+/** Una bancada es relevante si concentra al menos esta cuota de los PL. */
+const CUOTA_BANCADA_RELEVANTE = 0.15
+
+/** Bancadas que concentran la actividad legislativa del conjunto. */
+export function bancadasRelevantes(congresistas: CongresistaIncidencia[]): string[] {
+  const total = congresistas.reduce((acc, c) => acc + c.plCriticos, 0)
+  if (total === 0) return []
+
+  const porBancada = new Map<string, number>()
+  for (const c of congresistas) {
+    porBancada.set(c.bancada, (porBancada.get(c.bancada) ?? 0) + c.plCriticos)
+  }
+
+  return [...porBancada.entries()]
+    .filter(([, pl]) => pl / total >= CUOTA_BANCADA_RELEVANTE)
+    .map(([nombre]) => nombre)
+}
+
+/** ¿Tiene carga en alguna comisión de riesgo crítico? */
+const enComisionCritica = (c: CongresistaIncidencia) =>
+  c.comisiones.some((cc) => metaDe(cc.comision)?.riesgo === 'Crítico')
+
+/** Recorta el conjunto al KPI activo. */
+export function aplicarFocoIncidencia(
+  congresistas: CongresistaIncidencia[],
+  foco: FocoIncidencia,
+): CongresistaIncidencia[] {
+  switch (foco) {
+    case 'comisiones':
+      return congresistas.filter(enComisionCritica)
+    case 'impacto':
+      return congresistas.filter((c) => c.impacto === 'Alto' && c.probabilidad === 'Alta')
+    case 'bancadas': {
+      const relevantes = new Set(bancadasRelevantes(congresistas))
+      return congresistas.filter((c) => relevantes.has(c.bancada))
+    }
+    default:
+      return congresistas
+  }
+}
+
+/** Cifra de cada KPI: el tamaño del conjunto que selecciona. */
+export function conteosFoco(
+  congresistas: CongresistaIncidencia[],
+): Record<FocoIncidencia, number> {
+  return {
+    todos: congresistas.length,
+    comisiones: aplicarFocoIncidencia(congresistas, 'comisiones').length,
+    impacto: aplicarFocoIncidencia(congresistas, 'impacto').length,
+    bancadas: aplicarFocoIncidencia(congresistas, 'bancadas').length,
+  }
+}
+
+/* -------------------------------- detalle --------------------------------- */
+
+/**
+ * Selección fina dentro del conjunto del KPI: una bancada (desde el donut) o
+ * una comisión (desde las barras de concentración).
+ */
+export type DetalleIncidencia =
+  | { tipo: 'bancada'; valor: string }
+  | { tipo: 'comision'; valor: string }
+  | null
+
+/** Recorta el conjunto a la bancada o comisión seleccionada. */
+export function aplicarDetalleIncidencia(
+  congresistas: CongresistaIncidencia[],
+  detalle: DetalleIncidencia,
+): CongresistaIncidencia[] {
+  if (!detalle) return congresistas
+  if (detalle.tipo === 'bancada') return congresistas.filter((c) => c.bancada === detalle.valor)
+  return congresistas.filter((c) => c.comisiones.some((cc) => cc.comision === detalle.valor))
+}
+
+/* -------------------------- agregados derivados --------------------------- */
+
+export interface SegmentoBancada {
   nombre: string
-  plPresentados: number
-  /** Participación sobre el total de PL presentados en el periodo. */
+  pl: number
+  /** Participación sobre el total de PL del conjunto, con un decimal. */
   porcentaje: number
   color: string
+  /** Las bancadas menores se agrupan y no son seleccionables. */
+  esOtros: boolean
+  /** Bancadas agrupadas bajo "Otros". */
+  incluye: string[]
 }
 
-export const bancadasIncidencia: BancadaIncidencia[] = [
-  { nombre: 'Fuerza Popular', plPresentados: 124, porcentaje: 32, color: 'bg-chart-1' },
-  { nombre: 'Renovación Popular', plPresentados: 98, porcentaje: 25, color: 'bg-chart-1/80' },
-  { nombre: 'Alianza para el Progreso', plPresentados: 62, porcentaje: 16, color: 'bg-chart-1/60' },
-  { nombre: 'Podemos Perú', plPresentados: 32, porcentaje: 8, color: 'bg-chart-1/45' },
-]
+/** Cuántas bancadas se muestran por separado antes de agrupar en "Otros". */
+const MAX_SEGMENTOS = 5
 
-/* ----------------------------- concentración ------------------------------ */
+/** Reparto de PL por bancada, con las menores agrupadas en "Otros". */
+export function resumenBancadas(congresistas: CongresistaIncidencia[]): SegmentoBancada[] {
+  const porBancada = new Map<string, number>()
+  for (const c of congresistas) {
+    porBancada.set(c.bancada, (porBancada.get(c.bancada) ?? 0) + c.plCriticos)
+  }
 
-export interface TemaConcentracion {
-  name: string
-  value: number
-  color: string
+  const total = [...porBancada.values()].reduce((a, b) => a + b, 0)
+  if (total === 0) return []
+
+  const pct = (pl: number) => Math.round((pl / total) * 1000) / 10
+  const ordenadas = [...porBancada.entries()].sort((a, b) => b[1] - a[1])
+  const principales = ordenadas.slice(0, MAX_SEGMENTOS)
+  const resto = ordenadas.slice(MAX_SEGMENTOS)
+
+  const segmentos: SegmentoBancada[] = principales.map(([nombre, pl]) => ({
+    nombre,
+    pl,
+    porcentaje: pct(pl),
+    color: coloresBancada[nombre] ?? COLOR_OTROS,
+    esOtros: false,
+    incluye: [nombre],
+  }))
+
+  if (resto.length > 0) {
+    const pl = resto.reduce((acc, [, n]) => acc + n, 0)
+    segmentos.push({
+      nombre: 'Otros',
+      pl,
+      porcentaje: pct(pl),
+      color: COLOR_OTROS,
+      esOtros: true,
+      incluye: resto.map(([nombre]) => nombre),
+    })
+  }
+
+  return segmentos
 }
 
-export const TOTAL_PL_VINCULADOS = 272
+/** Total de PL del conjunto: la cifra central del donut. */
+export function totalPl(congresistas: CongresistaIncidencia[]): number {
+  return congresistas.reduce((acc, c) => acc + c.plCriticos, 0)
+}
 
-export const concentracionPorTema: TemaConcentracion[] = [
-  { name: 'Laboral', value: 34, color: 'var(--color-chart-1)' },
-  { name: 'Tributario', value: 22, color: 'var(--color-chart-2)' },
-  { name: 'Competitividad', value: 18, color: 'var(--color-chart-3)' },
-  { name: 'MYPE', value: 14, color: 'var(--color-chart-4)' },
-  { name: 'Infraestructura', value: 12, color: 'var(--color-muted-foreground)' },
-]
-
-/* --------------------------- comisiones críticas -------------------------- */
-
-export interface ComisionCritica {
+export interface ConcentracionComision {
   comision: string
-  plVinculados: number
+  pl: number
   riesgo: Riesgo
   prioridad: Prioridad
 }
 
-export const comisionesCriticas: ComisionCritica[] = [
-  { comision: 'Trabajo y Seguridad Social', plVinculados: 7, riesgo: 'Crítico', prioridad: 'Alta' },
-  { comision: 'Economía Banca y Finanzas', plVinculados: 6, riesgo: 'Alto', prioridad: 'Media' },
-  { comision: 'Producción', plVinculados: 3, riesgo: 'Medio', prioridad: 'Baja' },
-]
+/** PL por comisión, de mayor a menor: alimenta las barras y la tabla. */
+export function resumenComisiones(
+  congresistas: CongresistaIncidencia[],
+): ConcentracionComision[] {
+  const porComision = new Map<string, number>()
+  for (const c of congresistas) {
+    for (const cc of c.comisiones) {
+      porComision.set(cc.comision, (porComision.get(cc.comision) ?? 0) + cc.pl)
+    }
+  }
+
+  return [...porComision.entries()]
+    .map(([comision, pl]) => ({
+      comision,
+      pl,
+      riesgo: metaDe(comision)?.riesgo ?? 'Medio',
+      prioridad: metaDe(comision)?.prioridad ?? 'Baja',
+    }))
+    .sort((a, b) => b.pl - a.pl || a.comision.localeCompare(b.comision))
+}
