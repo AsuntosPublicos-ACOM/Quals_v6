@@ -322,9 +322,9 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
         </button>
       </div>
 
-      {/* KPIs: fila compacta sobre el mapa, que ocupa todo el ancho */}
-      <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-4 gap-3">
+      {/* KPIs: columna izquierda que acompaña al mapa de priorización */}
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)] items-stretch gap-4">
+        <div className="flex flex-col gap-3">
           {focosDef.map((f) => {
             const KpiIcon = ICONS[f.iconKey]
             const activo = foco === f.id
@@ -335,7 +335,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                 type="button"
                 onClick={() => elegirFoco(f.id)}
                 aria-pressed={activo}
-                className={`flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5 text-left transition-colors ${
+                className={`flex flex-1 items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5 text-left transition-colors ${
                   activo
                     ? 'border-info ring-1 ring-info'
                     : 'border-border hover:border-info/50 hover:bg-muted/40'
@@ -361,7 +361,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
             onClick={() => elegirFoco('comision')}
             aria-pressed={foco === 'comision'}
             disabled={!comision}
-            className={`flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5 text-left transition-colors disabled:cursor-default ${
+            className={`flex flex-1 items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5 text-left transition-colors disabled:cursor-default ${
               foco === 'comision'
                 ? 'border-info ring-1 ring-info'
                 : 'border-border hover:border-info/50 hover:bg-muted/40'
@@ -422,7 +422,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                     {fila.celdas.map((celda) => (
                       <div
                         key={celda.impactoDirecto}
-                        className={`min-h-[2.5rem] rounded-md p-1 ${
+                        className={`min-h-[2.5rem] min-w-0 rounded-md p-1 ${
                           celdaTone[`${fila.probabilidad}-${celda.impactoDirecto}`] ?? 'bg-muted/40'
                         }`}
                       >
@@ -452,7 +452,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                                         : ATENCION_META[atencionDe(p)].dot
                                     }
                                   />
-                                  <span className="truncate">
+                                  <span className="min-w-0 flex-1 truncate">
                                     {p.pl} — {p.titulo}
                                   </span>
                                 </button>
