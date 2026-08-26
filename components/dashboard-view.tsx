@@ -47,6 +47,7 @@ import {
   ACTUALIZADO,
   ATENCION_META,
   IMPACTOS_DIRECTOS,
+  aplicarDetalle,
   aplicarFoco,
   atencionDe,
   comisionTop,
@@ -59,8 +60,10 @@ import {
   movimientoDe,
   proyectosTransversales,
   resumenSectores,
+  sectorMarcado,
   series,
   valorFoco,
+  type Detalle,
   type Estado,
   type FiltroKey,
   type IconKey,
@@ -135,6 +138,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
   const [filtros, setFiltros] = useState<Record<FiltroKey, string>>(filtrosIniciales)
   const [favoritos, setFavoritos] = useState<string[]>(['PL 6789/2024-CR'])
   const [foco, setFoco] = useState<KpiFoco>('totales')
+  const [detalle, setDetalle] = useState<Detalle>(null)
 
   const setFiltro = (key: FiltroKey, value: string) =>
     setFiltros((prev) => ({ ...prev, [key]: value }))
@@ -142,12 +146,38 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
   const toggleFavorito = (pl: string) =>
     setFavoritos((prev) => (prev.includes(pl) ? prev.filter((p) => p !== pl) : [...prev, pl]))
 
-  const hayFiltrosActivos = filtrosDef.some((f) => filtros[f.key] !== f.all) || foco !== 'totales'
+  const hayFiltrosActivos =
+    filtrosDef.some((f) => filtros[f.key] !== f.all) || foco !== 'totales' || detalle !== null
 
   const limpiarFiltros = () => {
     setFiltros(filtrosIniciales)
     setFoco('totales')
+    setDetalle(null)
   }
+
+  /** Vuelve a mostrar todos los PL del periodo, sin tocar los filtros del encabezado. */
+  const limpiarSeleccion = () => {
+    setFoco('totales')
+    setDetalle(null)
+  }
+
+  /** Cambiar de KPI reinicia el detalle: el arrastre siempre parte del KPI. */
+  const elegirFoco = (id: KpiFoco) => {
+    setFoco((prev) => (prev === id && id !== 'totales' ? 'totales' : id))
+    setDetalle(null)
+  }
+
+  /** Click en un sector: alterna el detalle por sector. */
+  const elegirSector = (sector: string) =>
+    setDetalle((prev) =>
+      prev?.tipo === 'sector' && prev.valor === sector ? null : { tipo: 'sector', valor: sector },
+    )
+
+  /** Click en un PL del mapa: alterna el detalle por proyecto. */
+  const elegirPl = (pl: string) =>
+    setDetalle((prev) =>
+      prev?.tipo === 'pl' && prev.valor === pl ? null : { tipo: 'pl', valor: pl },
+    )
 
   /** PL del periodo y filtros del encabezado: base de los contadores de KPI. */
   const proyectosPeriodo = useMemo(
@@ -155,18 +185,40 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
     [filtros],
   )
 
-  /** PL que alimentan tabla, mapa, sectores y gráfico según el KPI activo. */
-  const proyectosVisibles = useMemo(
-    () => aplicarFoco(proyectosPeriodo, foco),
-    [proyectosPeriodo, foco],
+  /** Comisión líder del periodo; es estable y sirve como KPI clicable. */
+  const comision = useMemo(() => comisionTop(proyectosPeriodo), [proyectosPeriodo])
+
+  /** Conjunto del KPI activo: da contexto al mapa y a la tabla de sectores. */
+  const conjunto = useMemo(
+    () => aplicarFoco(proyectosPeriodo, foco, comision?.nombre),
+    [proyectosPeriodo, foco, comision],
   )
 
-  const sectores = useMemo(() => resumenSectores(proyectosVisibles), [proyectosVisibles])
+  /** Selección final (KPI + detalle) que alimenta la tabla y la evolución. */
+  const proyectosVisibles = useMemo(() => aplicarDetalle(conjunto, detalle), [conjunto, detalle])
+
+  const sectores = useMemo(() => resumenSectores(conjunto), [conjunto])
+  const matriz = useMemo(() => matrizPriorizacion(conjunto), [conjunto])
   const evolucionData = useMemo(() => evolucionDesde(proyectosVisibles), [proyectosVisibles])
-  const matriz = useMemo(() => matrizPriorizacion(proyectosVisibles), [proyectosVisibles])
-  const comision = useMemo(() => comisionTop(proyectosVisibles), [proyectosVisibles])
+  const sectorActivo = useMemo(() => sectorMarcado(conjunto, detalle), [conjunto, detalle])
   const maxSector = sectores[0]?.total ?? 1
+
   const focoActivo = foco === 'totales' ? null : focosDef.find((f) => f.id === foco)
+  const plActivo = detalle?.tipo === 'pl' ? detalle.valor : null
+
+  /** PL que sobreviven al detalle: el mapa atenúa los que quedan fuera. */
+  const plsSeleccionados = useMemo(
+    () => new Set(proyectosVisibles.map((p) => p.pl)),
+    [proyectosVisibles],
+  )
+
+  /** Etiquetas de la selección vigente, mostradas junto al título de la tabla. */
+  const chips = [
+    foco === 'comision' && comision ? `Comisión: ${comision.nombre}` : null,
+    focoActivo ? focoActivo.label : null,
+    detalle?.tipo === 'sector' ? `Sector: ${detalle.valor}` : null,
+    plActivo,
+  ].filter((c): c is string => Boolean(c))
 
   return (
     <div className="w-full">
@@ -253,12 +305,12 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
           {focosDef.map((f) => {
             const KpiIcon = ICONS[f.iconKey]
             const activo = foco === f.id
-            const total = valorFoco(proyectosPeriodo, f.id)
+            const total = valorFoco(proyectosPeriodo, f.id, comision?.nombre)
             return (
               <button
                 key={f.id}
                 type="button"
-                onClick={() => setFoco(activo && f.id !== 'totales' ? 'totales' : f.id)}
+                onClick={() => elegirFoco(f.id)}
                 aria-pressed={activo}
                 className={`flex items-start gap-2.5 rounded-xl border bg-card p-3 text-left transition-colors ${
                   activo
@@ -283,7 +335,17 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
             )
           })}
 
-          <div className="flex items-start gap-2.5 rounded-xl border border-border bg-card p-3">
+          <button
+            type="button"
+            onClick={() => elegirFoco('comision')}
+            aria-pressed={foco === 'comision'}
+            disabled={!comision}
+            className={`flex items-start gap-2.5 rounded-xl border bg-card p-3 text-left transition-colors disabled:cursor-default ${
+              foco === 'comision'
+                ? 'border-info ring-1 ring-info'
+                : 'border-border hover:border-info/50 hover:bg-muted/40'
+            }`}
+          >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-chart-3/10 text-chart-3">
               <Users className="h-4 w-4" />
             </div>
@@ -303,7 +365,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                 <p className="mt-1 text-xs text-muted-foreground">Sin datos</p>
               )}
             </div>
-          </div>
+          </button>
         </div>
 
         <Card>
@@ -313,7 +375,8 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
               <Info className="h-4 w-4 text-muted-foreground" />
             </h2>
             <p className="mb-2 text-[11px] text-muted-foreground">
-              Ubica rápidamente los PL que requieren más atención.
+              Ubica rápidamente los PL que requieren más atención. Haz click en uno para seguirlo en
+              los demás paneles.
             </p>
 
             <div className="flex gap-2">
@@ -352,14 +415,31 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                         ) : (
                           <ul className="flex flex-col gap-1">
                             {celda.proyectos.map((p) => (
-                              <li
-                                key={p.pl}
-                                className="flex items-center gap-1.5 rounded bg-card px-1.5 py-1 text-[10px] text-foreground shadow-sm"
-                              >
-                                <Dot className={ATENCION_META[atencionDe(p)].dot} />
-                                <span className="truncate">
-                                  {p.pl} — {p.titulo}
-                                </span>
+                              <li key={p.pl}>
+                                <button
+                                  type="button"
+                                  onClick={() => elegirPl(p.pl)}
+                                  aria-pressed={plActivo === p.pl}
+                                  title={`${p.pl} — ${p.titulo}`}
+                                  className={`flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left text-[10px] shadow-sm transition-colors ${
+                                    plActivo === p.pl
+                                      ? 'bg-info font-semibold text-primary-foreground'
+                                      : 'bg-card text-foreground hover:bg-muted'
+                                  } ${
+                                    detalle && !plsSeleccionados.has(p.pl) ? 'opacity-40' : ''
+                                  }`}
+                                >
+                                  <Dot
+                                    className={
+                                      plActivo === p.pl
+                                        ? 'bg-primary-foreground'
+                                        : ATENCION_META[atencionDe(p)].dot
+                                    }
+                                  />
+                                  <span className="truncate">
+                                    {p.pl} — {p.titulo}
+                                  </span>
+                                </button>
                               </li>
                             ))}
                           </ul>
@@ -385,7 +465,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
               </div>
               <button
                 type="button"
-                onClick={() => setFoco('altaPrioridad')}
+                onClick={() => elegirFoco('altaPrioridad')}
                 className="text-[11px] font-semibold text-info hover:underline"
               >
                 Alto impacto para el negocio
@@ -399,10 +479,13 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] gap-4">
         <Card>
           <CardContent className="p-4">
-            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               Sectores con mayor concentración
               <Info className="h-4 w-4 text-muted-foreground" />
             </h2>
+            <p className="mb-2 text-[11px] text-muted-foreground">
+              Haz click en un sector para ver su desglose y su lista de PL.
+            </p>
             <table className="w-full text-left text-[11px]">
               <thead>
                 <tr className="text-muted-foreground">
@@ -423,43 +506,70 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                 </tr>
               </thead>
               <tbody>
-                {sectores.map((s, i) => (
-                  <tr key={s.sector} className="border-t border-border">
-                    <td className="py-2 text-muted-foreground">{i + 1}</td>
-                    <td className="py-2 pr-2">
-                      <span className="flex items-center gap-1.5 text-foreground">
-                        <Dot className={s.dot} />
-                        {s.sector}
-                      </span>
-                    </td>
-                    <td className="py-2 pr-3 text-right font-semibold text-foreground">{s.total}</td>
-                    <td className="py-2">
-                      <div className="flex h-4 w-full">
-                        <div
-                          className="flex overflow-hidden rounded"
-                          style={{ width: `${(s.total / maxSector) * 100}%` }}
+                {sectores.map((s, i) => {
+                  const marcado = sectorActivo === s.sector
+                  const atenuado = sectorActivo !== null && !marcado
+                  return (
+                    <tr
+                      key={s.sector}
+                      className={`border-t border-border transition-colors ${
+                        marcado ? 'bg-info/5' : 'hover:bg-muted/40'
+                      } ${atenuado ? 'opacity-45' : ''}`}
+                    >
+                      <td className="py-2 text-muted-foreground">{i + 1}</td>
+                      <td className="py-2 pr-2">
+                        <button
+                          type="button"
+                          onClick={() => elegirSector(s.sector)}
+                          aria-pressed={marcado}
+                          className={`flex items-center gap-1.5 text-left ${
+                            marcado ? 'font-semibold text-info' : 'text-foreground hover:text-info'
+                          }`}
                         >
-                          {s.si > 0 && (
+                          <Dot className={s.dot} />
+                          {s.sector}
+                        </button>
+                      </td>
+                      <td className="py-2 pr-3 text-right font-semibold text-foreground">
+                        {s.total}
+                      </td>
+                      <td className="py-2">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex h-4 w-full">
                             <div
-                              className="flex items-center justify-center bg-info text-[9px] font-semibold text-primary-foreground"
-                              style={{ width: `${(s.si / s.total) * 100}%` }}
+                              className={`flex overflow-hidden rounded ${
+                                marcado ? 'ring-1 ring-info' : ''
+                              }`}
+                              style={{ width: `${(s.total / maxSector) * 100}%` }}
                             >
-                              {s.si}
+                              {s.si > 0 && (
+                                <div
+                                  className="flex items-center justify-center bg-info text-[9px] font-semibold text-primary-foreground"
+                                  style={{ width: `${(s.si / s.total) * 100}%` }}
+                                >
+                                  {s.si}
+                                </div>
+                              )}
+                              {s.no > 0 && (
+                                <div
+                                  className="flex items-center justify-center bg-muted text-[9px] font-semibold text-muted-foreground"
+                                  style={{ width: `${(s.no / s.total) * 100}%` }}
+                                >
+                                  {s.no}
+                                </div>
+                              )}
                             </div>
-                          )}
-                          {s.no > 0 && (
-                            <div
-                              className="flex items-center justify-center bg-muted text-[9px] font-semibold text-muted-foreground"
-                              style={{ width: `${(s.no / s.total) * 100}%` }}
-                            >
-                              {s.no}
-                            </div>
+                          </div>
+                          {marcado && (
+                            <span className="text-[10px] font-medium text-info">
+                              {s.si} con impacto directo · {s.no} sin impacto directo
+                            </span>
                           )}
                         </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  )
+                })}
                 {sectores.length === 0 && (
                   <tr>
                     <td colSpan={4} className="py-6 text-center text-muted-foreground">
@@ -479,8 +589,9 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
               <Info className="h-4 w-4 text-muted-foreground" />
             </h2>
             <p className="mb-2 text-[11px] text-muted-foreground">
-              Semana a semana, cuántos de los {proyectosVisibles.length} PL seleccionados estaban en
-              cada etapa.
+              {plActivo
+                ? `Recorrido de ${plActivo}: la etapa en la que estuvo cada semana.`
+                : `Semana a semana, cuántos de los ${proyectosVisibles.length} PL seleccionados estaban en cada etapa.`}
             </p>
             <div className="h-[196px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -542,15 +653,24 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                 Proyectos de ley con afectación transversal
                 <Info className="h-4 w-4 text-muted-foreground" />
               </h2>
-              {focoActivo && (
-                <span className="rounded-full bg-info/10 px-2 py-0.5 text-[10px] font-medium text-info">
-                  Filtro activo: {focoActivo.label}
-                </span>
+              {chips.length > 0 && (
+                <span className="text-[10px] text-muted-foreground">Filtro activo:</span>
               )}
+              {chips.map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-full bg-info/10 px-2 py-0.5 text-[10px] font-medium text-info"
+                >
+                  {chip}
+                </span>
+              ))}
+              <span className="text-[10px] text-muted-foreground">
+                {proyectosVisibles.length} de {proyectosPeriodo.length} PL
+              </span>
             </div>
             <button
               type="button"
-              onClick={() => setFoco('totales')}
+              onClick={limpiarSeleccion}
               className="flex items-center gap-1 whitespace-nowrap text-xs font-medium text-info hover:underline"
             >
               Ver todos <ArrowRight className="h-3.5 w-3.5" />
@@ -577,7 +697,12 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                 const isFav = favoritos.includes(p.pl)
                 const mov = movimientoDe(p)
                 return (
-                  <tr key={p.pl} className="border-b border-border align-top last:border-0">
+                  <tr
+                    key={p.pl}
+                    className={`border-b border-border align-top last:border-0 ${
+                      plActivo === p.pl ? 'bg-info/5' : ''
+                    }`}
+                  >
                     <td className="py-2 align-middle">
                       <button
                         onClick={() => toggleFavorito(p.pl)}

@@ -521,7 +521,7 @@ export const filtrosIniciales: Record<FiltroKey, string> = {
 /* ------------------------- foco por indicador (KPI) ----------------------- */
 
 /** Indicador seleccionado; recorta todos los paneles de la vista general. */
-export type KpiFoco = 'totales' | 'altaPrioridad' | 'conMovimiento'
+export type KpiFoco = 'totales' | 'altaPrioridad' | 'conMovimiento' | 'comision'
 
 export const focosDef: {
   id: KpiFoco
@@ -579,19 +579,61 @@ export function esAltaPrioridad(p: ProyectoTransversal): boolean {
   return p.probabilidad === 'Alta' && p.impactoDirecto === 'Sí'
 }
 
-/** Recorta la lista según el indicador seleccionado. */
+/**
+ * Recorta la lista según el indicador seleccionado.
+ * `comision` solo se usa cuando el foco es 'comision'.
+ */
 export function aplicarFoco(
   proyectos: ProyectoTransversal[],
   foco: KpiFoco,
+  comision?: string | null,
 ): ProyectoTransversal[] {
   if (foco === 'altaPrioridad') return proyectos.filter(esAltaPrioridad)
   if (foco === 'conMovimiento') return proyectos.filter(tuvoMovimiento)
+  if (foco === 'comision') {
+    return comision ? proyectos.filter((p) => p.comision === comision) : proyectos
+  }
   return proyectos
 }
 
 /** Valor de cada indicador para el conjunto de PL recibido. */
-export function valorFoco(proyectos: ProyectoTransversal[], foco: KpiFoco): number {
-  return aplicarFoco(proyectos, foco).length
+export function valorFoco(
+  proyectos: ProyectoTransversal[],
+  foco: KpiFoco,
+  comision?: string | null,
+): number {
+  return aplicarFoco(proyectos, foco, comision).length
+}
+
+/* --------------------------- detalle (2do nivel) -------------------------- */
+
+/**
+ * Selección fina dentro del conjunto del KPI: un sector (desde la tabla de
+ * concentración) o un PL puntual (desde el mapa de priorización).
+ */
+export type Detalle =
+  | { tipo: 'sector'; valor: string }
+  | { tipo: 'pl'; valor: string }
+  | null
+
+/** Recorta el conjunto al sector o al PL seleccionado. */
+export function aplicarDetalle(
+  proyectos: ProyectoTransversal[],
+  detalle: Detalle,
+): ProyectoTransversal[] {
+  if (!detalle) return proyectos
+  if (detalle.tipo === 'sector') return proyectos.filter((p) => p.tema === detalle.valor)
+  return proyectos.filter((p) => p.pl === detalle.valor)
+}
+
+/** Sector que debe quedar marcado en la tabla de concentración. */
+export function sectorMarcado(
+  proyectos: ProyectoTransversal[],
+  detalle: Detalle,
+): string | null {
+  if (!detalle) return null
+  if (detalle.tipo === 'sector') return detalle.valor
+  return proyectos.find((p) => p.pl === detalle.valor)?.tema ?? null
 }
 
 /* ---------------------------- paneles derivados --------------------------- */
