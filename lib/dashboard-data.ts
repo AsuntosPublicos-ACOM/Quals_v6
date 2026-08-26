@@ -532,7 +532,7 @@ export const focosDef: {
 }[] = [
   {
     id: 'totales',
-    label: 'PL totales',
+    label: 'PL en seguimiento',
     iconKey: 'file',
     tone: 'text-info bg-info/10',
     hint: 'Todos los PL del periodo',

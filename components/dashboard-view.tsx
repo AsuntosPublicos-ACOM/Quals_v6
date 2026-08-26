@@ -206,6 +206,18 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
   const focoActivo = foco === 'totales' ? null : focosDef.find((f) => f.id === foco)
   const plActivo = detalle?.tipo === 'pl' ? detalle.valor : null
 
+  /** Cifras de la selección, mostradas bajo los KPI. */
+  const resumen = useMemo(() => {
+    const n = (fn: (p: (typeof proyectosVisibles)[number]) => boolean) =>
+      proyectosVisibles.filter(fn).length
+    return [
+      { label: 'Impacto directo', valor: n((p) => p.impactoDirecto === 'Sí') },
+      { label: 'Probabilidad alta', valor: n((p) => p.probabilidad === 'Alta') },
+      { label: 'En agenda / debate', valor: n((p) => p.estado === 'En agenda / debate') },
+      { label: 'Con movimiento', valor: n((p) => movimientoDe(p) !== null) },
+    ]
+  }, [proyectosVisibles])
+
   /** PL que sobreviven al detalle: el mapa atenúa los que quedan fuera. */
   const plsSeleccionados = useMemo(
     () => new Set(proyectosVisibles.map((p) => p.pl)),
@@ -300,8 +312,8 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
       </div>
 
       {/* KPIs + mapa de priorización */}
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)] items-start gap-4">
-        <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)] items-stretch gap-4">
+        <div className="grid grid-cols-2 content-start gap-4">
           {focosDef.map((f) => {
             const KpiIcon = ICONS[f.iconKey]
             const activo = foco === f.id
@@ -312,7 +324,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                 type="button"
                 onClick={() => elegirFoco(f.id)}
                 aria-pressed={activo}
-                className={`flex items-start gap-2.5 rounded-xl border bg-card p-3 text-left transition-colors ${
+                className={`flex flex-col gap-2 rounded-xl border bg-card p-3 text-left transition-colors ${
                   activo
                     ? 'border-info ring-1 ring-info'
                     : 'border-border hover:border-info/50 hover:bg-muted/40'
@@ -323,14 +335,12 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                 >
                   <KpiIcon className="h-4 w-4" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] leading-tight text-muted-foreground text-pretty">
-                    {f.label}
-                  </p>
-                  <p className="mt-1 text-2xl font-bold leading-none tracking-tight text-foreground">
-                    {total}
-                  </p>
-                </div>
+                <p className="flex-1 text-[11px] leading-tight text-muted-foreground text-pretty">
+                  {f.label}
+                </p>
+                <p className="text-2xl font-bold leading-none tracking-tight text-foreground">
+                  {total}
+                </p>
               </button>
             )
           })}
@@ -340,7 +350,7 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
             onClick={() => elegirFoco('comision')}
             aria-pressed={foco === 'comision'}
             disabled={!comision}
-            className={`flex items-start gap-2.5 rounded-xl border bg-card p-3 text-left transition-colors disabled:cursor-default ${
+            className={`flex flex-col gap-2 rounded-xl border bg-card p-3 text-left transition-colors disabled:cursor-default ${
               foco === 'comision'
                 ? 'border-info ring-1 ring-info'
                 : 'border-border hover:border-info/50 hover:bg-muted/40'
@@ -349,23 +359,63 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-chart-3/10 text-chart-3">
               <Users className="h-4 w-4" />
             </div>
-            <div className="min-w-0">
-              <p className="text-[11px] leading-tight text-muted-foreground text-pretty">
-                Comisión con mayor incidencia
+            <p className="flex-1 text-[11px] leading-tight text-muted-foreground text-pretty">
+              Comisión predominante
+            </p>
+            {comision ? (
+              <p className="text-xs font-bold leading-tight text-foreground text-pretty">
+                {comision.nombre}
+                <span className="font-semibold text-muted-foreground"> — {comision.total} PL</span>
               </p>
-              {comision ? (
-                <p className="mt-1 text-xs font-bold leading-tight text-foreground text-pretty">
-                  {comision.nombre}
-                  <span className="font-semibold text-muted-foreground">
-                    {' '}
-                    — {comision.total} PL
-                  </span>
-                </p>
-              ) : (
-                <p className="mt-1 text-xs text-muted-foreground">Sin datos</p>
-              )}
-            </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Sin datos</p>
+            )}
           </button>
+
+          {/* Resumen de la selección: ocupa el alto restante junto al mapa. */}
+          <div className="col-span-2 flex flex-1 flex-col rounded-xl border border-border bg-card p-3">
+            <p className="text-[11px] font-semibold text-foreground">
+              {focoActivo ? focoActivo.label : 'Selección actual'}
+            </p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground text-pretty">
+              {focoActivo?.hint ?? 'Todos los PL del periodo'} · {proyectosVisibles.length} PL
+            </p>
+
+            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-border pt-2">
+              {resumen.map((r) => (
+                <div key={r.label} className="flex items-baseline justify-between gap-2">
+                  <dt className="truncate text-[10px] text-muted-foreground">{r.label}</dt>
+                  <dd className="text-xs font-bold tabular-nums text-foreground">{r.valor}</dd>
+                </div>
+              ))}
+            </dl>
+
+            {sectores.length > 0 && (
+              <div className="mt-auto border-t border-border pt-2">
+                <p className="mb-1 text-[10px] text-muted-foreground">Sectores de la selección</p>
+                <ul className="flex flex-wrap gap-1">
+                  {sectores.slice(0, 4).map((s) => (
+                    <li key={s.sector}>
+                      <button
+                        type="button"
+                        onClick={() => elegirSector(s.sector)}
+                        aria-pressed={sectorActivo === s.sector}
+                        className={`flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] transition-colors ${
+                          sectorActivo === s.sector
+                            ? 'border-info bg-info/10 font-semibold text-info'
+                            : 'border-border text-muted-foreground hover:border-info/50 hover:text-foreground'
+                        }`}
+                      >
+                        <Dot className={s.dot} />
+                        {s.sector}
+                        <span className="font-semibold text-foreground">{s.total}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
 
         <Card>
