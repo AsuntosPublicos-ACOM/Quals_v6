@@ -609,20 +609,27 @@ export function valorFoco(
 
 /**
  * Selección fina dentro del conjunto del KPI: un sector (desde la tabla de
- * concentración) o un PL puntual (desde el mapa de priorización).
+ * concentración, opcionalmente restringido a un tramo de impacto directo al
+ * hacer click en un segmento de la barra) o un PL puntual (desde el mapa).
  */
 export type Detalle =
-  | { tipo: 'sector'; valor: string }
+  | { tipo: 'sector'; valor: string; impacto?: ImpactoDirecto }
   | { tipo: 'pl'; valor: string }
   | null
 
-/** Recorta el conjunto al sector o al PL seleccionado. */
+/** Recorta el conjunto al sector, al tramo de impacto o al PL seleccionado. */
 export function aplicarDetalle(
   proyectos: ProyectoTransversal[],
   detalle: Detalle,
 ): ProyectoTransversal[] {
   if (!detalle) return proyectos
-  if (detalle.tipo === 'sector') return proyectos.filter((p) => p.tema === detalle.valor)
+  if (detalle.tipo === 'sector') {
+    return proyectos.filter(
+      (p) =>
+        p.tema === detalle.valor &&
+        (detalle.impacto === undefined || p.impactoDirecto === detalle.impacto),
+    )
+  }
   return proyectos.filter((p) => p.pl === detalle.valor)
 }
 

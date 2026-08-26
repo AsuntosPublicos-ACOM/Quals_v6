@@ -67,6 +67,7 @@ import {
   type Estado,
   type FiltroKey,
   type IconKey,
+  type ImpactoDirecto,
   type KpiFoco,
   type Probabilidad,
 } from '@/lib/dashboard-data'
@@ -167,11 +168,25 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
     setDetalle(null)
   }
 
-  /** Click en un sector: alterna el detalle por sector. */
+  /** Click en el nombre de un sector: alterna el sector completo. */
   const elegirSector = (sector: string) =>
     setDetalle((prev) =>
-      prev?.tipo === 'sector' && prev.valor === sector ? null : { tipo: 'sector', valor: sector },
+      prev?.tipo === 'sector' && prev.valor === sector && prev.impacto === undefined
+        ? null
+        : { tipo: 'sector', valor: sector },
     )
+
+  /** Click en un segmento de la barra: alterna sector + tramo de impacto. */
+  const elegirTramo = (sector: string, impacto: ImpactoDirecto) =>
+    setDetalle((prev) =>
+      prev?.tipo === 'sector' && prev.valor === sector && prev.impacto === impacto
+        ? null
+        : { tipo: 'sector', valor: sector, impacto },
+    )
+
+  /** ¿Está seleccionado este segmento concreto de la barra? */
+  const tramoActivo = (sector: string, impacto: ImpactoDirecto) =>
+    detalle?.tipo === 'sector' && detalle.valor === sector && detalle.impacto === impacto
 
   /** Click en un PL del mapa: alterna el detalle por proyecto. */
   const elegirPl = (pl: string) =>
@@ -216,7 +231,15 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
   const chips = [
     foco === 'comision' && comision ? `Comisión: ${comision.nombre}` : null,
     focoActivo ? focoActivo.label : null,
-    detalle?.tipo === 'sector' ? `Sector: ${detalle.valor}` : null,
+    detalle?.tipo === 'sector'
+      ? `Sector: ${detalle.valor}${
+          detalle.impacto === 'Sí'
+            ? ' · con impacto directo'
+            : detalle.impacto === 'No'
+              ? ' · sin impacto directo'
+              : ''
+        }`
+      : null,
     plActivo,
   ].filter((c): c is string => Boolean(c))
 
@@ -477,7 +500,8 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
               <Info className="h-4 w-4 text-muted-foreground" />
             </h2>
             <p className="mb-2 text-[11px] text-muted-foreground">
-              Haz click en un sector para ver su desglose y su lista de PL.
+              Haz click en un sector para ver su desglose, o en un tramo de la barra para quedarte
+              solo con los PL con o sin impacto directo.
             </p>
             <table className="w-full text-left text-[11px]">
               <thead>
@@ -536,26 +560,44 @@ export function DashboardView({ onBack, initialTab = 'general' }: DashboardViewP
                               style={{ width: `${(s.total / maxSector) * 100}%` }}
                             >
                               {s.si > 0 && (
-                                <div
-                                  className="flex items-center justify-center bg-info text-[9px] font-semibold text-primary-foreground"
+                                <button
+                                  type="button"
+                                  onClick={() => elegirTramo(s.sector, 'Sí')}
+                                  aria-pressed={tramoActivo(s.sector, 'Sí')}
+                                  aria-label={`${s.sector}: ${s.si} PL con impacto directo`}
+                                  title={`${s.sector}: ${s.si} con impacto directo`}
+                                  className={`flex items-center justify-center bg-info text-[9px] font-semibold text-primary-foreground transition-opacity hover:opacity-80 ${
+                                    tramoActivo(s.sector, 'No') ? 'opacity-40' : ''
+                                  }`}
                                   style={{ width: `${(s.si / s.total) * 100}%` }}
                                 >
                                   {s.si}
-                                </div>
+                                </button>
                               )}
                               {s.no > 0 && (
-                                <div
-                                  className="flex items-center justify-center bg-muted text-[9px] font-semibold text-muted-foreground"
+                                <button
+                                  type="button"
+                                  onClick={() => elegirTramo(s.sector, 'No')}
+                                  aria-pressed={tramoActivo(s.sector, 'No')}
+                                  aria-label={`${s.sector}: ${s.no} PL sin impacto directo`}
+                                  title={`${s.sector}: ${s.no} sin impacto directo`}
+                                  className={`flex items-center justify-center bg-muted text-[9px] font-semibold text-muted-foreground transition-opacity hover:opacity-80 ${
+                                    tramoActivo(s.sector, 'Sí') ? 'opacity-40' : ''
+                                  }`}
                                   style={{ width: `${(s.no / s.total) * 100}%` }}
                                 >
                                   {s.no}
-                                </div>
+                                </button>
                               )}
                             </div>
                           </div>
                           {marcado && (
                             <span className="text-[10px] font-medium text-info">
-                              {s.si} con impacto directo · {s.no} sin impacto directo
+                              {tramoActivo(s.sector, 'Sí')
+                                ? `${s.si} con impacto directo`
+                                : tramoActivo(s.sector, 'No')
+                                  ? `${s.no} sin impacto directo`
+                                  : `${s.si} con impacto directo · ${s.no} sin impacto directo`}
                             </span>
                           )}
                         </div>
