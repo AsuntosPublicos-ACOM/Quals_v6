@@ -148,13 +148,8 @@ export function IncidenciaView() {
   }
 
   /** Click en una fila del ranking: marca o desmarca al congresista. */
-  const marcarCongresista = (id: string) => {
-    console.log('[v0] marcarCongresista', id)
-    setSelectedId((prev) => {
-      console.log('[v0] prev', prev, '->', prev === id ? null : id)
-      return prev === id ? null : id
-    })
-  }
+  const marcarCongresista = (id: string) =>
+    setSelectedId((prev) => (prev === id ? null : id))
 
   /** Cambiar de KPI reinicia el detalle: el arrastre siempre parte del KPI. */
   const elegirFoco = (id: FocoIncidencia) => {
